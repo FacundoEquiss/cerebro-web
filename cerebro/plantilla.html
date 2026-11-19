@@ -1,0 +1,1131 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<title>__TITULO__</title>
+<meta name="description" content="__DESCRIPCION__">
+<link rel="canonical" href="__BASE_URL__/">
+<meta name="robots" content="index,follow,max-snippet:-1">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es">
+<meta property="og:site_name" content="Cerebro Web">
+<meta property="og:title" content="__TITULO__">
+<meta property="og:description" content="__DESCRIPCION__">
+<meta property="og:url" content="__BASE_URL__/">
+<meta property="og:image" content="__BASE_URL__/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="alternate" type="text/markdown" href="__BASE_URL__/llms-full.txt" title="Todo el contenido en Markdown">
+<link rel="alternate" type="application/json" href="__BASE_URL__/cerebro.json" title="Datos del cerebro en JSON">
+<link rel="alternate" type="text/plain" href="__BASE_URL__/llms.txt" title="llms.txt">
+<!-- AGENTES DE IA: no hace falta ejecutar JavaScript. Todo el contenido de este mapa está como texto dentro de <main id="contenido">
+     en este mismo HTML, y además en __BASE_URL__/llms-full.txt (Markdown), __BASE_URL__/guia (documento) y __BASE_URL__/cerebro.json (datos).
+     Empezar por la rama «Cómo usar este cerebro».
+     Este archivo se genera con armar.mjs a partir de plantilla.html + datos.json: no editarlo a mano. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --fondo:#0b1020; --panel:#141b30; --panel-2:#1d2742; --panel-3:#293556;
+  --texto:#eef2fb; --texto-2:#b4bfd6; --texto-3:#8894b0;
+  --acento:#9aa8ff; --acento-hondo:#5b6cf0; --acento-claro:#cdd5ff; --tinta:#0b1020;
+  --r-sm:8px; --r-md:12px; --r-lg:18px; --r-xl:26px; --r-pill:999px;
+  --sombra:0 18px 50px rgba(2,6,20,.55), 0 2px 8px rgba(2,6,20,.35);
+  --f-display:"Instrument Serif","Iowan Old Style","Palatino Linotype",Georgia,serif;
+  --f-ui:"IBM Plex Sans Condensed","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
+  --f-texto:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px); --aviso:26px;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none;background:var(--fondo);color:var(--texto);
+  font-family:var(--f-texto);-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+body{position:fixed;inset:0}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
+svg.ico{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* ---------- lienzo ---------- */
+#lienzo{position:absolute;inset:0;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+  background-color:var(--fondo);
+  background-image:radial-gradient(circle,rgba(205,213,255,.09) 1.1px,transparent 1.6px);cursor:grab}
+#lienzo.agarrando{cursor:grabbing}
+#lienzo::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 45%,rgba(122,138,255,.10),transparent 55%),
+             radial-gradient(ellipse at center,transparent 55%,rgba(2,5,16,.6) 100%)}
+#mapa{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.rama{opacity:.5;pointer-events:none}
+.rama.camino{opacity:1}
+.nodo{cursor:pointer;outline:none}
+.nodo text{font-family:var(--f-ui);letter-spacing:.04em;pointer-events:none;text-anchor:middle}
+.nodo .halo{opacity:0;pointer-events:none}
+.nodo .aro{fill:none;stroke:transparent;stroke-width:3;pointer-events:none}
+.nodo.activo .halo{opacity:1;animation:pulso 2.6s ease-in-out infinite}
+.nodo.activo .aro{stroke:#fff}
+.nodo:focus-visible .aro{stroke:var(--acento);stroke-width:4;stroke-dasharray:7 5}
+.nodo.activo:focus-visible .aro{stroke:#fff}
+.nodo.atenuado{opacity:.22}
+.rama.atenuado{opacity:.12}
+.nodo .conteo text,.nodo .fase text{font-size:10px;font-weight:600;letter-spacing:0}
+.p0 .halo{opacity:.8;animation:pulso 4.5s ease-in-out infinite}
+@media (hover:hover){.nodo:hover .aro{stroke:rgba(255,255,255,.55)}}
+@keyframes pulso{0%,100%{opacity:.55}50%{opacity:1}}
+/* nivel de detalle: al alejar se apagan los rótulos de los niveles profundos */
+.lod1 .p3 text,.lod1 .p4 text,.lod1 .p5 text,.lod1 .p6 text,.lod1 .extra{display:none}
+.lod2 .p2 text{display:none}
+.lod3 .p1 text{display:none}
+.lod4 .p0 text{display:none}
+/* …y los círculos que quedaron sin rótulo se pintan de un tono más vivo de su categoría, para que el mapa se lea de lejos */
+.lod1 .p3 .cuerpo,.lod1 .p4 .cuerpo,.lod1 .p5 .cuerpo,.lod1 .p6 .cuerpo,.lod2 .p2 .cuerpo{fill:var(--c2)}
+
+/* ---------- barra ---------- */
+.barra{position:fixed;z-index:30;top:calc(12px + var(--aviso) + var(--sat));left:12px;right:12px;display:flex;align-items:flex-start;gap:10px;pointer-events:none}
+.barra>*{pointer-events:auto}
+.marca{margin-right:auto;padding:9px 14px 9px;pointer-events:none;background:rgba(20,27,48,.88);border-radius:var(--r-lg);box-shadow:var(--sombra)}
+.marca .titulo em{color:var(--acento)}
+.marca .titulo{margin:0;font-family:var(--f-display);font-weight:400;font-size:24px;line-height:1;color:var(--texto);letter-spacing:.005em;
+  text-shadow:0 2px 14px rgba(0,0,0,.6)}
+.marca p{margin:5px 0 0;font-family:var(--f-ui);text-transform:uppercase;letter-spacing:.13em;font-size:10.5px;color:var(--texto-2);
+  text-shadow:0 1px 8px rgba(0,0,0,.8)}
+.marca .muestra{color:var(--tinta);background:var(--acento);border-radius:var(--r-pill);padding:1px 7px;margin-left:6px;font-weight:600;white-space:nowrap}
+.marca .ver{display:none}
+@media (max-width:767.98px){
+  .marca .muestra{display:table;margin:5px 0 0}.pista span{display:none}
+  .marca{transition:opacity .3s,transform .3s}
+  .barra.moviendo .marca,.barra.con-ficha .marca{opacity:0;transform:translateY(-10px)}
+}
+.herramientas{display:flex;gap:6px;background:var(--panel);border-radius:var(--r-lg);padding:5px;box-shadow:var(--sombra);position:relative}
+.bot{height:42px;min-width:42px;padding:0 10px;border-radius:var(--r-md);display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font-family:var(--f-ui);text-transform:uppercase;letter-spacing:.09em;font-size:12.5px;font-weight:500;color:var(--texto);transition:background .15s,color .15s}
+.bot span{display:none}
+.bot:hover{background:var(--panel-2)}
+.bot:active{background:var(--panel-3)}
+.bot[aria-pressed="true"],.bot[aria-expanded="true"]{background:var(--acento);color:var(--tinta)}
+.bot:focus-visible,.fila:focus-visible,.miga:focus-visible,.pastilla:focus-visible,.cerrar:focus-visible,.item-ley:focus-visible,.enlaces a:focus-visible{outline:2px solid var(--acento);outline-offset:2px}
+.buscador{display:none;align-items:center;gap:8px;height:42px;padding:0 6px 0 12px;border-radius:var(--r-md);background:var(--panel-2);color:var(--texto-2);min-width:0}
+.buscador input{flex:1;min-width:0;width:210px;height:100%;background:none;border:0;outline:none;color:var(--texto);font:500 15px var(--f-texto)}
+.buscador:focus-within{box-shadow:inset 0 0 0 2px var(--acento)}
+.buscador input::placeholder{color:var(--texto-3)}
+.buscador input::-webkit-search-cancel-button{display:none}
+.buscador .bot{height:34px;min-width:34px;padding:0}
+@media (max-width:767.98px){
+  .barra.buscando .marca,.barra.buscando .herramientas>.bot{display:none}
+  .barra.buscando .herramientas{flex:1}
+  .barra.buscando .buscador{display:flex;flex:1}
+}
+.resultados{position:absolute;top:calc(100% + 8px);left:0;right:0;max-height:min(62vh,520px);overflow:auto;overscroll-behavior:contain;
+  background:var(--panel);border-radius:var(--r-lg);box-shadow:var(--sombra);padding:6px;display:none}
+.resultados.abierto{display:block}
+.fila{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;padding:9px 10px;border-radius:var(--r-md)}
+.fila:hover,.fila.sel{background:var(--panel-2)}
+.fila i{flex:none;width:10px;height:10px;border-radius:50%;margin-top:5px}
+.fila b{display:block;font-family:var(--f-ui);font-weight:500;text-transform:uppercase;letter-spacing:.06em;font-size:13.5px;color:var(--texto)}
+.fila small{display:block;font-size:12px;color:var(--texto-2);margin-top:1px;line-height:1.35}
+.vacio{padding:14px 12px;color:var(--texto-2);font-size:14px}
+
+/* ---------- leyenda ---------- */
+.leyenda{position:fixed;z-index:25;left:12px;right:12px;top:calc(68px + var(--aviso) + var(--sat));z-index:32;max-height:min(60vh,520px);overflow:auto;overscroll-behavior:contain;
+  background:var(--panel);border-radius:var(--r-lg);box-shadow:var(--sombra);padding:14px 14px 10px;
+  opacity:0;transform:translateY(-8px) scale(.98);pointer-events:none;transition:opacity .2s,transform .25s cubic-bezier(.2,.9,.25,1)}
+.leyenda.abierta{opacity:1;transform:none;pointer-events:auto}
+.leyenda h2{margin:0 0 8px;font-family:var(--f-ui);font-weight:500;text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--texto-2)}
+.leyenda h2+div{display:grid;grid-template-columns:1fr 1fr;gap:2px 8px;margin-bottom:12px}
+.leyenda b.num{flex:none;width:18px;height:18px;border-radius:50%;background:var(--panel-3);color:var(--texto);display:grid;place-items:center;font:600 11px var(--f-ui)}
+.item-ley{display:flex;align-items:center;gap:8px;padding:6px 6px;border-radius:var(--r-sm);font-size:13px;color:var(--texto);text-align:left;min-height:32px}
+button.item-ley:hover{background:var(--panel-2)}
+.item-ley[aria-pressed="true"]{background:var(--panel-3)}
+.item-ley i{flex:none;width:12px;height:12px;border-radius:50%}
+.item-ley em{font-style:normal;color:var(--texto-3);font-size:11.5px;margin-left:auto}
+.leyenda p{margin:0;font-size:11.5px;color:var(--texto-3);line-height:1.4}
+
+/* ---------- ficha ---------- */
+.ficha{position:fixed;z-index:40;left:0;right:0;bottom:0;height:min(90vh,calc(100vh - 64px));height:min(90dvh,calc(100dvh - 64px));
+  --visible:50vh;--visible:50dvh;
+  background:var(--panel);border-radius:var(--r-xl) var(--r-xl) 0 0;box-shadow:0 -14px 50px rgba(0,0,0,.55);
+  display:flex;flex-direction:column;transform:translateY(105%);transition:transform .4s cubic-bezier(.2,.9,.25,1);will-change:transform}
+.ficha[data-estado="media"]{transform:translateY(calc(100% - var(--visible)))}
+.ficha[data-estado="completa"]{transform:none}
+.ficha.arrastrando{transition:none}
+.ficha-cabeza{flex:none;padding:8px 18px 10px;touch-action:none;cursor:grab;position:relative}
+.asa{width:44px;height:5px;border-radius:3px;background:var(--panel-3);margin:0 auto 10px}
+.cerrar{position:absolute;right:12px;top:14px;width:40px;height:40px;border-radius:50%;background:var(--panel-2);display:grid;place-items:center;color:var(--texto)}
+.cerrar:hover{background:var(--panel-3)}
+.migas{display:flex;flex-wrap:wrap;align-items:center;gap:2px 2px;padding-right:48px;min-height:30px}
+.miga{font-family:var(--f-ui);text-transform:uppercase;letter-spacing:.08em;font-size:11.5px;color:var(--texto-2);padding:5px 5px;border-radius:7px}
+.miga:hover{color:var(--acento)}
+.miga[aria-current]{color:var(--texto)}
+.migas svg{width:12px;height:12px;color:var(--texto-3)}
+.ficha-cuerpo{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:2px 18px calc(28px + var(--sab))}
+.ficha[data-estado="media"] .ficha-cuerpo{padding-bottom:calc(min(90vh,100vh - 64px) - 50vh + 28px);padding-bottom:calc(min(90dvh,100dvh - 64px) - 50dvh + 28px + var(--sab))}
+.etiquetas{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
+.etq{font-family:var(--f-ui);text-transform:uppercase;letter-spacing:.1em;font-size:11px;font-weight:600;padding:4px 10px;border-radius:var(--r-pill);display:inline-flex;align-items:center;gap:6px;line-height:1.3}
+.etq i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.etq.prov{background:var(--panel-2);color:var(--texto-2);font-weight:500}
+.ficha h2{margin:0 0 8px;font-family:var(--f-ui);font-weight:600;text-transform:uppercase;letter-spacing:.035em;font-size:25px;line-height:1.12;color:var(--texto)}
+.resumen{margin:0 0 14px;font-size:15.5px;line-height:1.5;color:var(--texto)}
+.clave{background:rgba(154,168,255,.14);border-radius:var(--r-lg);padding:12px 14px;margin:0 0 16px}
+.clave h3{color:var(--acento)!important;margin-bottom:3px!important}
+.clave p{margin:0;font-size:15px;line-height:1.45;font-weight:600;color:var(--texto)}
+.ficha h3{margin:0 0 5px;font-family:var(--f-ui);font-weight:500;text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--texto-2)}
+.bloque{margin:0 0 16px}
+.bloque p{margin:0;font-size:14.5px;line-height:1.55;color:var(--texto)}
+.bloque ul,.bloque ol{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.bloque ol{counter-reset:paso}
+.bloque ol li{counter-increment:paso;position:relative;padding-left:38px}
+.bloque ol li::before{content:counter(paso);position:absolute;left:10px;top:8px;width:20px;height:20px;border-radius:50%;background:var(--panel-3);color:var(--acento-claro);font:600 11.5px/20px var(--f-ui);text-align:center}
+.enlaces{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--texto-2)}
+.aviso{position:fixed;z-index:31;top:var(--sat);left:0;right:0;height:var(--aviso);margin:0;padding:0 12px;display:flex;align-items:center;justify-content:center;gap:6px;
+  background:rgba(20,27,48,.92);color:var(--texto-2);font:500 11.5px var(--f-texto);white-space:nowrap;overflow:hidden}
+.aviso a{color:var(--acento-claro);text-decoration:none;font-family:var(--f-mono);font-size:11px}
+.aviso a:hover,.aviso a:focus-visible{text-decoration:underline;outline:none}
+@media (max-width:767.98px){.aviso .largo{display:none}}
+.bloque li{font-size:14px;line-height:1.5;color:var(--texto);background:var(--panel-2);border-radius:var(--r-md);padding:8px 11px;overflow-wrap:anywhere}
+code,.ficha a{font-family:var(--f-mono);font-size:.86em;color:var(--acento-claro);background:rgba(154,168,255,.14);padding:1px 5px;border-radius:5px;overflow-wrap:anywhere;text-decoration:none}
+.ficha a:hover{text-decoration:underline}
+.adentro{display:flex;flex-wrap:wrap;gap:6px}
+.pastilla{font-family:var(--f-ui);text-transform:uppercase;letter-spacing:.07em;font-size:12px;font-weight:500;padding:7px 11px;border-radius:var(--r-pill);background:var(--panel-2);color:var(--texto);display:inline-flex;align-items:center;gap:7px;min-height:34px}
+.pastilla:hover{background:var(--panel-3)}
+.pastilla i{width:8px;height:8px;border-radius:50%}
+.panorama{display:grid;gap:6px}
+.rama-fila{display:flex;gap:10px;align-items:flex-start;text-align:left;width:100%;background:var(--panel-2);border-radius:var(--r-md);padding:9px 11px}
+.rama-fila:hover{background:var(--panel-3)}
+.rama-fila:focus-visible{outline:2px solid var(--acento);outline-offset:2px}
+.rama-fila i{flex:none;width:10px;height:10px;border-radius:50%;margin-top:5px}
+.rama-fila span{flex:1;min-width:0}
+.rama-fila b{display:block;font-family:var(--f-ui);font-weight:500;text-transform:uppercase;letter-spacing:.06em;font-size:13px;color:var(--texto)}
+.rama-fila small{display:block;font-size:12.5px;line-height:1.4;color:var(--texto-2);margin-top:2px}
+.rama-fila em{font-style:normal;font-family:var(--f-ui);font-size:12px;color:var(--texto-3);margin-top:1px}
+
+.pista{position:fixed;z-index:20;left:50%;bottom:calc(18px + var(--sab));transform:translateX(-50%);background:var(--panel);color:var(--texto-2);
+  border-radius:var(--r-pill);padding:9px 16px;font-size:12.5px;white-space:nowrap;box-shadow:var(--sombra);pointer-events:none;transition:opacity .5s,transform .5s}
+.pista.fuera{opacity:0;transform:translate(-50%,10px)}
+.sr,.sr-only{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+
+/* ---------- escritorio ---------- */
+@media (min-width:768px){
+  .barra{top:calc(16px + var(--aviso));left:16px;right:16px}
+  .marca{padding:10px 16px 11px}
+  .marca .ver{display:inline}
+  .marca .titulo{font-size:31px}
+  .marca p{font-size:11.5px}
+  .bot{padding:0 13px}.bot span{display:inline}
+  .solo-movil{display:none!important}
+  .buscador{display:flex}
+  .buscador input{width:230px}
+  .resultados{left:0;right:auto;width:400px}
+  .leyenda{left:16px;right:auto;top:auto;bottom:16px;width:380px;max-height:min(70vh,560px);transform:translateY(8px) scale(.98)}
+  .ficha{left:auto;top:calc(80px + var(--aviso));right:16px;bottom:16px;width:400px;height:auto;border-radius:var(--r-xl);box-shadow:var(--sombra);transform:translateX(calc(100% + 28px))}
+  .ficha[data-estado="media"],.ficha[data-estado="completa"]{transform:none}
+  .ficha[data-estado="media"] .ficha-cuerpo{padding-bottom:26px}
+  .ficha-cabeza{cursor:default;padding:14px 22px 8px}
+  .ficha-cuerpo{padding:4px 22px 26px}
+  .asa{display:none}
+  .cerrar{top:12px;right:14px}
+}
+@media (prefers-reduced-motion:reduce){
+  .nodo.activo .halo,.p0 .halo{animation:none}
+  .ficha,.leyenda,.pista{transition:none}
+}
+</style>
+</head>
+<body>
+<p class="aviso" id="aviso"><span><span class="largo">Para agentes de IA y lectores de texto: todo el contenido, sin JavaScript, en</span><span class="corto" aria-hidden="true"></span></span> <a href="llms-full.txt">llms-full.txt</a> · <a href="guia/">guia/</a> · <a href="cerebro.json">cerebro.json</a> · <a href="llms.txt">llms.txt</a></p>
+<div id="lienzo">
+  <svg id="mapa" role="application" aria-label="Mapa interactivo del cerebro. Tab y flechas para moverse; Enter abre un círculo. El mismo contenido está como texto más abajo.">
+    <defs>
+      <radialGradient id="g-halo"><stop offset=".45" stop-color="#8b98ff" stop-opacity=".55"/><stop offset="1" stop-color="#8b98ff" stop-opacity="0"/></radialGradient>
+      <radialGradient id="g-raiz" cx=".38" cy=".3" r=".9"><stop offset="0" stop-color="#dfe4ff"/><stop offset=".55" stop-color="#a3adff"/><stop offset="1" stop-color="#6c7bf2"/></radialGradient>
+    </defs>
+    <g id="camara"><g id="ramas"></g><g id="nodos"></g></g>
+  </svg>
+</div>
+
+<header class="barra" id="barra">
+  <div class="marca">
+    <p class="titulo">Cerebro <em>Web</em></p>
+    <p><span id="sub">cómo construir la web de un negocio</span></p>
+  </div>
+  <div class="herramientas">
+    <div class="buscador" role="search">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="q" type="search" placeholder="Buscar…" aria-label="Buscar en el cerebro" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" role="combobox" aria-expanded="false" aria-controls="resultados">
+      <button class="bot" id="q-x" aria-label="Cerrar la búsqueda"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+    </div>
+    <button class="bot solo-movil" id="b-buscar" aria-label="Buscar"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button>
+    <button class="bot" id="b-centrar" aria-label="Centrar"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><line x1="2" x2="5" y1="12" y2="12"/><line x1="19" x2="22" y1="12" y2="12"/><line x1="12" x2="12" y1="2" y2="5"/><line x1="12" x2="12" y1="19" y2="22"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/></svg><span>Centrar</span></button>
+    <button class="bot" id="b-todo" aria-label="Desplegar todo"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" id="i-todo"></svg><span id="t-todo">Desplegar todo</span></button>
+    <button class="bot" id="b-leyenda" aria-label="Leyenda" aria-expanded="false" aria-controls="leyenda"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg><span>Leyenda</span></button>
+    <div class="resultados" id="resultados" role="listbox" aria-label="Resultados"></div>
+  </div>
+</header>
+
+<section class="leyenda" id="leyenda" aria-label="Leyenda">
+  <h2>Prioridad · tocar para resaltar</h2><div id="ley-pri"></div>
+  <h2>Fase</h2><div id="ley-fases"></div>
+  <h2>Ramas</h2><div id="ley-cats"></div>
+  <p id="ley-pie"></p>
+</section>
+
+<aside class="ficha" id="ficha" data-estado="cerrada" aria-label="Ficha del círculo elegido" aria-hidden="true">
+  <div class="ficha-cabeza" id="ficha-cabeza">
+    <div class="asa" aria-hidden="true"></div>
+    <nav class="migas" id="migas" aria-label="Camino"></nav>
+    <button class="cerrar" id="ficha-x" aria-label="Cerrar la ficha"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+  </div>
+  <div class="ficha-cuerpo" id="ficha-cuerpo"></div>
+</aside>
+
+<div class="pista" id="pista">Tocar un círculo para abrirlo<span> · arrastrar y pellizcar para moverse</span></div>
+<div class="sr" aria-live="polite" id="voz"></div>
+
+<main class="sr-only" id="contenido">
+__CEREBRO_TEXTO__
+</main>
+
+<script id="datos" type="application/json">__CEREBRO_DATOS__</script>
+<script>
+(() => {
+'use strict';
+
+/* ================= datos ================= */
+let DATOS = {};
+try { DATOS = JSON.parse(document.getElementById('datos').textContent) || {}; }
+catch (e) { console.warn('[cerebro] no se pudieron leer los datos; volver a generar con armar.mjs'); }
+
+const FONDO = '#0b1020', TINTA = '#0b1020', CLARO = '#eef2fb', PANEL = '#141b30';
+// Una rama = un color. Tonos claros de saturación pareja, pensados para leerse sobre el fondo oscuro con
+// texto tinta encima. Se asignan por orden de aparición: sumar una rama en datos.json no exige tocar el motor.
+const PALETA = ['#f5f7ff', '#f6c56e', '#b7c4d8', '#ffa07a', '#7aa7ff', '#f58ad6', '#d39bf7', '#f0e36a', '#c6e36a',
+  '#b3a0ff', '#4fd6c4', '#7fe6a2', '#ff8a80', '#ff9ec4', '#8fd0ff', '#a8d5c2', '#8f9bff', '#ffd9a0'];
+const CATS = {};
+((DATOS.raiz && DATOS.raiz.hijos) || []).forEach((h, i) => { if (h && h.id) CATS[h.id] = {n: String(h.titulo || h.id), c: PALETA[i % PALETA.length]}; });
+const CAT_X = {n: 'Otros', c: '#9aa6bf'};
+const PRIORIDADES = {
+  esencial:{n:'Esencial',c:'#ffd24a',d:'sin esto no se vende o se corre un riesgo'}, recomendado:{n:'Recomendado',c:'#6ee7a8',d:'conviene hacerlo en esa fase'},
+  opcional:{n:'Opcional',c:'#7cc4ff',d:'depende del negocio'}, avanzado:{n:'Avanzado',c:'#c59bff',d:'para cuando lo básico ya funciona'}
+};
+const FASES = {
+  antes:{n:'Antes de construir',k:1}, construccion:{n:'Construcción',k:2}, lanzamiento:{n:'Lanzamiento',k:3}, crecimiento:{n:'Crecimiento',k:4}
+};
+const cat = k => CATS[k] || CAT_X;
+
+const txt = v => v == null ? '' : String(v).trim();
+const lista = v => Array.isArray(v) ? v.map(txt).filter(Boolean) : (txt(v) ? [txt(v)] : []);
+const porId = new Map(), todos = [];
+let sec = 0;
+function preparar(crudo, padre, prof) {
+  crudo = crudo && typeof crudo === 'object' ? crudo : {};
+  let id = txt(crudo.id) || 'nodo-' + (++sec);
+  while (porId.has(id)) id += '~';
+  const n = {
+    id, titulo: txt(crudo.titulo) || id, categoria: txt(crudo.categoria) || (padre ? padre.categoria : ''),
+    resumen: txt(crudo.resumen), para_que: txt(crudo.para_que), como: lista(crudo.como),
+    herramientas: lista(crudo.herramientas), error: txt(crudo.error_comun),
+    prioridad: txt(crudo.prioridad), fase: txt(crudo.fase),
+    padre, prof, hijos: [], desc: 0, abierto: false,
+    el: null, rama: null, kv: [], hoja: false, pad: 0, fila: 0, r: 0, A: 0, RHO: 0, dem: 0, sumaH: 0,
+    rot: null, c: null, d: null, h: null, t0: 0, dur: 0, modo: '', ola: 0, sucio: false, x: 0, y: 0
+  };
+  porId.set(id, n); todos.push(n);
+  for (const h of (Array.isArray(crudo.hijos) ? crudo.hijos : [])) {
+    if (!h || typeof h !== 'object') continue;
+    const k = preparar(h, n, prof + 1); n.hijos.push(k); n.desc += 1 + k.desc;
+  }
+  return n;
+}
+const raiz = preparar(DATOS.raiz || {id:'web', titulo:'Cerebro Web'}, null, 0);
+raiz.abierto = true;
+todos.forEach(n => { n.busca = norm([n.titulo, n.resumen, n.id, n.para_que, n.como.join(' '), n.herramientas.join(' '), n.error].join(' ')); n.buscaT = norm(n.titulo); });
+function norm(s) { return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+
+/* ================= utilidades ================= */
+const $ = s => document.querySelector(s);
+const NS = 'http://www.w3.org/2000/svg';
+const sv = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const limitar = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const sale3 = t => 1 - Math.pow(1 - t, 3);
+const entraSale = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const rebote = t => { const c1 = 1.55, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
+function mezcla(a, b, t) {
+  const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const A = p(a), B = p(b);
+  return '#' + A.map((v, i) => Math.round(v * t + B[i] * (1 - t)).toString(16).padStart(2, '0')).join('');
+}
+const mqMov = matchMedia('(prefers-reduced-motion: reduce)');
+const quieto = () => mqMov.matches;
+const movil = () => innerWidth < 768;
+
+const lienzo = $('#lienzo'), mapa = $('#mapa'), gCam = $('#camara'), gRamas = $('#ramas'), gNodos = $('#nodos');
+const ficha = $('#ficha'), barra = $('#barra');
+
+/* ================= distribución (árbol radial determinístico) =================
+   Cada círculo visible pide el ángulo que necesita para no tocar a sus vecinos en su anillo; un padre
+   pide el máximo entre lo suyo y la suma de sus hijos (= cuña proporcional al peso visible). Las hojas
+   vecinas se acomodan en zigzag en dos filas para ocupar la mitad de arco. Si el
+   total pasa de la vuelta completa, todos los anillos se corren hacia afuera la misma distancia hasta
+   que entra: así los hijos quedan siempre cerca de su padre y sólo se estiran las ramas del centro.
+   Es geometría pura: mismo estado => mismas posiciones, sin simulación ni temblor. */
+const SEP = 12, HOLGURA = 58, ABANICO = 1.8, ZIG = 0.9;
+const VACIO = [];
+let visibles = [], escala = 1, radioMapa = 300;
+function radio(n) {
+  if (n.prof === 0) return 74;
+  const q = Math.sqrt(n.desc);
+  if (n.prof === 1) return 58 + Math.min(12, 1.6 * q);
+  if (n.prof === 2) return 45 + Math.min(8, 2.2 * q);
+  return 42 + Math.min(6, 2 * q);
+}
+const asen = x => Math.asin(Math.min(1, x));
+/* En un teléfono vertical, el primer anillo no entra a lo ancho con rótulos legibles. Mientras sólo se ve
+   el centro y sus ramas, el anillo se acomoda en un óvalo de lados rectos (una superelipse): entra justo a lo ancho con los rótulos a
+   11 px o más y se recorre deslizando para abajo. Al abrir una rama vuelve a ser un círculo. */
+let kOvalo = 0, altoOvalo = 0;
+function ovalar(radioCirculo) {
+  const ks = raiz.kv, W = innerWidth;
+  if (!(W < 768 && innerHeight > W) || ks.length < 6) return;
+  let rmax = 0, fsMin = rotulo(raiz).fs, suma = 0;
+  for (const k of ks) { rmax = Math.max(rmax, k.r); fsMin = Math.min(fsMin, rotulo(k).fs); suma += 2 * k.r + SEP; }
+  let k0 = limitar(11.3 / fsMin, .6, 1), a = W / (2 * k0) - rmax - 5;
+  const amin = raiz.r + rmax + SEP;
+  if (a < amin) { a = amin; k0 = W / (2 * (a + rmax + 5)); }
+  if (a >= radioCirculo) return;                     // el círculo ya entra a lo ancho
+  const M = 1440, E = 2 / 3.4, pot = v => Math.sign(v) * Math.pow(Math.abs(v), E), colocar = b => {
+    const px = [], py = [], L = [0];
+    for (let i = 0; i <= M; i++) { const t = -Math.PI / 2 + i / M * Math.PI * 2; px.push(a * pot(Math.cos(t))); py.push(b * pot(Math.sin(t))); if (i) L.push(L[i - 1] + Math.hypot(px[i] - px[i - 1], py[i] - py[i - 1])); }
+    const pts = []; let ac = -(2 * ks[0].r + SEP) / 2, j = 0;
+    for (const k of ks) {
+      const D = 2 * k.r + SEP, l = (ac + D / 2) / suma * L[M]; ac += D;
+      while (j < M - 1 && L[j + 1] < l) j++;
+      const f = (l - L[j]) / (L[j + 1] - L[j] || 1);
+      pts.push({x: lerp(px[j], px[j + 1], f), y: lerp(py[j], py[j + 1], f), r: k.r});
+    }
+    return pts;
+  }, entra = pts => {
+    for (let i = 0; i < pts.length; i++) {
+      if (Math.hypot(pts[i].x, pts[i].y) < raiz.r + pts[i].r + SEP) return false;
+      for (let j = i + 1; j < pts.length; j++) if (Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y) < pts[i].r + pts[j].r + SEP) return false;
+    }
+    return true;
+  };
+  let lo = a, hi = Math.max(a, radioCirculo);
+  while (!entra(colocar(hi)) && hi < 1e5) { lo = hi; hi *= 1.25; }
+  for (let i = 0; i < 24; i++) { const m = (lo + hi) / 2; if (entra(colocar(m))) hi = m; else lo = m; }
+  colocar(hi).forEach((p, i) => { let an = Math.atan2(p.y, p.x); if (an < -Math.PI / 2 - 1e-6) an += Math.PI * 2; ks[i].A = an; ks[i].RHO = Math.hypot(p.x, p.y); });
+  kOvalo = k0; altoOvalo = hi + rmax;
+}
+function distribuir() {
+  const vis = [], maxr = [], delta = [], Dp = [], porProf = [];
+  (function rec(n) {
+    vis.push(n); n.r = radio(n); n.fila = 0; n.hoja = false; n.pad = 0;
+    maxr[n.prof] = Math.max(maxr[n.prof] || 0, n.r);
+    (porProf[n.prof] || (porProf[n.prof] = [])).push(n);
+    n.kv = n.abierto ? n.hijos : VACIO;
+    for (const k of n.kv) rec(k);
+  })(raiz);
+  // Filas: desde el 2.º anillo, las hojas vecinas se alternan afuera/adentro (zigzag) siguiendo el
+  // orden del anillo, sean o no hermanas. Una hoja de adentro pegada a un círculo con hijos (que
+  // ocupa el ancho entero) lleva un respiro extra; la última del anillo también, por la vuelta.
+  for (let p = 2; p < porProf.length; p++) {
+    let D = 0, prev = null;
+    for (const k of porProf[p]) {
+      if (k.kv.length) { if (prev && !prev.fila) prev.pad = .5; prev = null; }
+      else { D = Math.max(D, 2 * k.r + SEP); k.hoja = true; k.fila = prev ? 1 - prev.fila : 1; prev = k; }
+    }
+    if (prev) prev.pad = 1;
+    Dp[p] = D; delta[p] = D ? ZIG * D : 0;
+  }
+  const base = [0];
+  for (let p = 1; p < maxr.length; p++)
+    base[p] = base[p - 1] + maxr[p - 1] + (delta[p - 1] || 0) + (p === 1 ? 66 : HOLGURA) + maxr[p];
+  if (raiz.kv.length > 2) {          // el primer anillo arranca del tamaño justo para sus círculos
+    const cabe = R => { let t = 0; for (const k of raiz.kv) t += 2 * asen((2 * k.r + SEP) / 2 / R); return t <= Math.PI * 2; };
+    let lo = base[1], hi = base[1]; while (!cabe(hi)) { lo = hi; hi *= 1.5; }
+    for (let i = 0; i < 30 && hi > lo; i++) { const m = (lo + hi) / 2; if (cabe(m)) hi = m; else lo = m; }
+    const mas = hi - base[1]; for (let p = 1; p < base.length; p++) base[p] += mas;
+  }
+  function demanda(n, s) {
+    const rho = base[n.prof] + s;
+    if (n.hoja) return n.dem = asen(Dp[n.prof] / 2 / rho) * (1 + n.pad);
+    const propio = 2 * asen((2 * n.r + SEP) / 2 / rho);
+    if (!n.kv.length) return n.dem = propio;
+    let suma = 0; for (const k of n.kv) suma += demanda(k, s);
+    n.sumaH = suma; return n.dem = Math.max(propio, suma);
+  }
+  const total = s => { let t = 0; for (const k of raiz.kv) t += demanda(k, s); return t; };
+  const VUELTA = Math.PI * 2;
+  let s = 0;                         // cuánto se corren hacia afuera todos los anillos
+  if (raiz.kv.length && total(0) > VUELTA) {
+    let lo = 0, hi = 120; while (total(hi) > VUELTA && hi < 1e6) { lo = hi; hi *= 2; }
+    for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (total(m) > VUELTA) lo = m; else hi = m; }
+    s = hi;
+  }
+  const T = raiz.kv.length ? total(s) : 1;
+  raiz.A = -Math.PI / 2; raiz.RHO = 0;
+  function colocar(n, w0, w1) {
+    n.RHO = base[n.prof] + s + (n.fila ? delta[n.prof] : 0);
+    if (n.hoja) { n.A = w0 + (w1 - w0) / (1 + n.pad) / 2; return; }
+    n.A = (w0 + w1) / 2;
+    if (!n.kv.length) return;
+    const f = Math.min((w1 - w0) / n.sumaH, ABANICO);
+    let a = n.A - n.sumaH * f / 2;
+    for (const k of n.kv) { const w = k.dem * f; colocar(k, a, a + w); a += w; }
+  }
+  if (raiz.kv.length) {
+    const f0 = Math.min(VUELTA / T, raiz.kv.length < 3 ? 1.6 : Infinity);
+    let a = -Math.PI / 2 - raiz.kv[0].dem * f0 / 2;
+    for (const k of raiz.kv) { const w = k.dem * f0; colocar(k, a, a + w); a += w; }
+  }
+  kOvalo = 0;
+  if (porProf.length === 2) ovalar(base[1] + s);
+  visibles = vis; escala = s;
+  radioMapa = 0; for (const n of vis) radioMapa = Math.max(radioMapa, n.RHO + n.r);
+}
+
+/* ================= rótulos dentro del círculo ================= */
+const medidor = document.createElement('canvas').getContext('2d');
+const F_UI = '"IBM Plex Sans Condensed","Arial Narrow","Roboto Condensed",system-ui,sans-serif';
+const ESP = 0.04;
+let cacheAncho = new Map();
+function ancho(t, fs, peso) {
+  const k = peso + '|' + t; let w = cacheAncho.get(k);
+  if (w === undefined) { medidor.font = peso + ' 100px ' + F_UI; w = medidor.measureText(t).width / 100; cacheAncho.set(k, w); }
+  return (w + ESP * t.length) * fs;
+}
+function partir(pal, nl, fs, lh, R, peso) {
+  let mejor = null, mejorV = Infinity;
+  const cortes = [];
+  (function rec(desde, quedan) {
+    if (quedan === 1) {
+      const lineas = [], lim = [...cortes, pal.length]; let i0 = 0, peor = 0;
+      for (let i = 0; i < nl; i++) {
+        const t = pal.slice(i0, lim[i]).join(' '); i0 = lim[i];
+        const y = Math.abs((i - (nl - 1) / 2) * lh) + fs * .56;
+        if (y >= R) return;
+        const v = ancho(t, fs, peso) / (2 * Math.sqrt(R * R - y * y));
+        if (v > 1) return; peor = Math.max(peor, v); lineas.push(t);
+      }
+      if (peor < mejorV) { mejorV = peor; mejor = lineas; }
+      return;
+    }
+    for (let c = desde + 1; c <= pal.length - (quedan - 1); c++) { cortes.push(c); rec(c, quedan - 1); cortes.pop(); }
+  })(0, nl);
+  return mejor;
+}
+function encajar(titulo, r, fsMax, fsMin, peso) {
+  let pal = titulo.toLocaleUpperCase('es').split(/\s+/).filter(Boolean);
+  if (!pal.length) pal = ['·'];
+  const R = r - 7;
+  for (let intento = 0; intento < 3; intento++) {
+    for (let fs = fsMax; fs >= fsMin - .01; fs -= .5) {
+      const lh = fs * 1.17;
+      for (let nl = 1; nl <= Math.min(3, pal.length); nl++) {
+        const l = pal.length <= 9 ? partir(pal, nl, fs, lh, R, peso) : null;
+        if (l) return {fs, lh, lineas: l};
+      }
+    }
+    // no entró: partir con guion la palabra más larga y probar de nuevo
+    let i = 0; pal.forEach((p, j) => { if (p.length > pal[i].length) i = j; });
+    if (pal[i].length < 8) break;
+    const w = pal[i], medio = w.length / 2; let m = -1;      // mejor cortar en un guion que ya tenga
+    for (let j = 2; j < w.length - 2; j++) if ((w[j] === '_' || w[j] === '-') && (m < 0 || Math.abs(j + 1 - medio) < Math.abs(m - medio))) m = j + 1;
+    if (m > 0) pal.splice(i, 1, w.slice(0, m), w.slice(m));
+    else { m = Math.ceil(medio); pal.splice(i, 1, w.slice(0, m) + '-', w.slice(m)); }
+  }
+  // último recurso: tres renglones cortados con puntos suspensivos
+  const fs = fsMin, lh = fs * 1.17, lineas = []; let resto = pal.join(' ');
+  for (let i = 0; i < 3 && resto; i++) {
+    const y = Math.abs((i - 1) * lh) + fs * .56, max = 2 * Math.sqrt(Math.max(1, R * R - y * y));
+    let t = resto; while (t.length > 1 && ancho(t + (i === 2 && t !== resto ? '…' : ''), fs, peso) > max) t = t.slice(0, t.lastIndexOf(' ') > 0 ? t.lastIndexOf(' ') : t.length - 1);
+    resto = resto.slice(t.length).trim(); lineas.push(i === 2 && resto ? t + '…' : t);
+  }
+  return {fs, lh, lineas};
+}
+function rotulo(n) {
+  if (n.rot && n.rot.r === n.r) return n.rot;
+  const p = n.prof;
+  const e = p === 0 ? encajar(n.titulo, n.r, 17, 11, 700) : p === 1 ? encajar(n.titulo, n.r, 16, 10, 600)
+    : encajar(n.titulo, n.r, p === 2 ? 11.5 : 11, 8.5, 500);
+  e.r = n.r; return n.rot = e;
+}
+function rotular(n) {
+  const t = n.el.querySelector('text.rotulo'); if (!t) return;
+  const p = n.prof, peso = p <= 1 ? 600 : 500, e = rotulo(n);
+  t.textContent = '';
+  t.setAttribute('font-size', e.fs); t.setAttribute('font-weight', p === 0 ? 700 : peso);
+  const y0 = -(e.lineas.length - 1) / 2 * e.lh + e.fs * .36;
+  e.lineas.forEach((l, i) => { const s = sv('tspan', {x: 0, y: (y0 + i * e.lh).toFixed(2)}); s.textContent = l; t.appendChild(s); });
+}
+
+/* ================= elementos ================= */
+const conEl = new Set(), animando = new Set();
+let activo = null, filtro = null;   // filtro = {t: 'categoria' | 'prioridad' | 'fase', v}
+function crearEl(n) {
+  const c = cat(n.categoria).c, p = n.prof, r = n.r;
+  const g = sv('g', {class: 'nodo p' + Math.min(p, 6), tabindex: 0, role: 'button', 'data-id': n.id, style: '--c2:' + mezcla(c, FONDO, .66)});
+  g.appendChild(sv('circle', {class: 'halo', r: (r * 1.75).toFixed(1), fill: 'url(#g-halo)'}));
+  let relleno, trazo = null, tinta = TINTA;
+  if (p === 0) relleno = 'url(#g-raiz)';
+  else if (p === 1) relleno = c;
+  else { relleno = mezcla(c, FONDO, p === 2 ? .36 : .24); trazo = c; tinta = CLARO; }
+  const cu = sv('circle', {class: 'cuerpo', r, fill: relleno});
+  if (trazo) { cu.setAttribute('stroke', trazo); cu.setAttribute('stroke-width', p === 2 ? 2 : 1.5); if (p > 2) cu.setAttribute('stroke-opacity', .8); }
+  g.appendChild(cu);
+  g.appendChild(sv('circle', {class: 'aro', r: r + 4}));
+  g.appendChild(sv('text', {class: 'rotulo', fill: tinta}));
+  const q = r * .7071;
+  if (PRIORIDADES[n.prioridad]) g.appendChild(sv('circle', {class: 'extra estado', cx: q.toFixed(1), cy: (-q).toFixed(1), r: 5.5, fill: PRIORIDADES[n.prioridad].c, stroke: FONDO, 'stroke-width': 2.5}));
+  if (FASES[n.fase] && p > 0) {          // la fase: un número chico arriba a la izquierda
+    const f = sv('g', {class: 'extra fase', transform: `translate(${(-q).toFixed(1)} ${(-q).toFixed(1)})`});
+    f.appendChild(sv('circle', {r: 8.5, fill: FONDO, stroke: mezcla(CLARO, FONDO, .45), 'stroke-width': 1.2}));
+    const t = sv('text', {y: 3.5, fill: CLARO}); t.textContent = FASES[n.fase].k; f.appendChild(t);
+    g.appendChild(f);
+  }
+  if (n.hijos.length && p > 0) {
+    const b = sv('g', {class: 'extra conteo', transform: `translate(${q.toFixed(1)} ${q.toFixed(1)})`});
+    b.appendChild(sv('circle', {r: 11, fill: FONDO, stroke: c, 'stroke-width': 1.5}));
+    const t = sv('text', {y: 3.6, fill: c}); t.textContent = '+' + n.hijos.length; b.appendChild(t);
+    g.appendChild(b);
+  }
+  n.el = g; g.__n = n;
+  rotular(n); aria(n);
+  if (p > 0) { n.rama = sv('path', {class: 'rama', fill: c}); gRamas.appendChild(n.rama); }
+  conEl.add(n);
+}
+function aria(n) {
+  const e = PRIORIDADES[n.prioridad], f = FASES[n.fase];
+  n.el.setAttribute('aria-label', n.titulo + (n.prof > 1 && n.categoria ? ', rama ' + cat(n.categoria).n : '') + (e ? ', ' + e.n.toLowerCase() : '') + (f ? ', fase ' + f.n.toLowerCase() : '') + (n.hijos.length ? `, ${n.hijos.length} adentro` : ''));
+  if (n.hijos.length && n.prof > 0) n.el.setAttribute('aria-expanded', n.abierto ? 'true' : 'false');
+  const b = n.el.querySelector('.conteo'); if (b) b.style.display = n.abierto ? 'none' : '';
+}
+function quitarEl(n) {
+  if (n.el) n.el.remove(); if (n.rama) n.rama.remove();
+  n.el = n.rama = null; n.c = null; n.modo = ''; conEl.delete(n);
+}
+function pintarNodo(n) {
+  const c = n.c; n.x = c.rho * Math.cos(c.a); n.y = c.rho * Math.sin(c.a); n.sucio = true;
+  n.el.setAttribute('transform', c.s === 1 ? `translate(${n.x.toFixed(1)} ${n.y.toFixed(1)})` : `translate(${n.x.toFixed(1)} ${n.y.toFixed(1)}) scale(${Math.max(0, c.s).toFixed(3)})`);
+}
+const GROSOR = [[11, 4.5], [6.5, 2.6], [4.4, 1.8], [3.4, 1.4]];
+function pintarRama(n) {
+  const p = n.padre, x0 = p.x, y0 = p.y, x3 = n.x, y3 = n.y, dx = x3 - x0, dy = y3 - y0, d = Math.hypot(dx, dy);
+  if (d < .5) { n.rama.setAttribute('d', ''); return; }
+  let ux, uy; const hp = Math.hypot(x0, y0);
+  if (hp < 1) { ux = dx / d; uy = dy / d; } else { ux = x0 / hp; uy = y0 / hp; }
+  const hn = Math.hypot(x3, y3) || 1, vx = x3 / hn, vy = y3 / hn, k = d * .46;
+  const g = GROSOR[Math.min(n.prof - 1, 3)], s = limitar(n.c.s, 0, 1), a = g[0] * s / 2, b = g[1] * s / 2;
+  const c1x = x0 + ux * k, c1y = y0 + uy * k, c2x = x3 - vx * k, c2y = y3 - vy * k;
+  const f = v => v.toFixed(1);
+  n.rama.setAttribute('d',
+    `M${f(x0 - uy * a)} ${f(y0 + ux * a)}C${f(c1x - uy * a * .8)} ${f(c1y + ux * a * .8)} ${f(c2x - vy * b)} ${f(c2y + vx * b)} ${f(x3 - vy * b)} ${f(y3 + vx * b)}` +
+    `L${f(x3 + vy * b)} ${f(y3 - vx * b)}C${f(c2x + vy * b)} ${f(c2y - vx * b)} ${f(c1x + uy * a * .8)} ${f(c1y - ux * a * .8)} ${f(x0 + uy * a)} ${f(y0 - ux * a)}Z`);
+}
+
+/* Recalcula posiciones y arma la transición: los que ya estaban se deslizan, los nuevos brotan
+   desde su padre (la rama crece con ellos) y los que se van vuelven a su padre y desaparecen. */
+function redistribuir() {
+  const antes = new Set(visibles);
+  distribuir();
+  const ahora = new Set(visibles), t = performance.now(), q = quieto();
+  let ref = gNodos.firstChild;
+  for (const n of visibles) {
+    antes.delete(n);
+    const h = {a: n.A, rho: n.RHO, s: 1};
+    if (!n.el) {
+      crearEl(n);
+      const p = n.padre; let de;
+      if (!p) de = {a: h.a, rho: 0, s: 1};
+      else { const o = p.modo === 'entra' && p.t0 >= t ? p.d : p.c; de = {a: o.rho < 1 ? h.a : o.a, rho: o.rho, s: 0}; n.ola = p.modo === 'entra' && p.t0 >= t ? p.ola + 1 : 0; }
+      n.d = de; n.c = {a: de.a, rho: de.rho, s: de.s}; n.h = h; n.modo = 'entra';
+      n.t0 = t + (p ? n.ola * 130 + Math.min(p.hijos.indexOf(n) * 22, 240) : 0); n.dur = q ? 0 : 600;
+      pintarNodo(n);
+    } else {
+      n.d = {a: n.c.a, rho: n.c.rho, s: n.c.s}; n.h = h; n.modo = 'mueve'; n.t0 = t; n.dur = q ? 0 : 640;
+    }
+    while (ref && !ahora.has(ref.__n)) ref = ref.nextSibling;
+    if (n.el === ref) ref = ref.nextSibling; else gNodos.insertBefore(n.el, ref);
+    animando.add(n);
+  }
+  for (const n of antes) {           // salen
+    if (!n.el) continue;
+    let p = n.padre; while (p && !ahora.has(p)) p = p.padre;
+    n.d = {a: n.c.a, rho: n.c.rho, s: n.c.s}; n.h = {a: p && p.RHO > 1 ? p.A : n.c.a, rho: p ? p.RHO : 0, s: 0};
+    n.modo = 'sale'; n.t0 = t; n.dur = q ? 0 : 380; n.el.setAttribute('tabindex', -1); n.el.setAttribute('aria-hidden', 'true');
+    animando.add(n);
+  }
+  for (const n of visibles) { if (n.el.getAttribute('aria-hidden')) { n.el.removeAttribute('aria-hidden'); n.el.setAttribute('tabindex', 0); } aria(n); }
+  marcar(); botonTodo(); pedir();
+}
+function marcar() {
+  const cam = new Set(); for (let p = activo; p; p = p.padre) cam.add(p);
+  for (const n of conEl) {
+    n.el.classList.toggle('activo', n === activo);
+    const at = !!filtro && n[filtro.t] !== filtro.v && n.prof > 0;
+    n.el.classList.toggle('atenuado', at);
+    if (n.rama) { n.rama.classList.toggle('camino', cam.has(n)); n.rama.classList.toggle('atenuado', at); }
+  }
+}
+
+/* ================= cámara ================= */
+const cam = {x: 0, y: 0, k: 1};
+const K_MIN = 0.05, K_MAX = 2.6;
+let camSucia = true, vuelo = null, inercia = null, zoomObj = null, raf = 0, lod = -1;
+function area() {
+  const W = innerWidth, H = innerHeight, m = movil();
+  let x0 = 0, y0 = m ? 122 : 96, x1 = W, y1 = H;
+  if (ficha.dataset.estado !== 'cerrada') { if (m) y1 = H - Math.round(H * .5); else x1 = W - 432; }
+  return {x0, y0, x1, y1, w: Math.max(80, x1 - x0), h: Math.max(80, y1 - y0), cx: (x0 + x1) / 2, cy: (y0 + y1) / 2};
+}
+function pintarCam() {
+  gCam.setAttribute('transform', `translate(${cam.x.toFixed(2)} ${cam.y.toFixed(2)}) scale(${cam.k.toFixed(4)})`);
+  let paso = 46 * cam.k; while (paso < 26) paso *= 2; while (paso > 52) paso /= 2;
+  lienzo.style.backgroundSize = paso.toFixed(2) + 'px ' + paso.toFixed(2) + 'px';
+  lienzo.style.backgroundPosition = cam.x.toFixed(1) + 'px ' + cam.y.toFixed(1) + 'px';
+  const l = cam.k < .11 ? 4 : cam.k < .2 ? 3 : cam.k < .36 ? 2 : cam.k < .55 ? 1 : 0;
+  if (l !== lod) { lod = l; mapa.setAttribute('class', ['lod1', 'lod2', 'lod3', 'lod4'].slice(0, l).join(' ')); }
+}
+function zoomEn(sx, sy, k) {
+  k = limitar(k, K_MIN, K_MAX);
+  const wx = (sx - cam.x) / cam.k, wy = (sy - cam.y) / cam.k;
+  cam.k = k; cam.x = sx - wx * k; cam.y = sy - wy * k; camSucia = true;
+}
+function volarA(wx, wy, k, dur = 680) {
+  k = limitar(k, K_MIN, K_MAX); inercia = zoomObj = null;
+  const ar = area();
+  if (quieto() || dur <= 0) { cam.k = k; cam.x = ar.cx - wx * k; cam.y = ar.cy - wy * k; camSucia = true; vuelo = null; pedir(); return; }
+  vuelo = {t0: performance.now(), dur, k0: cam.k, k1: k, x0: (ar.cx - cam.x) / cam.k, y0: (ar.cy - cam.y) / cam.k, x1: wx, y1: wy, ar};
+  pedir();
+}
+function caja(ns) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const n of ns) { const x = n.RHO * Math.cos(n.A), y = n.RHO * Math.sin(n.A), r = n.r + 8;
+    x0 = Math.min(x0, x - r); y0 = Math.min(y0, y - r); x1 = Math.max(x1, x + r); y1 = Math.max(y1, y + r); }
+  return {x0, y0, x1, y1, w: x1 - x0, h: y1 - y0, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2};
+}
+function encuadrar(ns, kMax = 1.05, dur) {
+  const b = caja(ns), ar = area(), m = movil() ? 14 : 36;
+  volarA(b.cx, b.cy, Math.min(kMax, (ar.w - m * 2) / b.w, (ar.h - m * 2) / b.h), dur);
+}
+function inicio(dur) {                  // el centro y su primer anillo
+  if (!kOvalo) return encuadrar(visibles, 1.05, dur);
+  const ar = area(), medio = ar.h / 2 / kOvalo;
+  volarA(0, altoOvalo + 6 <= medio ? 0 : -altoOvalo - 6 + medio, kOvalo, dur);
+}
+function enfocar(n) {
+  const ar = area(), kd = limitar(cam.k, movil() ? .8 : .85, 1.15);
+  const x = n.RHO * Math.cos(n.A), y = n.RHO * Math.sin(n.A);
+  if (n === raiz) return kOvalo ? inicio() : encuadrar([raiz, ...raiz.kv], 1.05);
+  if (n.abierto && n.kv.length) {
+    const b = caja([n, ...n.kv]), kf = Math.min((ar.w - 24) / b.w, (ar.h - 24) / b.h);
+    const piso = movil() ? .8 : .5;       // en el teléfono se prioriza que se lea; el resto se desliza
+    if (kf >= piso) return volarA(b.cx, b.cy, Math.min(kd, kf));
+    return volarA(lerp(x, b.cx, .4), lerp(y, b.cy, .4), piso);
+  }
+  volarA(x, y, kd);
+}
+
+// En el teléfono la tarjeta del título se corre mientras te movés por el mapa y vuelve al quedarte quieto.
+let tMov = 0;
+function enMovimiento() {
+  if (!tMov) barra.classList.add('moviendo'); else clearTimeout(tMov);
+  tMov = setTimeout(() => { tMov = 0; barra.classList.remove('moviendo'); }, 900);
+}
+
+/* ================= bucle único de animación ================= */
+function pedir() { if (!raf) raf = requestAnimationFrame(cuadro); }
+function cuadro(ahora) {
+  raf = 0; let sigue = false;
+  if (animando.size) {
+    for (const n of animando) {
+      let p = n.dur <= 0 ? 1 : (ahora - n.t0) / n.dur;
+      if (p < 0) { sigue = true; continue; }
+      if (p > 1) p = 1;
+      const c = n.c, d = n.d, h = n.h;
+      if (n.modo === 'entra') { const e = sale3(p); c.a = lerp(d.a, h.a, e); c.rho = lerp(d.rho, h.rho, e); c.s = p >= 1 ? 1 : rebote(p); }
+      else { const e = entraSale(p); c.a = lerp(d.a, h.a, e); c.rho = lerp(d.rho, h.rho, e); c.s = p >= 1 ? h.s : lerp(d.s, h.s, e); }
+      pintarNodo(n);
+      if (p >= 1) { animando.delete(n); if (n.modo === 'sale') { n.sucio = false; quitarEl(n); } else n.modo = ''; } else sigue = true;
+    }
+    for (const n of conEl) if (n.rama && (n.sucio || n.padre.sucio)) pintarRama(n);
+    for (const n of conEl) n.sucio = false;
+  }
+  if (vuelo) {
+    const v = vuelo, p = Math.min(1, (ahora - v.t0) / v.dur), e = entraSale(p);
+    cam.k = v.k0 * Math.pow(v.k1 / v.k0, e);
+    cam.x = v.ar.cx - lerp(v.x0, v.x1, e) * cam.k; cam.y = v.ar.cy - lerp(v.y0, v.y1, e) * cam.k;
+    camSucia = true; if (p >= 1) vuelo = null; else sigue = true;
+  }
+  if (zoomObj) {
+    const z = zoomObj, dif = z.k - cam.k;
+    if (Math.abs(dif) < cam.k * .004 || quieto()) { zoomEn(z.x, z.y, z.k); zoomObj = null; }
+    else { zoomEn(z.x, z.y, cam.k + dif * .3); sigue = true; }
+  }
+  if (inercia) {
+    const i = inercia, dt = Math.min(40, ahora - i.t); i.t = ahora;
+    cam.x += i.vx * dt; cam.y += i.vy * dt; camSucia = true;
+    const roce = Math.pow(.94, dt / 16.7); i.vx *= roce; i.vy *= roce;
+    if (Math.hypot(i.vx, i.vy) < .012) inercia = null; else sigue = true;
+  }
+  if (camSucia) { pintarCam(); camSucia = false; if (tocado) enMovimiento(); }
+  if (sigue) pedir();
+}
+
+/* ================= gestos ================= */
+const punteros = new Map();
+let gesto = null, ultimoToque = null;
+let tocado = false;
+function soltarPista() { tocado = true; $('#pista').classList.add('fuera'); }
+mapa.addEventListener('pointerdown', e => {
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  try { mapa.setPointerCapture(e.pointerId); } catch (_) {}
+  punteros.set(e.pointerId, {x: e.clientX, y: e.clientY});
+  vuelo = inercia = zoomObj = null;
+  if (punteros.size === 1) {
+    const g = e.target.closest ? e.target.closest('.nodo') : null;
+    gesto = {tipo: 'pan', x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: e.timeStamp, movido: false, nodo: g ? g.__n : null, muestras: []};
+  } else if (punteros.size === 2) empezarPellizco();
+});
+function empezarPellizco() {
+  const [a, b] = [...punteros.values()];
+  gesto = {tipo: 'pellizco', d0: Math.max(10, Math.hypot(a.x - b.x, a.y - b.y)), k0: cam.k,
+    wx: ((a.x + b.x) / 2 - cam.x) / cam.k, wy: ((a.y + b.y) / 2 - cam.y) / cam.k, movido: true};
+  soltarPista();
+}
+mapa.addEventListener('pointermove', e => {
+  const p = punteros.get(e.pointerId); if (!p || !gesto) return;
+  p.x = e.clientX; p.y = e.clientY;
+  if (gesto.tipo === 'pellizco' && punteros.size >= 2) {
+    const [a, b] = [...punteros.values()], mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    cam.k = limitar(gesto.k0 * Math.hypot(a.x - b.x, a.y - b.y) / gesto.d0, K_MIN, K_MAX);
+    cam.x = mx - gesto.wx * cam.k; cam.y = my - gesto.wy * cam.k; camSucia = true; pedir();
+  } else if (gesto.tipo === 'pan') {
+    if (!gesto.movido && Math.hypot(e.clientX - gesto.x0, e.clientY - gesto.y0) > (e.pointerType === 'mouse' ? 4 : 9)) {
+      gesto.movido = true; gesto.x = e.clientX; gesto.y = e.clientY; lienzo.classList.add('agarrando'); soltarPista();
+    }
+    if (gesto.movido) {
+      cam.x += e.clientX - gesto.x; cam.y += e.clientY - gesto.y; gesto.x = e.clientX; gesto.y = e.clientY;
+      const m = gesto.muestras; m.push({t: e.timeStamp, x: e.clientX, y: e.clientY}); if (m.length > 6) m.shift();
+      camSucia = true; pedir();
+    }
+  }
+});
+function soltar(e) {
+  if (!punteros.has(e.pointerId)) return;
+  punteros.delete(e.pointerId);
+  const g = gesto; if (!g) return;
+  if (g.tipo === 'pellizco') {
+    if (punteros.size === 1) { const [a] = [...punteros.values()]; gesto = {tipo: 'pan', x: a.x, y: a.y, x0: a.x, y0: a.y, t0: e.timeStamp, movido: true, nodo: null, muestras: []}; }
+    else if (!punteros.size) gesto = null;
+    return;
+  }
+  gesto = null; lienzo.classList.remove('agarrando');
+  if (e.type === 'pointercancel') return;
+  if (g.movido) {
+    const m = g.muestras, u = m[m.length - 1], p = m.find(s => u && u.t - s.t < 110);
+    if (u && p && u !== p && e.timeStamp - u.t < 60 && !quieto()) {
+      const dt = Math.max(8, u.t - p.t), vx = (u.x - p.x) / dt, vy = (u.y - p.y) / dt;
+      if (Math.hypot(vx, vy) > .12) { inercia = {vx, vy, t: performance.now()}; pedir(); }
+    }
+    return;
+  }
+  if (e.timeStamp - g.t0 > 700) return;
+  if (g.nodo) { ultimoToque = null; soltarPista(); activar(g.nodo); return; }
+  // toque en el fondo: doble toque acerca; uno solo cierra la ficha
+  const t = ultimoToque;
+  if (t && e.timeStamp - t.t < 320 && Math.hypot(e.clientX - t.x, e.clientY - t.y) < 34) {
+    ultimoToque = null; zoomObj = {x: e.clientX, y: e.clientY, k: limitar(cam.k * 1.8, K_MIN, K_MAX)}; pedir();
+  } else {
+    ultimoToque = {t: e.timeStamp, x: e.clientX, y: e.clientY};
+    cerrarLeyenda();
+    if (activo) setTimeout(() => { if (ultimoToque && ultimoToque.t === e.timeStamp) cerrarFicha(); }, 330);
+  }
+}
+mapa.addEventListener('pointerup', soltar);
+mapa.addEventListener('pointercancel', soltar);
+mapa.addEventListener('wheel', e => {
+  e.preventDefault(); vuelo = inercia = null;
+  let dy = e.deltaY; if (e.deltaMode === 1) dy *= 32; else if (e.deltaMode === 2) dy *= 400;
+  const base = zoomObj ? zoomObj.k : cam.k;
+  zoomObj = {x: e.clientX, y: e.clientY, k: limitar(base * Math.exp(-limitar(dy, -240, 240) * (e.ctrlKey ? .012 : .0022)), K_MIN, K_MAX)};
+  soltarPista(); pedir();
+}, {passive: false});
+// que el navegador no haga su propio zoom ni scroll de página (iOS incluido)
+for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, e => e.preventDefault(), {passive: false});
+document.addEventListener('touchmove', e => { if (e.touches.length > 1 || !e.target.closest('.ficha-cuerpo,.resultados,.leyenda')) e.preventDefault(); }, {passive: false});
+document.addEventListener('dblclick', e => e.preventDefault());
+mapa.addEventListener('contextmenu', e => e.preventDefault());
+
+/* ================= acciones ================= */
+function plegarRama(n) { for (const k of n.hijos) { k.abierto = false; plegarRama(k); } }
+function activar(n, alternar = true) {
+  if (alternar && n !== raiz && n.hijos.length) { n.abierto = !n.abierto; if (!n.abierto) plegarRama(n); }
+  activo = n; abrirFicha(n); redistribuir(); enfocar(n); ancla(n);
+  $('#voz').textContent = n.titulo + (n.hijos.length && n !== raiz ? (n.abierto ? ', desplegado' : ', plegado') : '');
+}
+function irA(n) {                       // desde buscar / migas / pastillas: abre el camino y vuela
+  for (let p = n.padre; p; p = p.padre) p.abierto = true;
+  activo = n; abrirFicha(n); redistribuir(); enfocar(n); ancla(n);
+}
+function ancla(n) {                     // la dirección queda apuntando al círculo abierto (#id), para compartirlo
+  try { history.replaceState(null, '', n && n !== raiz ? '#' + encodeURIComponent(n.id) : location.pathname + location.search); } catch (_) {}
+}
+function todoAbierto() { return todos.every(n => !n.hijos.length || n.abierto); }
+function botonTodo() {
+  const ab = todoAbierto() && todos.length > 1;
+  $('#t-todo').textContent = ab ? 'Plegar todo' : 'Desplegar todo';
+  $('#b-todo').setAttribute('aria-label', ab ? 'Plegar todo' : 'Desplegar todo');
+  $('#i-todo').innerHTML = ab
+    ? '<polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" x2="21" y1="10" y2="3"/><line x1="3" x2="10" y1="21" y2="14"/>'
+    : '<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" x2="14" y1="3" y2="10"/><line x1="3" x2="10" y1="21" y2="14"/>';
+}
+function alternarTodo() {
+  const abrir = !todoAbierto();
+  todos.forEach(n => { n.abierto = n === raiz || (abrir && n.hijos.length > 0); });
+  if (!abrir && activo && activo.prof > 1) cerrarFicha(true);
+  redistribuir(); inicio(900); soltarPista();
+}
+$('#b-todo').addEventListener('click', alternarTodo);
+$('#b-centrar').addEventListener('click', () => { inicio(); soltarPista(); });
+
+/* ================= ficha ================= */
+const RUTA = /(https?:\/\/[^\s)]+)|`([^`]+)`|((?:(?<![\w.])\/)?(?:[\w@.()\[\]~-]+\/)+[\w@.()\[\]*~-]*|(?<![\w.\/])\/[a-z][\w.-]{2,}(?![\w\/])|\b[\w-]+(?:\.[\w-]+)*\.(?:tsx?|jsx?|mjs|cjs|css|json|md|sql|ya?ml|toml|html|txt|xml|webp|svg|env(?:\.[\w-]+)?)\b|\.env(?:\.[\w-]+)?\b|\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b)/g;
+function conRutas(s) {
+  let out = '', i = 0; RUTA.lastIndex = 0; let m;
+  while ((m = RUTA.exec(s))) {
+    out += esc(s.slice(i, m.index));
+    if (m[1]) { const u = m[1].replace(/[.,;:]+$/, ''); out += `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u.replace(/^https?:\/\//, ''))}</a>` + esc(m[1].slice(u.length)); }
+    else if (m[2]) out += `<code>${esc(m[2])}</code>`;
+    else if (!/[a-z]/i.test(m[3]) || /^[\dA-Za-záéíóúñ]+\/[a-záéíóúñ]+$/.test(m[3]) || /^(next|node|vue|three|react)\.js[.,;:]*$/i.test(m[3])) out += esc(m[3]);   // fechas, «y/o», «60/min»
+    else {
+      let u = m[3].replace(/[.,;:]+$/, ''), antes = '', cola = m[3].slice(u.length);
+      if (u[0] === '(' && !u.includes(')')) { antes = '('; u = u.slice(1); }
+      if (u.endsWith(')') && !u.includes('(')) { u = u.slice(0, -1); cola = ')' + cola; }
+      out += antes + `<code>${esc(u)}</code>` + esc(cola);
+    }
+    i = m.index + m[0].length;
+  }
+  return out + esc(s.slice(i));
+}
+const FLECHA = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>';
+const GUIA = /^https?:$/.test(location.protocol) ? 'guia/' : 'guia/index.html';
+function etqPri(n) {
+  const e = PRIORIDADES[n.prioridad]; if (!n.prioridad) return '';
+  return `<span class="etq" style="background:${mezcla((e || {c: '#8d939c'}).c, PANEL, .2)};color:${(e || {c: '#c9ccd1'}).c}"><i></i>${esc(e ? e.n : n.prioridad)}</span>`;
+}
+function pintarFicha(n) {
+  const camino = []; for (let p = n; p; p = p.padre) camino.unshift(p);
+  $('#migas').innerHTML = camino.map((p, i) => (i ? FLECHA : '') +
+    `<button class="miga" data-ir="${esc(p.id)}"${p === n ? ' aria-current="page"' : ''}>${esc(p === raiz ? 'inicio' : p.titulo)}</button>`).join('');
+  if (n === raiz) return pintarPanorama();
+  const c = cat(n.categoria), f = FASES[n.fase];
+  let h = '<div class="etiquetas">';
+  if (n.categoria) h += `<span class="etq" style="background:${c.c};color:${TINTA}">${esc(c === CAT_X ? n.categoria : c.n)}</span>`;
+  h += etqPri(n);
+  if (n.fase) h += `<span class="etq prov">${f ? 'Fase ' + f.k + ' · ' + esc(f.n) : esc(n.fase)}</span>`;
+  h += `</div><h2>${esc(n.titulo)}</h2>`;
+  if (n.resumen) h += `<p class="resumen">${conRutas(n.resumen)}</p>`;
+  if (n.para_que) h += `<div class="bloque"><h3>Para qué sirve</h3><p>${conRutas(n.para_que)}</p></div>`;
+  if (n.como.length) h += `<div class="bloque"><h3>Cómo se hace</h3><ol>${n.como.map(d => `<li>${conRutas(d)}</li>`).join('')}</ol></div>`;
+  if (n.herramientas.length) h += `<div class="bloque"><h3>Herramientas · dónde se hace</h3><ul>${n.herramientas.map(d => `<li>${conRutas(d)}</li>`).join('')}</ul></div>`;
+  if (n.error) h += `<div class="clave"><h3>Error común · regla de oro</h3><p>${conRutas(n.error)}</p></div>`;
+  if (n.hijos.length) h += `<div class="bloque"><h3>Adentro · ${n.hijos.length}</h3><div class="adentro">${n.hijos.map(k =>
+    `<button class="pastilla" data-ir="${esc(k.id)}"><i style="background:${(PRIORIDADES[k.prioridad] || cat(k.categoria)).c}"></i>${esc(k.titulo)}</button>`).join('')}</div></div>`;
+  h += `<div class="bloque enlaces"><a href="${GUIA}#${esc(n.id)}">Ver en la guía de texto</a></div>`;
+  const cu = $('#ficha-cuerpo'); cu.innerHTML = h; cu.scrollTop = 0;
+}
+function pintarPanorama() {
+  const ne = {}; todos.forEach(n => { if (n.prof && n.prioridad) ne[n.prioridad] = (ne[n.prioridad] || 0) + 1; });
+  let h = `<div class="etiquetas"><span class="etq" style="background:var(--acento);color:${TINTA}">El mapa completo</span>`;
+  if (DATOS.version) h += `<span class="etq prov">v${esc(txt(DATOS.version))}</span>`;
+  if (DATOS.generado) h += `<span class="etq prov">actualizado el ${esc(txt(DATOS.generado))}</span>`;
+  h += `</div><h2>${esc(raiz.titulo)}</h2>`;
+  if (raiz.resumen) h += `<p class="resumen">${conRutas(raiz.resumen)}</p>`;
+  if (raiz.para_que) h += `<div class="bloque"><p>${conRutas(raiz.para_que)}</p></div>`;
+  h += `<div class="bloque"><h3>En números</h3><div class="etiquetas" style="margin:0"><span class="etq prov">${raiz.hijos.length} ramas</span><span class="etq prov">${todos.length - 1} nodos</span>` +
+    Object.keys(PRIORIDADES).filter(k => ne[k]).map(k => `<span class="etq" style="background:${mezcla(PRIORIDADES[k].c, PANEL, .2)};color:${PRIORIDADES[k].c}"><i></i>${ne[k]} ${esc(PRIORIDADES[k].n.toLowerCase())}</span>`).join('') + '</div></div>';
+  h += `<div class="bloque"><h3>Versiones de texto, para agentes</h3><div class="enlaces"><a href="llms-full.txt">llms-full.txt</a><a href="${GUIA}">guía</a><a href="cerebro.json">cerebro.json</a><a href="llms.txt">llms.txt</a></div></div>`;
+  h += `<div class="bloque"><h3>Rama por rama</h3><div class="panorama">${raiz.hijos.map(k =>
+    `<button class="rama-fila" data-ir="${esc(k.id)}"><i style="background:${cat(k.categoria).c}"></i><span><b>${esc(k.titulo)}</b>${k.resumen ? `<small>${esc(k.resumen)}</small>` : ''}</span><em>${k.desc}</em></button>`).join('')}</div></div>`;
+  const cu = $('#ficha-cuerpo'); cu.innerHTML = h; cu.scrollTop = 0;
+}
+function abrirFicha(n) {
+  pintarFicha(n);
+  if (ficha.dataset.estado === 'cerrada') ficha.dataset.estado = 'media';
+  ficha.setAttribute('aria-hidden', 'false'); barra.classList.add('con-ficha'); cerrarLeyenda();
+}
+function cerrarFicha(sinCamara) {
+  if (ficha.dataset.estado === 'cerrada' && !activo) return;
+  ficha.dataset.estado = 'cerrada'; ficha.setAttribute('aria-hidden', 'true'); ficha.style.transform = ''; barra.classList.remove('con-ficha');
+  if (ficha.contains(document.activeElement)) { const el = activo && activo.el; if (el) el.focus({preventScroll: true}); else document.activeElement.blur(); }
+  activo = null; marcar(); ancla(null);
+}
+ficha.addEventListener('click', e => {
+  const b = e.target.closest('[data-ir]'); if (!b) return;
+  const n = porId.get(b.dataset.ir); if (n) irA(n);
+});
+$('#ficha-x').addEventListener('click', () => cerrarFicha());
+// hoja arrastrable (teléfono): bajala para cerrarla, subila para verla entera
+(() => {
+  const cab = $('#ficha-cabeza'); let a = null;
+  cab.addEventListener('pointerdown', e => {
+    if (!movil() || e.target.closest('button,a')) return;
+    a = {y: e.clientY, base: ficha.getBoundingClientRect().top, t: e.timeStamp, ult: e.clientY, ultT: e.timeStamp, v: 0, mov: false};
+    cab.setPointerCapture(e.pointerId);
+  });
+  cab.addEventListener('pointermove', e => {
+    if (!a) return;
+    const dy = e.clientY - a.y; if (!a.mov && Math.abs(dy) < 6) return;
+    if (!a.mov) { a.mov = true; ficha.classList.add('arrastrando'); }
+    const dt = e.timeStamp - a.ultT; if (dt > 0) a.v = (e.clientY - a.ult) / dt; a.ult = e.clientY; a.ultT = e.timeStamp;
+    const alto = ficha.offsetHeight, tope = innerHeight - alto;
+    ficha.style.transform = `translateY(${Math.max(0, a.base + dy - tope)}px)`;
+  });
+  const fin = e => {
+    if (!a) return; const g = a; a = null;
+    ficha.classList.remove('arrastrando'); ficha.style.transform = '';
+    const est = ficha.dataset.estado, dy = e.clientY - g.y;
+    if (!g.mov) { if (e.type === 'pointerup') ficha.dataset.estado = est === 'media' ? 'completa' : 'media'; return; }
+    if (dy > 70 || g.v > .5) { if (est === 'completa' && dy < innerHeight * .45) ficha.dataset.estado = 'media'; else cerrarFicha(); }
+    else if (dy < -50 || g.v < -.5) ficha.dataset.estado = 'completa';
+  };
+  cab.addEventListener('pointerup', fin); cab.addEventListener('pointercancel', fin);
+})();
+
+/* ================= buscar ================= */
+const q = $('#q'), res = $('#resultados');
+let hallados = [], sel = -1;
+function buscar() {
+  const t = norm(q.value.trim());
+  if (!t) { res.classList.remove('abierto'); q.setAttribute('aria-expanded', 'false'); hallados = []; return; }
+  const pal = t.split(/\s+/);
+  hallados = todos.filter(n => pal.every(p => n.busca.includes(p)))
+    .map(n => ({n, p: (n.buscaT.startsWith(t) ? 0 : n.buscaT.includes(t) ? 1 : 2) * 10 + n.prof}))
+    .sort((a, b) => a.p - b.p).slice(0, 40).map(o => o.n);
+  sel = hallados.length ? 0 : -1;
+  res.innerHTML = hallados.length ? hallados.map((n, i) => {
+    const cam = []; for (let p = n.padre; p; p = p.padre) cam.unshift(p === raiz ? 'inicio' : p.titulo);
+    return `<button class="fila${i === sel ? ' sel' : ''}" role="option" data-i="${i}"><i style="background:${cat(n.categoria).c}"></i><span><b>${esc(n.titulo)}</b><small>${esc(cam.join(' › ') || 'el centro')}${n.resumen ? ' — ' + esc(n.resumen) : ''}</small></span></button>`;
+  }).join('') : '<div class="vacio">Sin resultados. Probar con otra palabra.</div>';
+  res.classList.add('abierto'); q.setAttribute('aria-expanded', 'true'); res.scrollTop = 0;
+}
+function elegir(i) {
+  const n = hallados[i]; if (!n) return;
+  cerrarBusqueda(true); irA(n);
+}
+function cerrarBusqueda(limpiar) {
+  res.classList.remove('abierto'); q.setAttribute('aria-expanded', 'false'); barra.classList.remove('buscando');
+  if (limpiar) q.value = ''; q.blur();
+}
+q.addEventListener('input', buscar);
+q.addEventListener('focus', () => { if (q.value.trim()) buscar(); cerrarLeyenda(); });
+q.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    if (!hallados.length) return; e.preventDefault();
+    sel = (sel + (e.key === 'ArrowDown' ? 1 : -1) + hallados.length) % hallados.length;
+    res.querySelectorAll('.fila').forEach((f, i) => { f.classList.toggle('sel', i === sel); if (i === sel) f.scrollIntoView({block: 'nearest'}); });
+  } else if (e.key === 'Enter') { e.preventDefault(); elegir(sel); }
+  else if (e.key === 'Escape') { e.stopPropagation(); cerrarBusqueda(true); }
+});
+res.addEventListener('click', e => { const f = e.target.closest('.fila'); if (f) elegir(+f.dataset.i); });
+$('#b-buscar').addEventListener('click', () => { barra.classList.add('buscando'); cerrarLeyenda(); q.focus(); });
+$('#q-x').addEventListener('click', () => { if (q.value && !movil()) { q.value = ''; buscar(); q.focus(); } else cerrarBusqueda(true); });
+document.addEventListener('pointerdown', e => { if (!e.target.closest('.herramientas') && (res.classList.contains('abierto') || barra.classList.contains('buscando'))) cerrarBusqueda(false); }, true);
+
+/* ================= leyenda ================= */
+const ley = $('#leyenda'), bLey = $('#b-leyenda');
+function cerrarLeyenda() { ley.classList.remove('abierta'); bLey.setAttribute('aria-expanded', 'false'); }
+bLey.addEventListener('click', () => { const a = ley.classList.toggle('abierta'); bLey.setAttribute('aria-expanded', a ? 'true' : 'false'); soltarPista(); });
+(() => {
+  const nc = {}, np = {}, nf = {};
+  todos.forEach(n => { if (n.prof) { nc[n.categoria] = (nc[n.categoria] || 0) + 1; if (n.prioridad) np[n.prioridad] = (np[n.prioridad] || 0) + 1; if (n.fase) nf[n.fase] = (nf[n.fase] || 0) + 1; } });
+  const claves = [...Object.keys(CATS).filter(k => nc[k]), ...Object.keys(nc).filter(k => k && !CATS[k])];
+  $('#ley-cats').innerHTML = claves.map(k => `<button class="item-ley" data-t="categoria" data-v="${esc(k)}" aria-pressed="false"><i style="background:${cat(k).c}"></i>${esc(CATS[k] ? CATS[k].n : k)}<em>${nc[k]}</em></button>`).join('');
+  $('#ley-pri').innerHTML = Object.keys(PRIORIDADES).filter(k => np[k]).map(k => `<button class="item-ley" data-t="prioridad" data-v="${k}" aria-pressed="false" title="${esc(PRIORIDADES[k].d)}"><i style="background:${PRIORIDADES[k].c}"></i>${esc(PRIORIDADES[k].n)}<em>${np[k]}</em></button>`).join('');
+  $('#ley-fases').innerHTML = Object.keys(FASES).filter(k => nf[k]).map(k => `<button class="item-ley" data-t="fase" data-v="${k}" aria-pressed="false"><b class="num">${FASES[k].k}</b>${esc(FASES[k].n)}<em>${nf[k]}</em></button>`).join('');
+  ley.addEventListener('click', e => {
+    const b = e.target.closest('[data-t]'); if (!b) return;
+    filtro = filtro && filtro.t === b.dataset.t && filtro.v === b.dataset.v ? null : {t: b.dataset.t, v: b.dataset.v};
+    ley.querySelectorAll('[data-t]').forEach(x => x.setAttribute('aria-pressed', filtro && x.dataset.t === filtro.t && x.dataset.v === filtro.v ? 'true' : 'false'));
+    marcar();
+  });
+  const partes = [`${todos.length - 1} nodos`];
+  if (DATOS.version) partes.push('v' + txt(DATOS.version));
+  if (DATOS.generado) partes.push('actualizado el ' + txt(DATOS.generado));
+  $('#ley-pie').textContent = partes.join(' · ') + '. En cada círculo: el punto de color es la prioridad, el número de arriba a la izquierda es la fase y el «+n» es lo que tiene adentro.';
+  const sub = $('#sub');
+  if (DATOS.version) sub.insertAdjacentHTML('beforeend', '<span class="ver"> · v' + esc(txt(DATOS.version)) + '</span>');
+})();
+
+/* ================= teclado ================= */
+gNodos.addEventListener('keydown', e => {
+  const g = e.target.closest('.nodo'); if (!g) return; const n = g.__n;
+  const foco = m => { if (m && m.el) { m.el.focus({preventScroll: true}); } };
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activar(n); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); if (n.hijos.length) { if (!n.abierto) activar(n); foco(n.hijos[0]); } }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); foco(n.padre); }
+  else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault(); const h = n.padre ? n.padre.hijos : [n], i = h.indexOf(n);
+    foco(h[(i + (e.key === 'ArrowDown' ? 1 : -1) + h.length) % h.length]);
+  }
+});
+gNodos.addEventListener('click', e => { if (e.detail === 0) { const g = e.target.closest('.nodo'); if (g) activar(g.__n); } }); // lectores de pantalla
+gNodos.addEventListener('focusin', e => {
+  const g = e.target.closest('.nodo'); if (!g || !g.matches(':focus-visible')) return;
+  const n = g.__n, ar = area(), x = n.RHO * Math.cos(n.A) * cam.k + cam.x, y = n.RHO * Math.sin(n.A) * cam.k + cam.y, m = n.r * cam.k + 12;
+  if (x - m < ar.x0 || x + m > ar.x1 || y - m < ar.y0 || y + m > ar.y1 || cam.k < .5)
+    volarA(n.RHO * Math.cos(n.A), n.RHO * Math.sin(n.A), Math.max(cam.k, .8), 420);
+});
+document.addEventListener('keydown', e => {
+  const enCampo = /^(INPUT|TEXTAREA)$/.test(e.target.tagName);
+  if (e.key === 'Escape') {
+    if (res.classList.contains('abierto') || barra.classList.contains('buscando')) cerrarBusqueda(true);
+    else if (ley.classList.contains('abierta')) cerrarLeyenda();
+    else cerrarFicha();
+  } else if (!enCampo && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    const ar = area();
+    if (e.key === '/') { e.preventDefault(); barra.classList.add('buscando'); q.focus(); }
+    else if (e.key === '+' || e.key === '=') { zoomObj = {x: ar.cx, y: ar.cy, k: limitar(cam.k * 1.35, K_MIN, K_MAX)}; pedir(); }
+    else if (e.key === '-') { zoomObj = {x: ar.cx, y: ar.cy, k: limitar(cam.k / 1.35, K_MIN, K_MAX)}; pedir(); }
+    else if (e.key === '0') inicio();
+  }
+});
+
+/* ================= arranque ================= */
+redistribuir();
+for (const n of animando) { n.t0 = performance.now() + (n === raiz ? 0 : 150 + raiz.hijos.indexOf(n) * 35); }
+inicio(0);
+pintarCam();
+setTimeout(soltarPista, 9000);
+function deAncla() { let id = ''; try { id = decodeURIComponent(location.hash.slice(1)); } catch (_) {} const n = id && porId.get(id); if (n && n !== activo) { soltarPista(); irA(n); } }
+addEventListener('hashchange', deAncla);
+if (location.hash.length > 1) setTimeout(deAncla, 400);
+let anchoPrevio = innerWidth;
+addEventListener('resize', () => {
+  if (innerWidth !== anchoPrevio && visibles.every(n => n.prof < 2)) { anchoPrevio = innerWidth; redistribuir(); inicio(0); }
+  camSucia = true; pedir();
+});
+if (document.fonts && document.fonts.ready) {
+  const reajustar = () => {
+    cacheAncho = new Map(); for (const n of todos) n.rot = null; for (const n of conEl) rotular(n);
+    if (!tocado && visibles.every(n => n.prof < 2)) { redistribuir(); inicio(0); }
+  };
+  document.fonts.ready.then(reajustar);
+  document.fonts.addEventListener && document.fonts.addEventListener('loadingdone', reajustar);
+}
+
+// para pruebas y para curiosear desde la consola
+window.cerebro = {
+  kOvalo: () => kOvalo,
+  raiz, todos, porId, cam, activar, irA, alternarTodo, CATS, PRIORIDADES, FASES, encuadrar: () => encuadrar(visibles, 1.05, 0),
+  visibles: () => visibles.map(n => ({id: n.id, prof: n.prof, r: n.r, x: n.RHO * Math.cos(n.A), y: n.RHO * Math.sin(n.A)})),
+  quieto: () => !raf && !animando.size, escala: () => escala
+};
+})();
+</script>
+</body>
+</html>

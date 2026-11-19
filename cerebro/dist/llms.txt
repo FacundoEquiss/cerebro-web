@@ -1,0 +1,48 @@
+# Cerebro Web
+
+> Mapa de todo lo necesario para construir, lanzar y hacer crecer la web de un negocio, pensado para agentes de IA y personas.
+
+Es una guía genérica y reutilizable: 18 ramas y 316 nodos, cada uno con qué es, para qué sirve, cómo se hace, herramientas, error común, prioridad y fase. No contiene datos de ningún negocio concreto.
+
+Instrucciones para agentes:
+
+- Leer primero la rama «Cómo usar este cerebro» completa.
+- Seguir el orden de fases: 1 antes de construir, 2 construcción, 3 lanzamiento, 4 crecimiento. Dentro de cada fase, hacer primero lo «esencial».
+- Adaptar cada recomendación al negocio concreto (rubro, país, tamaño, presupuesto). Descartar las ramas que no aplican.
+- Deducir todo lo posible del repositorio, la web y las cuentas existentes; preguntar al dueño sólo lo que no se pueda deducir, en una sola tanda.
+- Nunca inventar datos del negocio: precios, plazos, reseñas, direcciones, cuotas, stock ni resultados. Lo que falta se marca como pendiente.
+- Verificar antes de dar algo por hecho: pruebas, capturas en móvil y escritorio, y el flujo real (por ejemplo, una compra de punta a punta).
+- Pedir aprobación antes de publicar, gastar dinero, enviar mensajes o modificar datos de producción.
+- Confirmar contra la documentación oficial vigente todo lo que dependa de un panel o una API: las plataformas cambian.
+
+## Contenido completo
+
+- [Todo el cerebro en Markdown](https://cerebro-web-negocios.vercel.app/llms-full.txt): el contenido íntegro en un solo archivo; empieza por las instrucciones para el agente
+- [Guía legible](https://cerebro-web-negocios.vercel.app/guia): el mismo contenido como documento HTML, con índice y un ancla por nodo
+- [Datos en JSON](https://cerebro-web-negocios.vercel.app/cerebro.json): el árbol completo con todos los campos
+- [Mapa interactivo](https://cerebro-web-negocios.vercel.app/): mapa mental navegable; el HTML incluye todo el texto sin necesidad de JavaScript
+
+## Ramas
+
+- [Cómo usar este cerebro](https://cerebro-web-negocios.vercel.app/guia#uso): Instrucciones para el agente (o la persona) que va a construir una web de negocio con este mapa.
+- [Estrategia y marca](https://cerebro-web-negocios.vercel.app/guia#est): Qué se vende, a quién, con qué números y con qué identidad, antes de escribir una línea de código.
+- [Arquitectura y datos](https://cerebro-web-negocios.vercel.app/guia#arq): El stack, el backend, la lógica de servidor y la relación con el sistema de gestión.
+- [Tienda y catálogo](https://cerebro-web-negocios.vercel.app/guia#tie): Portada, catálogo, ficha de producto, carrito y, si aplica, configurador de producto.
+- [Checkout, pagos y envíos](https://cerebro-web-negocios.vercel.app/guia#chk): El tramo donde el interés se convierte en dinero: datos, pedido, pago, envío y confirmación.
+- [Diseño y UX](https://cerebro-web-negocios.vercel.app/guia#dis): Interfaz pensada primero para el móvil, accesible, coherente y con animaciones que no frenan.
+- [Multimedia](https://cerebro-web-negocios.vercel.app/guia#mm): Fotos, video e imágenes preparadas en formato, tamaño, peso y texto alternativo.
+- [SEO técnico](https://cerebro-web-negocios.vercel.app/guia#seo): Lo que hace que buscadores y asistentes puedan rastrear, entender e indexar cada página.
+- [Google, Bing y fichas](https://cerebro-web-negocios.vercel.app/guia#bus): Herramientas de buscadores, perfil de negocio, reseñas y catálogos de producto.
+- [Contenido e IA](https://cerebro-web-negocios.vercel.app/guia#ia): Cómo aparecer en asistentes de IA y qué contenido crear para cada búsqueda.
+- [Performance](https://cerebro-web-negocios.vercel.app/guia#perf): Velocidad de carga y de respuesta, medida con Core Web Vitals.
+- [Medición y atribución](https://cerebro-web-negocios.vercel.app/guia#med): Saber qué pasa en la web, de dónde viene cada venta y qué anuncio la trajo.
+- [Publicidad paga](https://cerebro-web-negocios.vercel.app/guia#pau): Anuncios en Meta y Google por etapas, con presupuesto calculado y reglas para cortar o escalar.
+- [Redes y contenido](https://cerebro-web-negocios.vercel.app/guia#red): Presencia orgánica: rutina de publicación, formatos, calendario y cómo llevar gente a la web.
+- [Seguridad y legal](https://cerebro-web-negocios.vercel.app/guia#seg): Protección de la aplicación y de los datos, y cumplimiento legal y de privacidad.
+- [Calidad y operación](https://cerebro-web-negocios.vercel.app/guia#cal): Pruebas, integración continua, versionado, verificación visual y observabilidad.
+- [Trabajo con agentes IA](https://cerebro-web-negocios.vercel.app/guia#age): Cómo dirigir agentes de IA: instrucciones, decisiones cerradas, aprobaciones y verificación.
+- [Lanzamiento y 90 días](https://cerebro-web-negocios.vercel.app/guia#lan): Checklist para salir a producción y plan de los primeros tres meses.
+
+## Optional
+
+- [Mapa del sitio](https://cerebro-web-negocios.vercel.app/sitemap.xml): las direcciones publicadas

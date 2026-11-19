@@ -1,0 +1,6 @@
+# Todo el contenido es público. Los buscadores y los rastreadores de asistentes de IA
+# (de búsqueda y de entrenamiento) son bienvenidos: la regla general los cubre a todos.
+User-agent: *
+Allow: /
+
+Sitemap: https://cerebro-web-negocios.vercel.app/sitemap.xml
