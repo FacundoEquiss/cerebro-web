@@ -1,0 +1,31 @@
+.header {
+  position: sticky; top: 0; z-index: 40;
+  background: color-mix(in srgb, var(--background) 88%, transparent);
+  backdrop-filter: saturate(1.4) blur(12px);
+  box-shadow: 0 1px 0 var(--line);
+}
+.bar { display: flex; align-items: center; gap: 24px; height: var(--header-h); }
+.brand {
+  font-family: var(--font-display), Georgia, serif; font-size: 1.45rem; font-weight: 600;
+  letter-spacing: -0.02em; text-decoration: none; margin-right: auto;
+}
+.nav { display: none; }
+.nav ul { display: flex; gap: 26px; }
+.nav a { text-decoration: none; font-weight: 500; font-size: 0.96rem; padding-block: 12px; }
+.nav a:hover { color: var(--action); }
+.actions { display: flex; align-items: center; gap: 2px; }
+.icon {
+  position: relative; display: grid; place-items: center;
+  width: var(--tap); height: var(--tap); border-radius: var(--r-pill); color: var(--ink);
+}
+.icon:hover { background: var(--surface-2); }
+.icon svg { width: 22px; height: 22px; }
+.count {
+  position: absolute; top: 4px; right: 2px; min-width: 19px; height: 19px; padding: 0 5px;
+  border-radius: var(--r-pill); background: var(--action); color: var(--on-action);
+  font-size: 0.7rem; font-weight: 700; display: grid; place-items: center;
+}
+@media (min-width: 768px) {
+  .brand { margin-right: 12px; font-size: 1.6rem; }
+  .nav { display: block; margin-right: auto; }
+}

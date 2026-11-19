@@ -1,0 +1,10 @@
+.page { max-width: 940px; }
+.intro { margin-block: 12px 28px; max-width: 56ch; }
+.cards { display: grid; gap: 14px; }
+.cards li { padding: 22px; display: grid; gap: 8px; justify-items: start; align-content: start; }
+.cards svg { width: 24px; height: 24px; color: var(--action); }
+.cards h2 { font-family: var(--font-body), system-ui, sans-serif; font-size: 1.05rem; font-weight: 600; letter-spacing: 0; }
+.cards .btn { margin-top: 6px; }
+.social { margin-top: 26px; display: flex; gap: 12px; flex-wrap: wrap; }
+.social a { text-transform: capitalize; }
+@media (min-width: 768px) { .cards { grid-template-columns: repeat(3, 1fr); gap: 20px; } }

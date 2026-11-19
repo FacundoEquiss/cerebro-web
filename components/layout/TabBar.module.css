@@ -1,0 +1,19 @@
+.bar {
+  position: fixed; inset: auto 0 0 0; z-index: 45;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  height: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--surface); box-shadow: 0 -1px 0 var(--line), 0 -6px 20px rgb(0 0 0 / 0.05);
+}
+.item {
+  position: relative; display: grid; place-items: center; align-content: center; gap: 3px;
+  text-decoration: none; color: var(--muted); font-size: 0.7rem; font-weight: 600;
+}
+.item svg { width: 22px; height: 22px; }
+.item[aria-current="page"] { color: var(--action); }
+.count {
+  position: absolute; top: 7px; left: calc(50% + 6px); min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: var(--r-pill); background: var(--action); color: var(--on-action);
+  font-size: 0.68rem; font-weight: 700; display: grid; place-items: center;
+}
+@media (min-width: 768px) { .bar { display: none; } }

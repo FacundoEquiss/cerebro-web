@@ -1,0 +1,62 @@
+.layout { display: grid; gap: 24px; }
+.gallery { display: grid; gap: 10px; min-width: 0; }
+.main { border-radius: var(--r-lg); overflow: hidden; background: var(--surface-2); aspect-ratio: 4 / 5; }
+.main img { width: 100%; height: 100%; object-fit: cover; }
+.thumbs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity; padding: 2px; }
+.thumbs::-webkit-scrollbar { display: none; }
+.thumbs li { flex: none; scroll-snap-align: start; }
+.thumbs button {
+  display: block; width: 64px; aspect-ratio: 4 / 5; padding: 0; border: 0; border-radius: var(--r-sm);
+  overflow: hidden; cursor: pointer; background: var(--surface-2); opacity: 0.7; transition: opacity 0.15s ease;
+}
+.thumbs button:hover { opacity: 1; }
+.thumbs button[aria-current] { opacity: 1; box-shadow: 0 0 0 2px var(--ink); }
+.thumbs img { width: 100%; height: 100%; object-fit: cover; }
+
+.buy { display: grid; gap: 14px; align-content: start; }
+.name { font-size: clamp(1.7rem, 4.4vw, 2.4rem); }
+.price { font-size: 1.5rem; }
+.options { display: grid; gap: 16px; margin-top: 4px; }
+.option { border: 0; margin: 0; padding: 0; min-width: 0; }
+.option legend { font-weight: 600; font-size: 0.93rem; margin-bottom: 8px; padding: 0; }
+.chosen { font-weight: 400; color: var(--muted); }
+.values { display: flex; flex-wrap: wrap; gap: 8px; }
+.value {
+  display: inline-flex; align-items: center; gap: 8px; min-width: var(--tap); min-height: var(--tap); padding: 0 16px;
+  justify-content: center; border-radius: var(--r-md); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line);
+  font-weight: 500; font-size: 0.95rem; cursor: pointer; user-select: none; transition: box-shadow 0.12s ease;
+}
+.value[data-swatch] { padding-left: 10px; }
+.value:hover { box-shadow: inset 0 0 0 1px var(--muted); }
+.value[data-active] { box-shadow: inset 0 0 0 2px var(--ink); font-weight: 600; }
+.value[data-off] { color: var(--muted); text-decoration: line-through; background: var(--surface-2); }
+.value:has(input:focus-visible) { outline: 2px solid var(--action); outline-offset: 2px; }
+.swatch { width: 22px; height: 22px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.14); }
+
+.stock { display: flex; align-items: center; gap: 9px; font-size: 0.93rem; color: var(--muted); }
+.dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: #2f8f5b; }
+.stock[data-state="made_to_order"] .dot { background: #c98a1b; }
+.stock[data-state="out_of_stock"] .dot { background: var(--muted); }
+
+.actions { display: flex; gap: 10px; margin-top: 4px; }
+.quantity {
+  display: inline-flex; align-items: center; height: 54px; border-radius: var(--r-pill);
+  background: var(--surface); box-shadow: inset 0 0 0 1px var(--line);
+}
+.quantity button {
+  width: 46px; height: 100%; display: grid; place-items: center; background: none; border: 0; cursor: pointer; border-radius: var(--r-pill);
+}
+.quantity button:disabled { opacity: 0.35; cursor: not-allowed; }
+.quantity output { min-width: 26px; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
+.add { flex: 1; }
+.feedback { min-height: 26px; }
+.added { display: flex; align-items: center; gap: 8px; font-weight: 600; color: #23764a; }
+.added a { margin-left: 6px; }
+
+@media (min-width: 768px) {
+  .layout { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 56px; align-items: start; }
+  .gallery { grid-template-columns: 76px 1fr; position: sticky; top: calc(var(--header-h) + 20px); }
+  .thumbs { flex-direction: column; order: -1; overflow: visible; }
+  .thumbs button { width: 72px; }
+  .buy { gap: 18px; padding-top: 6px; }
+}

@@ -1,0 +1,27 @@
+.layout { display: grid; gap: 24px; align-items: start; }
+.lines { display: grid; gap: 12px; }
+.line { display: grid; grid-template-columns: 84px 1fr auto; gap: 14px; background: var(--surface); border-radius: var(--r-lg); padding: 12px; box-shadow: var(--shadow-sm); }
+.gone { grid-template-columns: 1fr; }
+.thumb { display: block; border-radius: var(--r-md); overflow: hidden; background: var(--surface-2); aspect-ratio: 4 / 5; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; }
+.info { display: grid; gap: 2px; align-content: start; font-size: 0.92rem; min-width: 0; }
+.name { font-weight: 600; font-size: 1rem; text-decoration: none; }
+.name:hover { text-decoration: underline; }
+.row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.quantity { display: inline-flex; align-items: center; height: 40px; border-radius: var(--r-pill); box-shadow: inset 0 0 0 1px var(--line); }
+.quantity button { width: 40px; height: 100%; display: grid; place-items: center; background: none; border: 0; cursor: pointer; border-radius: var(--r-pill); }
+.quantity button:disabled { opacity: 0.35; cursor: not-allowed; }
+.quantity output { min-width: 22px; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
+.remove { width: 40px; height: 40px; display: grid; place-items: center; background: none; border: 0; border-radius: var(--r-pill); color: var(--muted); cursor: pointer; }
+.remove:hover { background: var(--surface-2); color: var(--ink); }
+.lineTotal { white-space: nowrap; }
+.summary { padding: 22px; display: grid; gap: 12px; }
+.summary dl { margin: 0; display: grid; gap: 10px; }
+.summary dl div { display: flex; justify-content: space-between; gap: 16px; }
+.summary dd { margin: 0; text-align: right; }
+.note { font-size: 0.84rem; text-align: center; }
+@media (min-width: 768px) {
+  .layout { grid-template-columns: 1fr 360px; gap: 40px; }
+  .line { grid-template-columns: 96px 1fr auto; padding: 16px; gap: 18px; }
+  .summary { position: sticky; top: calc(var(--header-h) + 20px); }
+}

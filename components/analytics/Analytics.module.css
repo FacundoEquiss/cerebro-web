@@ -1,0 +1,13 @@
+.banner {
+  position: fixed; z-index: 60; left: 12px; right: 12px;
+  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 12px);
+  display: grid; gap: 14px; padding: 18px;
+  background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-md);
+}
+.title { font-weight: 700; margin-bottom: 4px; }
+.text { font-size: 0.9rem; color: var(--muted); }
+.actions { display: flex; gap: 10px; }
+.actions > * { flex: 1; }
+@media (min-width: 768px) {
+  .banner { left: auto; right: 24px; bottom: 24px; max-width: 440px; }
+}

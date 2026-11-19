@@ -1,0 +1,10 @@
+.footer { background: var(--surface); margin-top: 40px; padding-block: 44px 28px; font-size: 0.94rem; }
+.grid { display: grid; gap: 30px; }
+.brand { font-family: var(--font-display), Georgia, serif; font-size: 1.4rem; font-weight: 600; margin-bottom: 6px; }
+.title { font-family: var(--font-body), system-ui, sans-serif; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.footer ul { display: grid; gap: 2px; }
+.footer li a, .footer li button { display: inline-block; padding-block: 7px; text-decoration: none; }
+.footer li a:hover, .footer li button:hover { text-decoration: underline; }
+.footer li button { background: none; border: 0; padding-inline: 0; cursor: pointer; text-align: left; }
+.bottom { margin-top: 34px; padding-top: 20px; box-shadow: 0 -1px 0 var(--line); display: flex; flex-wrap: wrap; gap: 6px 24px; justify-content: space-between; color: var(--muted); font-size: 0.85rem; }
+@media (min-width: 768px) { .grid { grid-template-columns: 1.4fr 1fr 1fr 1.2fr; gap: 40px; } }

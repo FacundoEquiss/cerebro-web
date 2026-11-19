@@ -1,0 +1,36 @@
+.layout { display: grid; gap: 18px; align-items: start; }
+.steps { display: grid; gap: 18px; }
+.block { padding: 20px; display: grid; gap: 14px; }
+.block h2, .summary h2 { font-size: 1.25rem; }
+.two { display: grid; gap: 14px; }
+.choices { display: grid; gap: 8px; }
+.choice {
+  display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 14px;
+  border-radius: var(--r-md); box-shadow: inset 0 0 0 1px var(--line); cursor: pointer; min-height: var(--tap);
+}
+.choice[data-active] { box-shadow: inset 0 0 0 2px var(--action); background: var(--action-soft); }
+.choice input { width: 18px; height: 18px; accent-color: var(--action); margin: 0; }
+.choice > span:nth-child(2) { display: grid; gap: 1px; font-size: 0.9rem; }
+.choice strong { font-size: 0.98rem; }
+.hint, .small { font-size: 0.84rem; }
+.summary { padding: 20px; display: grid; gap: 14px; }
+.items { display: grid; gap: 12px; }
+.items li { display: grid; grid-template-columns: 52px 1fr auto; gap: 12px; align-items: center; font-size: 0.9rem; }
+.items img { border-radius: var(--r-sm); background: var(--surface-2); object-fit: cover; aspect-ratio: 4 / 5; }
+.items li > span:nth-child(2) { display: grid; }
+.totals { margin: 0; display: grid; gap: 8px; padding-top: 14px; box-shadow: 0 -1px 0 var(--line); }
+.totals div { display: flex; justify-content: space-between; gap: 16px; }
+.totals dd { margin: 0; font-variant-numeric: tabular-nums; }
+.total { font-size: 1.15rem; font-weight: 700; padding-top: 6px; }
+/* Phone: the confirm button stays within reach of the thumb (the tab bar is hidden here). */
+.confirm {
+  position: sticky; bottom: 0; z-index: 30; margin-inline: -20px; padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: var(--surface); box-shadow: 0 -1px 0 var(--line);
+}
+@media (min-width: 768px) {
+  .layout { grid-template-columns: 1fr 400px; gap: 36px; }
+  .block, .summary { padding: 28px; }
+  .two { grid-template-columns: 1fr 1fr; }
+  .summary { position: sticky; top: calc(var(--header-h) + 20px); }
+  .confirm { position: static; margin: 0; padding: 0; box-shadow: none; }
+}
