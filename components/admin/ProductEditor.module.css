@@ -1,0 +1,33 @@
+.form { display: grid; gap: 16px; max-width: 900px; }
+.back { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); text-decoration: none; font-weight: 600; font-size: 0.88rem; min-height: 36px; }
+.back:hover { color: var(--ink); }
+.block { display: grid; gap: 14px; }
+.block h2 { font-family: var(--font-body), system-ui, sans-serif; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.three { display: grid; gap: 14px; }
+.checks { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+.checks label { display: inline-flex; align-items: center; gap: 9px; min-height: 40px; cursor: pointer; }
+.checks input { width: 18px; height: 18px; accent-color: var(--action); }
+.photos { display: grid; gap: 12px; }
+.photos li { display: grid; grid-template-columns: 72px 1fr auto; gap: 12px; align-items: start; }
+.photos img { width: 72px; height: 90px; object-fit: cover; border-radius: var(--r-sm); background: var(--surface-2); }
+.photoFields { display: grid; gap: 10px; min-width: 0; }
+.upload { justify-self: start; cursor: pointer; position: relative; }
+.option { display: grid; grid-template-columns: 1fr auto; gap: 10px 12px; align-items: end; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.option > :nth-child(2) { grid-column: 1; }
+.option .remove { grid-row: 1; grid-column: 2; }
+.remove { width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: var(--r-pill); background: none; color: var(--muted); cursor: pointer; }
+.remove:hover { background: var(--surface-2); color: var(--ink); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; }
+.small { width: 120px; max-width: 100%; height: 40px; padding: 0 10px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); font-size: 16px; font-variant-numeric: tabular-nums; }
+.footer {
+  position: sticky; bottom: calc(57px + env(safe-area-inset-bottom, 0px)); z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-md); padding: 12px 16px;
+}
+.saved { color: #23764a; font-weight: 600; }
+@media (min-width: 768px) {
+  .three { grid-template-columns: 1fr 1fr 1fr; }
+  .option { grid-template-columns: 220px 1fr auto; }
+  .option > :nth-child(2) { grid-column: 2; }
+  .option .remove { grid-column: 3; }
+  .footer { bottom: 16px; }
+}

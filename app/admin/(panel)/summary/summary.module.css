@@ -1,0 +1,26 @@
+.periods { display: grid; gap: 12px; }
+.period { display: grid; gap: 6px; }
+.period h2, .cardTitle { font-family: var(--font-body), system-ui, sans-serif; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.cardTitle { margin-bottom: 14px; }
+.big { font-size: 1.9rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.period dl { margin: 6px 0 0; display: grid; gap: 4px; font-size: 0.88rem; }
+.period dl div { display: flex; justify-content: space-between; gap: 12px; }
+.period dt { color: var(--muted); }
+.period dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.chart { margin: 0; display: grid; gap: 10px; }
+.chart svg { width: 100%; height: auto; display: block; }
+.bar { fill: var(--action); }
+.bar:hover { fill: var(--highlight); }
+.axis { stroke: var(--line); stroke-width: 1; }
+.tick { font-size: 11px; fill: var(--muted); }
+.top { display: grid; gap: 12px; }
+.top li { display: grid; grid-template-columns: 1fr; gap: 4px; font-size: 0.9rem; }
+.topName { font-weight: 600; }
+.topBar { height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.topBar span { display: block; height: 100%; border-radius: 4px; background: var(--action); }
+.topValue { color: var(--muted); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+@media (min-width: 768px) {
+  .periods { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .top li { grid-template-columns: 220px 1fr 190px; align-items: center; gap: 14px; }
+  .topValue { text-align: right; }
+}

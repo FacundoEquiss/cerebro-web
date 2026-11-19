@@ -1,0 +1,43 @@
+// POST /api/admin/orders/<id> — every change to an order: move it, add a note, set the tracking.
+
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { requireWriter } from "@/lib/admin/auth";
+import { moveOrder } from "@/lib/admin/orders";
+import { data } from "@/lib/data";
+import { AdminError, ReadOnlyError } from "@/lib/data/types";
+
+const schema = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("move"), to: z.enum(["new", "paid", "preparing", "shipped", "delivered", "cancelled"]), reason: z.string().trim().max(300).optional() }),
+  z.object({ action: z.literal("note"), text: z.string().trim().min(1).max(1000) }),
+  z.object({ action: z.literal("tracking"), tracking: z.string().trim().max(200) }),
+]);
+
+const STATUS: Record<AdminError["code"], number> = { not_found: 404, conflict: 409, invalid_transition: 422, slug_taken: 409, category: 422, invalid: 400 };
+
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const guard = await requireWriter(request);
+  if (guard.response) return guard.response;
+  const { id } = await params;
+  const parsed = schema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: "invalid" }, { status: 400 });
+  const body = parsed.data;
+  const actor = guard.session.email;
+
+  try {
+    if (body.action === "move" && body.to === "cancelled" && !body.reason) {
+      return NextResponse.json({ error: "reason_required" }, { status: 400 });
+    }
+    const adapter = await data();
+    const order =
+      body.action === "move" ? await moveOrder(id, body.to, actor, body.reason)
+      : body.action === "note" ? await adapter.addOrderNote(id, body.text, actor)
+      : await adapter.setOrderTracking(id, body.tracking, actor);
+    return NextResponse.json({ order });
+  } catch (e) {
+    if (e instanceof AdminError) return NextResponse.json({ error: e.code }, { status: STATUS[e.code] });
+    if (e instanceof ReadOnlyError) return NextResponse.json({ error: "read_only" }, { status: 403 });
+    console.error("[admin-order]", e instanceof Error ? e.message : e);
+    return NextResponse.json({ error: "generic" }, { status: 500 });
+  }
+}

@@ -1,0 +1,64 @@
+/* The admin panel: same tokens as the store, denser. */
+.admin { --admin-pad: 16px; min-height: 100dvh; background: var(--background); font-size: 15px; }
+.admin h1 { font-size: 1.5rem; }
+.admin-shell { display: grid; min-height: 100dvh; grid-template-rows: auto 1fr; }
+.admin-top {
+  position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 12px; height: 56px; padding-inline: var(--admin-pad);
+  background: var(--surface); box-shadow: 0 1px 0 var(--line);
+}
+.admin-brand { font-family: var(--font-display), Georgia, serif; font-size: 1.2rem; font-weight: 600; text-decoration: none; margin-right: auto; display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.admin-brand small { font-family: var(--font-body), system-ui, sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.admin-user { display: none; color: var(--muted); font-size: 0.84rem; }
+.admin-top a.admin-link, .admin-top button {
+  display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px; border: 0; border-radius: var(--r-pill);
+  background: none; font-size: 0.86rem; font-weight: 600; text-decoration: none; cursor: pointer; color: var(--ink);
+}
+.admin-top a.admin-link:hover, .admin-top button:hover { background: var(--surface-2); }
+.admin-main { padding: 18px var(--admin-pad) calc(96px + env(safe-area-inset-bottom, 0px)); min-width: 0; display: grid; gap: 16px; align-content: start; }
+.admin-nav {
+  position: fixed; inset: auto 0 0 0; z-index: 50; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  background: var(--surface); box-shadow: 0 -1px 0 var(--line); padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.admin-nav a {
+  display: grid; justify-items: center; gap: 2px; padding: 9px 2px 8px; text-decoration: none; color: var(--muted);
+  font-size: 0.68rem; font-weight: 600; min-height: 56px; align-content: center;
+}
+.admin-nav a svg { width: 21px; height: 21px; }
+.admin-nav a[aria-current="page"] { color: var(--action); }
+.admin-banner { background: var(--highlight-soft); border-radius: var(--r-md); padding: 10px 14px; font-size: 0.88rem; font-weight: 500; }
+.admin-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.admin-head h1 { margin-right: auto; }
+.admin-card { background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); padding: 18px; }
+.admin-note { color: var(--muted); font-size: 0.86rem; }
+.admin .btn { min-height: 42px; font-size: 0.92rem; padding-inline: 18px; }
+
+/* Tables that turn into stacked cards on a phone. */
+.admin-table { width: 100%; border-collapse: collapse; }
+.admin-table th { text-align: left; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 10px 12px; }
+.admin-table td { padding: 12px; border-top: 1px solid var(--line); vertical-align: middle; }
+.admin-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (max-width: 767.98px) {
+  .admin-table thead { display: none; }
+  .admin-table tr { display: grid; gap: 4px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .admin-table tr:first-child { border-top: 0; }
+  .admin-table td { padding: 0; border: 0; }
+  .admin-table td[data-label]::before { content: attr(data-label) ": "; color: var(--muted); font-size: 0.82rem; }
+  .admin-table .num { text-align: left; }
+}
+
+@media (min-width: 768px) {
+  .admin { --admin-pad: 28px; }
+  .admin-shell { grid-template-columns: 216px 1fr; grid-template-rows: auto 1fr; }
+  .admin-top { grid-column: 1 / -1; height: 60px; }
+  .admin-user { display: inline; }
+  .admin-nav { position: sticky; top: 60px; inset: auto; height: calc(100dvh - 60px); display: flex; flex-direction: column; gap: 2px; padding: 16px 12px; box-shadow: 1px 0 0 var(--line); align-self: start; }
+  .admin-nav a { display: flex; flex-direction: row; justify-items: start; gap: 10px; padding: 0 12px; min-height: 42px; border-radius: var(--r-md); font-size: 0.92rem; align-items: center; }
+  .admin-nav a:hover { background: var(--surface-2); color: var(--ink); }
+  .admin-nav a[aria-current="page"] { background: var(--action-soft); }
+  .admin-main { padding: 24px var(--admin-pad) 48px; }
+}
+
+@media print {
+  .admin-top, .admin-nav, .no-print { display: none !important; }
+  .admin, body { background: #fff !important; }
+}

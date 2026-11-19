@@ -1,0 +1,12 @@
+.page { min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; }
+.card { width: min(400px, 100%); background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-md); padding: 30px 26px; display: grid; gap: 16px; }
+.card h1 { font-size: 1.5rem; }
+.brand { font-family: var(--font-display), Georgia, serif; font-size: 1.15rem; font-weight: 600; color: var(--muted); }
+.demo { background: var(--action-soft); border-radius: var(--r-md); padding: 14px 16px; display: grid; gap: 8px; font-size: 0.9rem; }
+.demoTitle { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--action); }
+.demo dl { margin: 0; display: grid; gap: 4px; }
+.demo dl div { display: flex; justify-content: space-between; gap: 12px; }
+.demo dd { margin: 0; }
+.demo code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9rem; background: var(--surface); padding: 2px 8px; border-radius: 6px; }
+.hint { color: var(--muted); font-size: 0.88rem; }
+.back { color: var(--muted); font-size: 0.88rem; text-align: center; }
