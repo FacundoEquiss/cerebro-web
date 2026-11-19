@@ -1,0 +1,33 @@
+name: Proposal
+description: Suggest an improvement, a new adapter or a new module.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: Check ROADMAP.md first — it may already be planned.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does it solve?
+      description: Describe the situation of the shop owner or of the agent building the site.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What it would do. If it is an adapter, which interface it implements.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - label: It stays generic (no brand, no country-specific rule hard-coded).
+        - label: It does not tie the project to one hosting platform.
+        - label: I can work on it.

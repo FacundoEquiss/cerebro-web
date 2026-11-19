@@ -1,0 +1,59 @@
+# Cerebro Web
+
+> Open-source (MIT) Next.js project: a working online store, an admin panel that receives orders on a kanban board, and "the brain" — a guide for AI agents on how to build and grow a business website. One repository, generic, no platform lock-in. The owner of the business does not program: an agent adapts this template to their business and verifies its own work.
+
+If you are an agent asked to "adapt this to my business following the brain", read in this order:
+
+1. `AGENTS.md` — the rules of this codebase and where everything lives (Spanish: `AGENTS.es.md`).
+2. `cerebro/dist/llms-full.txt` — the brain: 316 nodes on strategy, store, checkout, SEO, AI search, measurement, ads, security, quality and working with agents. Read the branch «Cómo usar este cerebro» first, then the essential nodes of your phase. (Spanish.)
+3. `GETTING-STARTED.md` — the ordered checklist from template to real site: what the agent does, what only the owner can do.
+4. `docs/adapters.md` — the contracts every data, payment, mail, storage and antibot adapter keeps.
+5. The code you are about to change, and the tests next to it.
+
+Never invent business data. Never let the browser set a price. Verify before saying it works.
+
+## Instructions and docs
+
+- [AGENTS.md](AGENTS.md): rules that always apply, map of the repository, how to verify
+- [GETTING-STARTED.md](GETTING-STARTED.md): brand, products, photos, database, admin user, payments, shipping, legal pages, domain, search engines, feeds, measurement
+- [README.md](README.md): what the project is, how to run it, from demo to real use
+- [docs/adapters.md](docs/adapters.md): adapter interfaces and how to add one
+- [docs/admin.md](docs/admin.md): the admin panel — access, kanban, live reception, order detail
+- [docs/deploy.md](docs/deploy.md): any Node server, Docker, Vercel
+- [ROADMAP.md](ROADMAP.md): what is planned and what is not
+- [SECURITY.md](SECURITY.md): the properties the project defends and where they live
+
+## The brain
+
+- [cerebro/dist/llms-full.txt](cerebro/dist/llms-full.txt): the whole guide as text
+- [cerebro/dist/llms.txt](cerebro/dist/llms.txt): its index
+- [cerebro/datos.json](cerebro/datos.json): the source (edit this, then `npm run brain`)
+- [cerebro/README.md](cerebro/README.md): how the brain is built and published
+
+## Configuration (the business, in one place)
+
+- [config/brand.ts](config/brand.ts): name, tagline, colours, contact, social, country, currency, language
+- [config/commerce.ts](config/commerce.ts): shipping, minimum order, instalments, lead times, bank details
+- [config/redirects.ts](config/redirects.ts): 301 redirects
+- [i18n/es.ts](i18n/es.ts), [i18n/en.ts](i18n/en.ts): every UI text
+- [i18n/routes.ts](i18n/routes.ts): the public URL of each page per language
+- [content/products.json](content/products.json): the demo catalogue
+- [.env.example](.env.example): every environment variable, explained
+
+## Code
+
+- [lib/data/types.ts](lib/data/types.ts): the data model and the `DataAdapter` contract
+- [lib/data/json.ts](lib/data/json.ts), [lib/data/sql.ts](lib/data/sql.ts): the adapters
+- [db/schema.sql](db/schema.sql): tables, row level security, `create_order` and the admin functions
+- [lib/orders/pricing.ts](lib/orders/pricing.ts): the server sets the price
+- [lib/orders/idempotency.ts](lib/orders/idempotency.ts), [lib/orders/receipt.ts](lib/orders/receipt.ts): one order per attempt; the signed order link
+- [lib/orders/status.ts](lib/orders/status.ts): the order workflow and its allowed moves
+- [lib/payments/credit.ts](lib/payments/credit.ts): credit a payment once, for the right amount
+- [lib/admin/auth.ts](lib/admin/auth.ts), [proxy.ts](proxy.ts): who may enter the admin panel
+- [lib/env.ts](lib/env.ts): environment variables, validated
+- [app/api/orders/route.ts](app/api/orders/route.ts): the one door through which an order is created
+- [components/admin/OrdersBoard.tsx](components/admin/OrdersBoard.tsx): the kanban
+
+## Verify
+
+`npm run check && npm run typecheck && npm test && npm run build && npm run test:e2e`, then `npm run screenshots` and look at the result.
