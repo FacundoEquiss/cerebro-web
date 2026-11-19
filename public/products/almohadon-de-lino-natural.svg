@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Linen cushion in natural">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f2ef"/><stop offset="1" stop-color="#ebe8e2"/></linearGradient></defs>
+<rect width="800" height="1000" fill="url(#bg)"/><ellipse cx="400" cy="850" rx="250" ry="24" fill="#000000" opacity=".09"/><path d="M190 300Q400 262 610 300 650 500 610 700 400 738 190 700 150 500 190 300Z" fill="#ddd2bd"/><path d="M215 330Q400 300 585 330M215 670Q400 700 585 670" fill="none" stroke="#c2b9a6" stroke-width="5" stroke-dasharray="14 12"/><path d="M300 420Q400 500 500 420M300 520Q400 600 500 520" fill="none" stroke="#e9e2d4" stroke-width="10" stroke-linecap="round"/>
+</svg>

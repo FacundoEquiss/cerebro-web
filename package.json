@@ -1,0 +1,64 @@
+{
+  "name": "cerebro-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Open-source Next.js business website: a working store, an admin panel with a kanban for incoming orders, and a guide for AI agents — in one repo you own.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FacundoEquiss/cerebro-web"
+  },
+  "engines": {
+    "node": ">=20.9"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "prebuild": "node scripts/check-brand.mjs",
+    "build": "next build",
+    "start": "next start",
+    "check": "node scripts/check-brand.mjs && node --no-warnings scripts/check-i18n.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test --trace off",
+    "admin:hash": "node scripts/admin-hash.mjs",
+    "data:export": "node scripts/export-catalog.mjs",
+    "db:seed": "node scripts/generate-seed.mjs",
+    "images": "node scripts/generate-images.mjs",
+    "brain": "node cerebro/armar.mjs",
+    "screenshots": "node scripts/screenshots.mjs"
+  },
+  "dependencies": {
+    "lucide-react": "^1.76.0",
+    "next": "^16.4.6",
+    "nodemailer": "^10.6.0",
+    "pg": "^8.23.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zod": "^4.6.7",
+    "zustand": "^5.1.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.17",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.1",
+    "@types/nodemailer": "^8.0.2"
+  },
+  "keywords": [
+    "nextjs",
+    "ecommerce",
+    "storefront",
+    "admin",
+    "kanban",
+    "open-source",
+    "template"
+  ],
+  "bugs": {
+    "url": "https://github.com/FacundoEquiss/cerebro-web/issues"
+  },
+  "homepage": "https://github.com/FacundoEquiss/cerebro-web#readme"
+}

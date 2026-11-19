@@ -1,0 +1,1871 @@
+{
+  "_note": "DEMO CATALOGUE. Every product, price and text here is an EXAMPLE: replace them with the real ones. Texts can be a plain string or { \"es\": \"…\", \"en\": \"…\" }. stock: number = units, null = made to order. Images with a \"placeholder\" key are drawn by `npm run images`; remove that key when you add a real photo.",
+  "categories": [
+    {
+      "slug": "indumentaria",
+      "name": {
+        "es": "Indumentaria",
+        "en": "Apparel"
+      },
+      "description": {
+        "es": "Prendas básicas y cómodas para todos los días. Texto de EJEMPLO.",
+        "en": "Comfortable everyday basics. EXAMPLE text."
+      }
+    },
+    {
+      "slug": "accesorios",
+      "name": {
+        "es": "Accesorios",
+        "en": "Accessories"
+      },
+      "description": {
+        "es": "Bolsos, mochilas y objetos para llevar con vos. Texto de EJEMPLO.",
+        "en": "Bags, backpacks and things to carry with you. EXAMPLE text."
+      }
+    },
+    {
+      "slug": "hogar",
+      "name": {
+        "es": "Hogar",
+        "en": "Home"
+      },
+      "description": {
+        "es": "Objetos para la casa, simples y bien hechos. Texto de EJEMPLO.",
+        "en": "Simple, well-made objects for the home. EXAMPLE text."
+      }
+    }
+  ],
+  "products": [
+    {
+      "id": "camiseta-basica-algodon",
+      "slug": "camiseta-basica-algodon",
+      "name": {
+        "es": "Camiseta básica de algodón",
+        "en": "Basic cotton tee"
+      },
+      "description": {
+        "es": "Camiseta de algodón peinado de 180 g, corte recto y cuello redondo reforzado. Una prenda simple para usar todos los días. Texto de EJEMPLO: describí acá tu producto real.",
+        "en": "Combed cotton tee, 180 gsm, straight fit with a reinforced crew neck. A simple piece for every day. EXAMPLE text: describe your real product here."
+      },
+      "category": "indumentaria",
+      "price": 18900,
+      "compareAtPrice": 22900,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {
+        "gender": "unisex",
+        "ageGroup": "adult",
+        "material": "Algodón",
+        "googleCategory": "Apparel & Accessories > Clothing > Shirts & Tops"
+      },
+      "createdAt": "2026-01-14T00:00:00.000Z",
+      "options": [
+        {
+          "id": "size",
+          "name": {
+            "es": "Talle",
+            "en": "Size"
+          },
+          "values": [
+            {
+              "id": "s",
+              "label": "S"
+            },
+            {
+              "id": "m",
+              "label": "M"
+            },
+            {
+              "id": "l",
+              "label": "L"
+            },
+            {
+              "id": "xl",
+              "label": "XL"
+            }
+          ]
+        },
+        {
+          "id": "color",
+          "name": {
+            "es": "Color",
+            "en": "Colour"
+          },
+          "values": [
+            {
+              "id": "white",
+              "label": {
+                "es": "Blanco",
+                "en": "White"
+              },
+              "swatch": "#f1efe9"
+            },
+            {
+              "id": "black",
+              "label": {
+                "es": "Negro",
+                "en": "Black"
+              },
+              "swatch": "#23262b"
+            },
+            {
+              "id": "olive",
+              "label": {
+                "es": "Oliva",
+                "en": "Olive"
+              },
+              "swatch": "#6b7353"
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "id": "camiseta-basica-algodon-s-white",
+          "options": {
+            "size": "s",
+            "color": "white"
+          },
+          "stock": 8
+        },
+        {
+          "id": "camiseta-basica-algodon-s-black",
+          "options": {
+            "size": "s",
+            "color": "black"
+          },
+          "stock": 6
+        },
+        {
+          "id": "camiseta-basica-algodon-s-olive",
+          "options": {
+            "size": "s",
+            "color": "olive"
+          },
+          "stock": 6
+        },
+        {
+          "id": "camiseta-basica-algodon-m-white",
+          "options": {
+            "size": "m",
+            "color": "white"
+          },
+          "stock": 8
+        },
+        {
+          "id": "camiseta-basica-algodon-m-black",
+          "options": {
+            "size": "m",
+            "color": "black"
+          },
+          "stock": 6
+        },
+        {
+          "id": "camiseta-basica-algodon-m-olive",
+          "options": {
+            "size": "m",
+            "color": "olive"
+          },
+          "stock": 2
+        },
+        {
+          "id": "camiseta-basica-algodon-l-white",
+          "options": {
+            "size": "l",
+            "color": "white"
+          },
+          "stock": 8
+        },
+        {
+          "id": "camiseta-basica-algodon-l-black",
+          "options": {
+            "size": "l",
+            "color": "black"
+          },
+          "stock": 6
+        },
+        {
+          "id": "camiseta-basica-algodon-l-olive",
+          "options": {
+            "size": "l",
+            "color": "olive"
+          },
+          "stock": 6
+        },
+        {
+          "id": "camiseta-basica-algodon-xl-white",
+          "options": {
+            "size": "xl",
+            "color": "white"
+          },
+          "stock": 8
+        },
+        {
+          "id": "camiseta-basica-algodon-xl-black",
+          "options": {
+            "size": "xl",
+            "color": "black"
+          },
+          "stock": 2
+        },
+        {
+          "id": "camiseta-basica-algodon-xl-olive",
+          "options": {
+            "size": "xl",
+            "color": "olive"
+          },
+          "stock": 0
+        }
+      ],
+      "images": [
+        {
+          "src": "/products/camiseta-basica-algodon-white.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Camiseta básica de algodón en color blanco",
+            "en": "Basic cotton tee in white"
+          },
+          "option": {
+            "color": "white"
+          },
+          "placeholder": {
+            "shape": "tee",
+            "color": "#f1efe9",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/camiseta-basica-algodon-black.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Camiseta básica de algodón en color negro",
+            "en": "Basic cotton tee in black"
+          },
+          "option": {
+            "color": "black"
+          },
+          "placeholder": {
+            "shape": "tee",
+            "color": "#23262b",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/camiseta-basica-algodon-olive.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Camiseta básica de algodón en color oliva",
+            "en": "Basic cotton tee in olive"
+          },
+          "option": {
+            "color": "olive"
+          },
+          "placeholder": {
+            "shape": "tee",
+            "color": "#6b7353",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/camiseta-basica-algodon-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de camiseta básica de algodón",
+            "en": "Close-up of basic cotton tee"
+          },
+          "placeholder": {
+            "shape": "tee",
+            "color": "#f1efe9",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/camiseta-basica-algodon-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Camiseta básica de algodón, vista de ambiente",
+            "en": "Basic cotton tee, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "tee",
+            "color": "#6b7353",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "sudadera-con-capucha",
+      "slug": "sudadera-con-capucha",
+      "name": {
+        "es": "Sudadera con capucha",
+        "en": "Hooded sweatshirt"
+      },
+      "description": {
+        "es": "Abrigo de algodón frisado con capucha forrada y bolsillo canguro. Se confecciona a pedido en el talle y color que elijas. Texto de EJEMPLO.",
+        "en": "Brushed cotton hoodie with a lined hood and kangaroo pocket. Made to order in the size and colour you choose. EXAMPLE text."
+      },
+      "category": "indumentaria",
+      "price": 42500,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {
+        "gender": "unisex",
+        "ageGroup": "adult",
+        "material": "Algodón frisado",
+        "googleCategory": "Apparel & Accessories > Clothing > Outerwear"
+      },
+      "createdAt": "2026-01-23T00:00:00.000Z",
+      "options": [
+        {
+          "id": "size",
+          "name": {
+            "es": "Talle",
+            "en": "Size"
+          },
+          "values": [
+            {
+              "id": "s",
+              "label": "S"
+            },
+            {
+              "id": "m",
+              "label": "M"
+            },
+            {
+              "id": "l",
+              "label": "L"
+            },
+            {
+              "id": "xl",
+              "label": "XL"
+            }
+          ]
+        },
+        {
+          "id": "color",
+          "name": {
+            "es": "Color",
+            "en": "Colour"
+          },
+          "values": [
+            {
+              "id": "grey",
+              "label": {
+                "es": "Gris",
+                "en": "Grey"
+              },
+              "swatch": "#8d9094"
+            },
+            {
+              "id": "navy",
+              "label": {
+                "es": "Azul marino",
+                "en": "Navy"
+              },
+              "swatch": "#27374f"
+            },
+            {
+              "id": "sand",
+              "label": {
+                "es": "Arena",
+                "en": "Sand"
+              },
+              "swatch": "#cdb99a"
+            }
+          ]
+        }
+      ],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/sudadera-con-capucha-grey.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Sudadera con capucha en color gris",
+            "en": "Hooded sweatshirt in grey"
+          },
+          "option": {
+            "color": "grey"
+          },
+          "placeholder": {
+            "shape": "hoodie",
+            "color": "#8d9094",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/sudadera-con-capucha-navy.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Sudadera con capucha en color azul marino",
+            "en": "Hooded sweatshirt in navy"
+          },
+          "option": {
+            "color": "navy"
+          },
+          "placeholder": {
+            "shape": "hoodie",
+            "color": "#27374f",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/sudadera-con-capucha-sand.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Sudadera con capucha en color arena",
+            "en": "Hooded sweatshirt in sand"
+          },
+          "option": {
+            "color": "sand"
+          },
+          "placeholder": {
+            "shape": "hoodie",
+            "color": "#cdb99a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/sudadera-con-capucha-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de sudadera con capucha",
+            "en": "Close-up of hooded sweatshirt"
+          },
+          "placeholder": {
+            "shape": "hoodie",
+            "color": "#8d9094",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/sudadera-con-capucha-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Sudadera con capucha, vista de ambiente",
+            "en": "Hooded sweatshirt, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "hoodie",
+            "color": "#cdb99a",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "gorra-clasica",
+      "slug": "gorra-clasica",
+      "name": {
+        "es": "Gorra clásica",
+        "en": "Classic cap"
+      },
+      "description": {
+        "es": "Gorra de seis paneles con visera curva y cierre regulable. Talle único. Texto de EJEMPLO.",
+        "en": "Six-panel cap with a curved brim and adjustable strap. One size. EXAMPLE text."
+      },
+      "category": "indumentaria",
+      "price": 14500,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {
+        "gender": "unisex",
+        "ageGroup": "adult",
+        "googleCategory": "Apparel & Accessories > Clothing Accessories > Hats"
+      },
+      "createdAt": "2026-02-01T00:00:00.000Z",
+      "options": [
+        {
+          "id": "color",
+          "name": {
+            "es": "Color",
+            "en": "Colour"
+          },
+          "values": [
+            {
+              "id": "black",
+              "label": {
+                "es": "Negro",
+                "en": "Black"
+              },
+              "swatch": "#23262b"
+            },
+            {
+              "id": "sand",
+              "label": {
+                "es": "Arena",
+                "en": "Sand"
+              },
+              "swatch": "#cdb99a"
+            },
+            {
+              "id": "terracotta",
+              "label": {
+                "es": "Terracota",
+                "en": "Terracotta"
+              },
+              "swatch": "#b4603c"
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "id": "gorra-clasica-black",
+          "options": {
+            "color": "black"
+          },
+          "stock": 10
+        },
+        {
+          "id": "gorra-clasica-sand",
+          "options": {
+            "color": "sand"
+          },
+          "stock": 10
+        },
+        {
+          "id": "gorra-clasica-terracotta",
+          "options": {
+            "color": "terracotta"
+          },
+          "stock": 3
+        }
+      ],
+      "images": [
+        {
+          "src": "/products/gorra-clasica-black.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Gorra clásica en color negro",
+            "en": "Classic cap in black"
+          },
+          "option": {
+            "color": "black"
+          },
+          "placeholder": {
+            "shape": "cap",
+            "color": "#23262b",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/gorra-clasica-sand.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Gorra clásica en color arena",
+            "en": "Classic cap in sand"
+          },
+          "option": {
+            "color": "sand"
+          },
+          "placeholder": {
+            "shape": "cap",
+            "color": "#cdb99a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/gorra-clasica-terracotta.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Gorra clásica en color terracota",
+            "en": "Classic cap in terracotta"
+          },
+          "option": {
+            "color": "terracotta"
+          },
+          "placeholder": {
+            "shape": "cap",
+            "color": "#b4603c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/gorra-clasica-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de gorra clásica",
+            "en": "Close-up of classic cap"
+          },
+          "placeholder": {
+            "shape": "cap",
+            "color": "#23262b",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/gorra-clasica-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Gorra clásica, vista de ambiente",
+            "en": "Classic cap, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "cap",
+            "color": "#b4603c",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "medias-de-algodon-pack-x3",
+      "slug": "medias-de-algodon-pack-x3",
+      "name": {
+        "es": "Medias de algodón (pack x3)",
+        "en": "Cotton socks (3-pack)"
+      },
+      "description": {
+        "es": "Tres pares de medias de algodón con puño elástico suave y talón reforzado. Texto de EJEMPLO.",
+        "en": "Three pairs of cotton socks with a soft elastic cuff and reinforced heel. EXAMPLE text."
+      },
+      "category": "indumentaria",
+      "price": 9800,
+      "compareAtPrice": 11500,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {
+        "gender": "unisex",
+        "ageGroup": "adult",
+        "googleCategory": "Apparel & Accessories > Clothing > Underwear & Socks > Socks"
+      },
+      "createdAt": "2026-02-10T00:00:00.000Z",
+      "options": [
+        {
+          "id": "size",
+          "name": {
+            "es": "Talle",
+            "en": "Size"
+          },
+          "values": [
+            {
+              "id": "35-38",
+              "label": "35-38"
+            },
+            {
+              "id": "39-42",
+              "label": "39-42"
+            },
+            {
+              "id": "43-46",
+              "label": "43-46"
+            }
+          ]
+        },
+        {
+          "id": "color",
+          "name": {
+            "es": "Color",
+            "en": "Colour"
+          },
+          "values": [
+            {
+              "id": "white",
+              "label": {
+                "es": "Blanco",
+                "en": "White"
+              },
+              "swatch": "#f1efe9"
+            },
+            {
+              "id": "grey",
+              "label": {
+                "es": "Gris",
+                "en": "Grey"
+              },
+              "swatch": "#8d9094"
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "id": "medias-de-algodon-pack-x3-35-38-white",
+          "options": {
+            "size": "35-38",
+            "color": "white"
+          },
+          "stock": 15
+        },
+        {
+          "id": "medias-de-algodon-pack-x3-35-38-grey",
+          "options": {
+            "size": "35-38",
+            "color": "grey"
+          },
+          "stock": 15
+        },
+        {
+          "id": "medias-de-algodon-pack-x3-39-42-white",
+          "options": {
+            "size": "39-42",
+            "color": "white"
+          },
+          "stock": 15
+        },
+        {
+          "id": "medias-de-algodon-pack-x3-39-42-grey",
+          "options": {
+            "size": "39-42",
+            "color": "grey"
+          },
+          "stock": 15
+        },
+        {
+          "id": "medias-de-algodon-pack-x3-43-46-white",
+          "options": {
+            "size": "43-46",
+            "color": "white"
+          },
+          "stock": 15
+        },
+        {
+          "id": "medias-de-algodon-pack-x3-43-46-grey",
+          "options": {
+            "size": "43-46",
+            "color": "grey"
+          },
+          "stock": 0
+        }
+      ],
+      "images": [
+        {
+          "src": "/products/medias-de-algodon-pack-x3-white.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Medias de algodón (pack x3) en color blanco",
+            "en": "Cotton socks (3-pack) in white"
+          },
+          "option": {
+            "color": "white"
+          },
+          "placeholder": {
+            "shape": "socks",
+            "color": "#f1efe9",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/medias-de-algodon-pack-x3-grey.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Medias de algodón (pack x3) en color gris",
+            "en": "Cotton socks (3-pack) in grey"
+          },
+          "option": {
+            "color": "grey"
+          },
+          "placeholder": {
+            "shape": "socks",
+            "color": "#8d9094",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/medias-de-algodon-pack-x3-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de medias de algodón (pack x3)",
+            "en": "Close-up of cotton socks (3-pack)"
+          },
+          "placeholder": {
+            "shape": "socks",
+            "color": "#f1efe9",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/medias-de-algodon-pack-x3-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Medias de algodón (pack x3), vista de ambiente",
+            "en": "Cotton socks (3-pack), lifestyle view"
+          },
+          "placeholder": {
+            "shape": "socks",
+            "color": "#8d9094",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "bolso-de-lona",
+      "slug": "bolso-de-lona",
+      "name": {
+        "es": "Bolso de lona",
+        "en": "Canvas tote bag"
+      },
+      "description": {
+        "es": "Bolso de lona gruesa con asas largas y bolsillo interno. Entra una notebook de 15 pulgadas. Texto de EJEMPLO.",
+        "en": "Heavy canvas tote with long handles and an inner pocket. Fits a 15-inch laptop. EXAMPLE text."
+      },
+      "category": "accesorios",
+      "price": 16900,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-02-19T00:00:00.000Z",
+      "options": [
+        {
+          "id": "color",
+          "name": {
+            "es": "Color",
+            "en": "Colour"
+          },
+          "values": [
+            {
+              "id": "natural",
+              "label": {
+                "es": "Natural",
+                "en": "Natural"
+              },
+              "swatch": "#ddd2bd"
+            },
+            {
+              "id": "black",
+              "label": {
+                "es": "Negro",
+                "en": "Black"
+              },
+              "swatch": "#23262b"
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "id": "bolso-de-lona-natural",
+          "options": {
+            "color": "natural"
+          },
+          "stock": 9
+        },
+        {
+          "id": "bolso-de-lona-black",
+          "options": {
+            "color": "black"
+          },
+          "stock": 9
+        }
+      ],
+      "images": [
+        {
+          "src": "/products/bolso-de-lona-natural.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Bolso de lona en color natural",
+            "en": "Canvas tote bag in natural"
+          },
+          "option": {
+            "color": "natural"
+          },
+          "placeholder": {
+            "shape": "tote",
+            "color": "#ddd2bd",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/bolso-de-lona-black.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Bolso de lona en color negro",
+            "en": "Canvas tote bag in black"
+          },
+          "option": {
+            "color": "black"
+          },
+          "placeholder": {
+            "shape": "tote",
+            "color": "#23262b",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/bolso-de-lona-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de bolso de lona",
+            "en": "Close-up of canvas tote bag"
+          },
+          "placeholder": {
+            "shape": "tote",
+            "color": "#ddd2bd",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/bolso-de-lona-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Bolso de lona, vista de ambiente",
+            "en": "Canvas tote bag, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "tote",
+            "color": "#23262b",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "mochila-urbana",
+      "slug": "mochila-urbana",
+      "name": {
+        "es": "Mochila urbana",
+        "en": "Urban backpack"
+      },
+      "description": {
+        "es": "Mochila de 20 litros con compartimento acolchado, bolsillo frontal y tela repelente al agua. Texto de EJEMPLO.",
+        "en": "20-litre backpack with a padded compartment, front pocket and water-repellent fabric. EXAMPLE text."
+      },
+      "category": "accesorios",
+      "price": 58900,
+      "compareAtPrice": 67000,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-02-28T00:00:00.000Z",
+      "options": [
+        {
+          "id": "color",
+          "name": {
+            "es": "Color",
+            "en": "Colour"
+          },
+          "values": [
+            {
+              "id": "olive",
+              "label": {
+                "es": "Oliva",
+                "en": "Olive"
+              },
+              "swatch": "#6b7353"
+            },
+            {
+              "id": "black",
+              "label": {
+                "es": "Negro",
+                "en": "Black"
+              },
+              "swatch": "#23262b"
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "id": "mochila-urbana-olive",
+          "options": {
+            "color": "olive"
+          },
+          "stock": 4
+        },
+        {
+          "id": "mochila-urbana-black",
+          "options": {
+            "color": "black"
+          },
+          "stock": 2
+        }
+      ],
+      "images": [
+        {
+          "src": "/products/mochila-urbana-olive.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Mochila urbana en color oliva",
+            "en": "Urban backpack in olive"
+          },
+          "option": {
+            "color": "olive"
+          },
+          "placeholder": {
+            "shape": "backpack",
+            "color": "#6b7353",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/mochila-urbana-black.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Mochila urbana en color negro",
+            "en": "Urban backpack in black"
+          },
+          "option": {
+            "color": "black"
+          },
+          "placeholder": {
+            "shape": "backpack",
+            "color": "#23262b",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/mochila-urbana-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de mochila urbana",
+            "en": "Close-up of urban backpack"
+          },
+          "placeholder": {
+            "shape": "backpack",
+            "color": "#6b7353",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/mochila-urbana-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Mochila urbana, vista de ambiente",
+            "en": "Urban backpack, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "backpack",
+            "color": "#23262b",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "botella-termica-500-ml",
+      "slug": "botella-termica-500-ml",
+      "name": {
+        "es": "Botella térmica 500 ml",
+        "en": "Insulated bottle 500 ml"
+      },
+      "description": {
+        "es": "Botella de acero inoxidable de doble pared: mantiene la bebida fría o caliente por horas. Texto de EJEMPLO.",
+        "en": "Double-wall stainless steel bottle: keeps drinks cold or hot for hours. EXAMPLE text."
+      },
+      "category": "accesorios",
+      "price": 24900,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-03-09T00:00:00.000Z",
+      "options": [
+        {
+          "id": "color",
+          "name": {
+            "es": "Color",
+            "en": "Colour"
+          },
+          "values": [
+            {
+              "id": "sage",
+              "label": {
+                "es": "Salvia",
+                "en": "Sage"
+              },
+              "swatch": "#9aa58c"
+            },
+            {
+              "id": "navy",
+              "label": {
+                "es": "Azul marino",
+                "en": "Navy"
+              },
+              "swatch": "#27374f"
+            },
+            {
+              "id": "terracotta",
+              "label": {
+                "es": "Terracota",
+                "en": "Terracotta"
+              },
+              "swatch": "#b4603c"
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "id": "botella-termica-500-ml-sage",
+          "options": {
+            "color": "sage"
+          },
+          "stock": 7
+        },
+        {
+          "id": "botella-termica-500-ml-navy",
+          "options": {
+            "color": "navy"
+          },
+          "stock": 0
+        },
+        {
+          "id": "botella-termica-500-ml-terracotta",
+          "options": {
+            "color": "terracotta"
+          },
+          "stock": 7
+        }
+      ],
+      "images": [
+        {
+          "src": "/products/botella-termica-500-ml-sage.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Botella térmica 500 ml en color salvia",
+            "en": "Insulated bottle 500 ml in sage"
+          },
+          "option": {
+            "color": "sage"
+          },
+          "placeholder": {
+            "shape": "bottle",
+            "color": "#9aa58c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/botella-termica-500-ml-navy.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Botella térmica 500 ml en color azul marino",
+            "en": "Insulated bottle 500 ml in navy"
+          },
+          "option": {
+            "color": "navy"
+          },
+          "placeholder": {
+            "shape": "bottle",
+            "color": "#27374f",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/botella-termica-500-ml-terracotta.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Botella térmica 500 ml en color terracota",
+            "en": "Insulated bottle 500 ml in terracotta"
+          },
+          "option": {
+            "color": "terracotta"
+          },
+          "placeholder": {
+            "shape": "bottle",
+            "color": "#b4603c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/botella-termica-500-ml-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de botella térmica 500 ml",
+            "en": "Close-up of insulated bottle 500 ml"
+          },
+          "placeholder": {
+            "shape": "bottle",
+            "color": "#9aa58c",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/botella-termica-500-ml-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Botella térmica 500 ml, vista de ambiente",
+            "en": "Insulated bottle 500 ml, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "bottle",
+            "color": "#b4603c",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "cuaderno-a5-tapa-dura",
+      "slug": "cuaderno-a5-tapa-dura",
+      "name": {
+        "es": "Cuaderno A5 de tapa dura",
+        "en": "A5 hardcover notebook"
+      },
+      "description": {
+        "es": "Cuaderno de 96 hojas lisas, tapa dura forrada en tela y elástico de cierre. Texto de EJEMPLO.",
+        "en": "96 plain sheets, cloth-bound hard cover and elastic closure. EXAMPLE text."
+      },
+      "category": "accesorios",
+      "price": 8900,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": 25,
+      "attributes": {},
+      "createdAt": "2026-03-18T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/cuaderno-a5-tapa-dura-terracotta.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Cuaderno A5 de tapa dura en color terracota",
+            "en": "A5 hardcover notebook in terracotta"
+          },
+          "placeholder": {
+            "shape": "notebook",
+            "color": "#b4603c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/cuaderno-a5-tapa-dura-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de cuaderno a5 de tapa dura",
+            "en": "Close-up of a5 hardcover notebook"
+          },
+          "placeholder": {
+            "shape": "notebook",
+            "color": "#b4603c",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/cuaderno-a5-tapa-dura-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Cuaderno A5 de tapa dura, vista de ambiente",
+            "en": "A5 hardcover notebook, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "notebook",
+            "color": "#b4603c",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "taza-de-ceramica",
+      "slug": "taza-de-ceramica",
+      "name": {
+        "es": "Taza de cerámica",
+        "en": "Ceramic mug"
+      },
+      "description": {
+        "es": "Taza de cerámica esmaltada de 350 ml, apta para microondas y lavavajillas. Texto de EJEMPLO.",
+        "en": "350 ml glazed ceramic mug, microwave and dishwasher safe. EXAMPLE text."
+      },
+      "category": "hogar",
+      "price": 11900,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-03-27T00:00:00.000Z",
+      "options": [
+        {
+          "id": "color",
+          "name": {
+            "es": "Color",
+            "en": "Colour"
+          },
+          "values": [
+            {
+              "id": "white",
+              "label": {
+                "es": "Blanco",
+                "en": "White"
+              },
+              "swatch": "#f1efe9"
+            },
+            {
+              "id": "sage",
+              "label": {
+                "es": "Salvia",
+                "en": "Sage"
+              },
+              "swatch": "#9aa58c"
+            },
+            {
+              "id": "mustard",
+              "label": {
+                "es": "Mostaza",
+                "en": "Mustard"
+              },
+              "swatch": "#c99a3b"
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "id": "taza-de-ceramica-white",
+          "options": {
+            "color": "white"
+          },
+          "stock": 14
+        },
+        {
+          "id": "taza-de-ceramica-sage",
+          "options": {
+            "color": "sage"
+          },
+          "stock": 14
+        },
+        {
+          "id": "taza-de-ceramica-mustard",
+          "options": {
+            "color": "mustard"
+          },
+          "stock": 14
+        }
+      ],
+      "images": [
+        {
+          "src": "/products/taza-de-ceramica-white.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Taza de cerámica en color blanco",
+            "en": "Ceramic mug in white"
+          },
+          "option": {
+            "color": "white"
+          },
+          "placeholder": {
+            "shape": "mug",
+            "color": "#f1efe9",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/taza-de-ceramica-sage.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Taza de cerámica en color salvia",
+            "en": "Ceramic mug in sage"
+          },
+          "option": {
+            "color": "sage"
+          },
+          "placeholder": {
+            "shape": "mug",
+            "color": "#9aa58c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/taza-de-ceramica-mustard.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Taza de cerámica en color mostaza",
+            "en": "Ceramic mug in mustard"
+          },
+          "option": {
+            "color": "mustard"
+          },
+          "placeholder": {
+            "shape": "mug",
+            "color": "#c99a3b",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/taza-de-ceramica-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de taza de cerámica",
+            "en": "Close-up of ceramic mug"
+          },
+          "placeholder": {
+            "shape": "mug",
+            "color": "#f1efe9",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/taza-de-ceramica-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Taza de cerámica, vista de ambiente",
+            "en": "Ceramic mug, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "mug",
+            "color": "#c99a3b",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "almohadon-de-lino",
+      "slug": "almohadon-de-lino",
+      "name": {
+        "es": "Almohadón de lino",
+        "en": "Linen cushion"
+      },
+      "description": {
+        "es": "Funda de lino lavado con cierre invisible y relleno incluido. Se confecciona a pedido en la medida y el color que elijas. Texto de EJEMPLO.",
+        "en": "Washed linen cover with an invisible zip, insert included. Made to order in the size and colour you choose. EXAMPLE text."
+      },
+      "category": "hogar",
+      "price": 21500,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-04-05T00:00:00.000Z",
+      "options": [
+        {
+          "id": "size",
+          "name": {
+            "es": "Talle",
+            "en": "Size"
+          },
+          "values": [
+            {
+              "id": "40x40",
+              "label": "40x40"
+            },
+            {
+              "id": "50x50",
+              "label": "50x50"
+            }
+          ]
+        },
+        {
+          "id": "color",
+          "name": {
+            "es": "Color",
+            "en": "Colour"
+          },
+          "values": [
+            {
+              "id": "natural",
+              "label": {
+                "es": "Natural",
+                "en": "Natural"
+              },
+              "swatch": "#ddd2bd"
+            },
+            {
+              "id": "sage",
+              "label": {
+                "es": "Salvia",
+                "en": "Sage"
+              },
+              "swatch": "#9aa58c"
+            },
+            {
+              "id": "terracotta",
+              "label": {
+                "es": "Terracota",
+                "en": "Terracotta"
+              },
+              "swatch": "#b4603c"
+            }
+          ]
+        }
+      ],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/almohadon-de-lino-natural.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Almohadón de lino en color natural",
+            "en": "Linen cushion in natural"
+          },
+          "option": {
+            "color": "natural"
+          },
+          "placeholder": {
+            "shape": "cushion",
+            "color": "#ddd2bd",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/almohadon-de-lino-sage.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Almohadón de lino en color salvia",
+            "en": "Linen cushion in sage"
+          },
+          "option": {
+            "color": "sage"
+          },
+          "placeholder": {
+            "shape": "cushion",
+            "color": "#9aa58c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/almohadon-de-lino-terracotta.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Almohadón de lino en color terracota",
+            "en": "Linen cushion in terracotta"
+          },
+          "option": {
+            "color": "terracotta"
+          },
+          "placeholder": {
+            "shape": "cushion",
+            "color": "#b4603c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/almohadon-de-lino-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de almohadón de lino",
+            "en": "Close-up of linen cushion"
+          },
+          "placeholder": {
+            "shape": "cushion",
+            "color": "#ddd2bd",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/almohadon-de-lino-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Almohadón de lino, vista de ambiente",
+            "en": "Linen cushion, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "cushion",
+            "color": "#b4603c",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vela-aromatica-de-soja",
+      "slug": "vela-aromatica-de-soja",
+      "name": {
+        "es": "Vela aromática de soja",
+        "en": "Soy scented candle"
+      },
+      "description": {
+        "es": "Vela de cera de soja en frasco de vidrio, con unas 40 horas de duración. Texto de EJEMPLO.",
+        "en": "Soy wax candle in a glass jar, about 40 hours of burn time. EXAMPLE text."
+      },
+      "category": "hogar",
+      "price": 13200,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": 18,
+      "attributes": {},
+      "createdAt": "2026-04-14T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/vela-aromatica-de-soja-sand.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Vela aromática de soja en color arena",
+            "en": "Soy scented candle in sand"
+          },
+          "placeholder": {
+            "shape": "candle",
+            "color": "#cdb99a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/vela-aromatica-de-soja-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de vela aromática de soja",
+            "en": "Close-up of soy scented candle"
+          },
+          "placeholder": {
+            "shape": "candle",
+            "color": "#cdb99a",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/vela-aromatica-de-soja-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Vela aromática de soja, vista de ambiente",
+            "en": "Soy scented candle, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "candle",
+            "color": "#cdb99a",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "lamina-decorativa-30x40",
+      "slug": "lamina-decorativa-30x40",
+      "name": {
+        "es": "Lámina decorativa 30 × 40",
+        "en": "Art print 30 × 40"
+      },
+      "description": {
+        "es": "Lámina impresa en papel de 250 g con tintas de larga duración. No incluye marco. Texto de EJEMPLO.",
+        "en": "Printed on 250 gsm paper with long-lasting inks. Frame not included. EXAMPLE text."
+      },
+      "category": "hogar",
+      "price": 15800,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": 0,
+      "attributes": {},
+      "createdAt": "2026-04-23T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/lamina-decorativa-30x40-navy.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Lámina decorativa 30 × 40 en color azul marino",
+            "en": "Art print 30 × 40 in navy"
+          },
+          "placeholder": {
+            "shape": "print",
+            "color": "#27374f",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/lamina-decorativa-30x40-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de lámina decorativa 30 × 40",
+            "en": "Close-up of art print 30 × 40"
+          },
+          "placeholder": {
+            "shape": "print",
+            "color": "#27374f",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/lamina-decorativa-30x40-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Lámina decorativa 30 × 40, vista de ambiente",
+            "en": "Art print 30 × 40, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "print",
+            "color": "#27374f",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "manta-tejida",
+      "slug": "manta-tejida",
+      "name": {
+        "es": "Manta tejida",
+        "en": "Knitted throw"
+      },
+      "description": {
+        "es": "Manta de punto grueso de 130 × 170 cm, suave y abrigada, para el sillón o los pies de la cama. Texto de EJEMPLO.",
+        "en": "Chunky knit throw, 130 × 170 cm, soft and warm, for the sofa or the foot of the bed. EXAMPLE text."
+      },
+      "category": "hogar",
+      "price": 38900,
+      "compareAtPrice": 45000,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-05-02T00:00:00.000Z",
+      "options": [
+        {
+          "id": "color",
+          "name": {
+            "es": "Color",
+            "en": "Colour"
+          },
+          "values": [
+            {
+              "id": "grey",
+              "label": {
+                "es": "Gris",
+                "en": "Grey"
+              },
+              "swatch": "#8d9094"
+            },
+            {
+              "id": "mustard",
+              "label": {
+                "es": "Mostaza",
+                "en": "Mustard"
+              },
+              "swatch": "#c99a3b"
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "id": "manta-tejida-grey",
+          "options": {
+            "color": "grey"
+          },
+          "stock": 5
+        },
+        {
+          "id": "manta-tejida-mustard",
+          "options": {
+            "color": "mustard"
+          },
+          "stock": 3
+        }
+      ],
+      "images": [
+        {
+          "src": "/products/manta-tejida-grey.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Manta tejida en color gris",
+            "en": "Knitted throw in grey"
+          },
+          "option": {
+            "color": "grey"
+          },
+          "placeholder": {
+            "shape": "blanket",
+            "color": "#8d9094",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/manta-tejida-mustard.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Manta tejida en color mostaza",
+            "en": "Knitted throw in mustard"
+          },
+          "option": {
+            "color": "mustard"
+          },
+          "placeholder": {
+            "shape": "blanket",
+            "color": "#c99a3b",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/manta-tejida-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de manta tejida",
+            "en": "Close-up of knitted throw"
+          },
+          "placeholder": {
+            "shape": "blanket",
+            "color": "#8d9094",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/manta-tejida-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Manta tejida, vista de ambiente",
+            "en": "Knitted throw, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "blanket",
+            "color": "#c99a3b",
+            "view": "scene"
+          }
+        }
+      ]
+    }
+  ]
+}

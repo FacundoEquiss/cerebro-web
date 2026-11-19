@@ -1,0 +1,17 @@
+node_modules/
+.next/
+out/
+.vercel/
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+next-env.d.ts
+test-results/
+playwright-report/
+coverage/
+.DS_Store
+.data/
+/screenshots/
+# Your own forbidden terms for `npm run check` (see CONTRIBUTING.md). Local only, never committed.
+.brand-blocklist

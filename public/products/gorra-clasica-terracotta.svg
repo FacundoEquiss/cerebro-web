@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Classic cap in terracotta">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2eeea"/><stop offset="1" stop-color="#e8e0d9"/></linearGradient></defs>
+<rect width="800" height="1000" fill="url(#bg)"/><ellipse cx="400" cy="850" rx="250" ry="24" fill="#000000" opacity=".09"/><path d="M210 560C210 320 590 320 590 560Z" fill="#b4603c"/><path d="M200 560C320 535 560 540 700 600 600 652 330 642 200 592Z" fill="#904d30"/><path d="M400 380V560M300 420C320 470 325 520 322 560M500 420C480 470 475 520 478 560" fill="none" stroke="#9e5435" stroke-width="5"/><circle cx="400" cy="382" r="13" fill="#87482d"/>
+</svg>
