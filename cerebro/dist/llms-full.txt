@@ -4,7 +4,7 @@
 
 Sirve como guía de trabajo reutilizable: cada nodo dice qué es, para qué sirve, cómo se hace, con qué herramientas, cuál es el error común, su prioridad y su fase. Es genérico: los datos del negocio concreto los aporta su dueño.
 
-Versión 1.2.0 · actualizado el 2026-11-20 · 19 ramas · 334 nodos · Fuente: https://cerebro-web-negocios.vercel.app/
+Versión 1.2.1 · actualizado el 2026-11-20 · 19 ramas · 334 nodos · Fuente: https://cerebro-web-negocios.vercel.app/
 
 ## La plantilla que aplica esta guía
 
@@ -12,7 +12,7 @@ Este cerebro es la guía de **Cerebro Web**, una base de tienda de código abier
 
 - Código (MIT): https://github.com/FacundoEquiss/cerebro-web
 - Demo en vivo: https://cerebro-web-demo.vercel.app
-- Para empezar: clonar el repositorio y seguir su `AGENTS.md` y su `GETTING-STARTED.md`. Cuando el creador esté publicado en npm: `npm create cerebro-web@latest mi-tienda`.
+- Para empezar: clonar el repositorio y seguir su `AGENTS.md` y su `GETTING-STARTED.md`. Creador en un comando: `npm create cerebro-web@latest mi-tienda`. Todavía NO está publicado en npm: ese comando no funciona aún. Hasta que se publique, clonar el repositorio y seguir su AGENTS.md.
 
 ## Instrucciones para el agente
 
@@ -327,7 +327,8 @@ Cuando falta el precio de un producto, se carga como borrador: no se vende ni se
 2. Un borrador no aparece en la tienda, el buscador, el sitemap, los feeds ni los datos estructurados, y el servidor rechaza cualquier pedido que lo incluya.
 3. `npm run check:catalog` y `npm run doctor` listan los borradores: llevarle esa lista al dueño.
 4. Cuando el dueño da el precio, cargarlo y quitar la marca de borrador.
-5. No confundir con «a presupuesto» (`quote`): ese tipo es para lo que se cotiza caso por caso.
+5. Precio 0 en algo que se vende no se acepta: es un campo vacío, no un producto gratis. Sin precio, queda en borrador.
+6. No confundir con «a presupuesto» (`quote`): ese tipo es para lo que se cotiza caso por caso. Un `quote` con `"price": null` no es borrador: se muestra, sin precio público.
 
 **Herramientas / dónde se hace:** `npm run check:catalog` · `npm run doctor` · panel de productos
 
@@ -462,14 +463,18 @@ Talleres, clases sueltas, charlas y entradas: fechas fijas y lugares limitados, 
 
 **Cómo se hace:**
 
-1. Crear un producto de tipo `service` y cargarle las fechas en `service.sessions` (en el panel: «Fechas fijas», una por línea).
-2. Poner en `capacity` los lugares de cada fecha; la cantidad de la compra es la cantidad de lugares.
-3. La ficha muestra la lista de fechas con «Quedan N lugares» y el botón «Inscribirme»; cada fecha se reserva, se retiene y se libera como un turno.
-4. Ver las inscripciones en la Agenda del panel. Las fechas pasadas dejan de ofrecerse solas: cargar las próximas.
-5. Definir con el dueño la política de cancelación y qué pasa si el evento se suspende.
-6. Necesita una base de datos, igual que los turnos.
+1. Crear un producto de tipo `service` y, en el panel, elegir «Evento o taller: fechas propias».
+2. Si se repite (un taller mensual, una clase semanal), cargar la regla: `service.repeat` — «el primer sábado de cada mes a las 10:00» — y cuántas fechas quedan abiertas a la vez. Las fechas se calculan solas desde hoy: no hay que volver a cargarlas.
+3. Si son fechas sueltas, cargarlas en `service.sessions` (en el panel: «Fechas sueltas», una por línea; si una dura distinto, los minutos al final). Regla y fechas sueltas se suman.
+4. Poner en `capacity` los lugares de cada fecha; la cantidad de la compra es la cantidad de lugares.
+5. La ficha muestra la lista de fechas con «Quedan N lugares» y el botón «Inscribirme»; cada fecha se reserva, se retiene y se libera como un turno.
+6. Ver las inscripciones en la Agenda del panel (tiene «Próximo evento» e «Ir a una fecha»). Las fechas pasadas dejan de ofrecerse solas; sin regla de repetición hay que cargar las próximas, y `npm run check:catalog` avisa cuando no queda ninguna.
+7. Dos fechas del mismo evento que se pisan comparten el cupo: si son actividades distintas, van como productos distintos.
+8. Antes de mover o quitar una fecha, mirar si tiene inscripciones: el panel avisa al guardar, y a esas personas hay que avisarles.
+9. Definir con el dueño la política de cancelación y qué pasa si el evento se suspende.
+10. Necesita una base de datos, igual que los turnos.
 
-**Herramientas / dónde se hace:** docs/product-types.es.md · editor de productos (fechas fijas) · Agenda del panel
+**Herramientas / dónde se hace:** docs/product-types.es.md · editor de productos (evento: repetición y fechas sueltas) · Agenda del panel
 
 **Error común / regla de oro:** Simular un taller mensual con la agenda semanal: ofrece días que no existen y promete lugares que nadie controla.
 
@@ -5891,10 +5896,11 @@ La guía para llevar de la mano a un dueño que no programa: base de datos, vari
 **Cómo se hace:**
 
 1. Correr `npm run doctor`: dice qué está listo y cuál es el único paso que sigue.
-2. Seguir `docs/go-live.es.md` en orden: cada paso dice qué preguntarle al dueño, dónde hacer clic y qué pegar.
-3. Los nombres de los botones de cada proveedor cambian: guiarse por su documentación oficial, enlazada en cada paso.
-4. Las claves las crea y las pega el dueño en su hospedaje: nunca van al repositorio ni al chat.
-5. Cerrar con una compra de prueba de punta a punta y recién entonces permitir la indexación.
+2. Cargar los datos reales del negocio (e-mail, WhatsApp, datos bancarios) en `config/`: `npm run check` y el build los aceptan. El control de «marca privada» solo corre en el repositorio de la plantilla.
+3. Seguir `docs/go-live.es.md` en orden: cada paso dice qué preguntarle al dueño, dónde hacer clic y qué pegar.
+4. Los nombres de los botones de cada proveedor cambian: guiarse por su documentación oficial, enlazada en cada paso.
+5. Las claves las crea y las pega el dueño en su hospedaje: nunca van al repositorio ni al chat.
+6. Cerrar con una compra de prueba de punta a punta y recién entonces permitir la indexación.
 
 **Herramientas / dónde se hace:** docs/go-live.es.md · `npm run doctor` · GETTING-STARTED.es.md
 

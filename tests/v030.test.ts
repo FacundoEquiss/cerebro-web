@@ -2,7 +2,7 @@
 // (a product without a price), events with fixed dates, and the one-command creator.
 
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -254,7 +254,8 @@ describe("npm run doctor", () => {
   });
 });
 
-describe("create-cerebro-web", () => {
+// A store made by the creator does not carry packages/: there this block has nothing to test.
+describe.skipIf(!existsSync("packages/create-cerebro-web/index.mjs"))("create-cerebro-web", () => {
   const cli = join(process.cwd(), "packages/create-cerebro-web/index.mjs");
   const run = (cwd: string, ...args: string[]) => spawnSync(process.execPath, [cli, ...args], { cwd, encoding: "utf8", env: { ...process.env, CEREBRO_WEB_TEMPLATE: process.cwd() } });
   let work: string;
@@ -272,7 +273,16 @@ describe("create-cerebro-web", () => {
     expect(pkg).not.toHaveProperty("repository");
     expect(JSON.parse(readFileSync(join(store, "content/site.json"), "utf8")).preset).toBe("almacen");
     expect(JSON.parse(readFileSync(join(store, "content/products.json"), "utf8")).products).toEqual(JSON.parse(readFileSync("content/presets/almacen.json", "utf8")).products);
-    for (const there of ["AGENTS.md", "app", "lib", "db/schema.sql", "scripts/preset.mjs", "docs/go-live.es.md", ".env.example", ".git"]) expect(existsSync(join(store, there)), there).toBe(true);
+    for (const there of ["AGENTS.md", "CLAUDE.md", "ROADMAP.md", "cerebro/datos.json", "app", "lib", "db/schema.sql", "scripts/preset.mjs", "docs/go-live.es.md", ".env.example", ".git"]) expect(existsSync(join(store, there)), there).toBe(true);
+    // Its own history: the template's changelog stays in the template.
+    const changelog = readFileSync(join(store, "CHANGELOG.md"), "utf8");
+    expect(changelog).toContain("## 0.1.0");
+    expect(changelog).not.toContain("0.2.0");
+    expect(existsSync(join(store, ".github/workflows/presets.yml"))).toBe(false);
+    // A folder with a space is printed so that it can be pasted.
+    expect(created.stdout).toContain('cd "Mi Dietética"');
+    // No build step scans the store for contact data.
+    expect(pkg.scripts).not.toHaveProperty("prebuild");
     // Nothing of the template's own repository, nothing private, nothing heavy.
     for (const gone of ["packages", "node_modules", ".next", ".data", ".brand-blocklist", ".env", ".env.local", ".preset-backups"]) expect(existsSync(join(store, gone)), gone).toBe(false);
     expect(created.stdout).toContain("npm run doctor");
@@ -293,5 +303,22 @@ describe("create-cerebro-web", () => {
     expect(unknown.status).toBe(1);
     expect(unknown.stderr).toContain('no preset "nope"');
     expect(existsSync(join(work, "other"))).toBe(false);
+    // An empty folder that was already there is left empty, not deleted.
+    mkdirSync(join(work, "empty"));
+    expect(run(work, "empty", "--preset", "nope", "--no-install", "--no-git").status).toBe(1);
+    expect(readdirSync(join(work, "empty"))).toEqual([]);
   }, 120_000);
+
+  it("says clearly what is wrong: a file in the way, a flag without its value", () => {
+    writeFileSync(join(work, "a-file"), "x");
+    const file = run(work, "a-file", "--yes", "--no-install", "--lang", "en");
+    expect(file.status).toBe(1);
+    expect(file.stderr).toContain("is a file");
+    for (const args of [["x1", "--preset"], ["x2", "--preset", "--no-install"], ["x3", "--ref"]]) {
+      const bad = run(work, ...args, "--lang", "en");
+      expect(bad.status, args.join(" ")).toBe(1);
+      expect(bad.stderr).toContain("needs a value");
+      expect(existsSync(join(work, args[0]!))).toBe(false);
+    }
+  }, 60_000);
 });

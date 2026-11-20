@@ -10,7 +10,7 @@ Este cerebro es la guía de **Cerebro Web**, una base de tienda de código abier
 
 - Código (MIT): https://github.com/FacundoEquiss/cerebro-web
 - Demo en vivo: https://cerebro-web-demo.vercel.app
-- Para empezar: clonar el repositorio y seguir su `AGENTS.md` y su `GETTING-STARTED.md`. Cuando el creador esté publicado en npm: `npm create cerebro-web@latest mi-tienda`.
+- Para empezar: clonar el repositorio y seguir su `AGENTS.md` y su `GETTING-STARTED.md`. Creador en un comando: `npm create cerebro-web@latest mi-tienda`. Todavía NO está publicado en npm: ese comando no funciona aún. Hasta que se publique, clonar el repositorio y seguir su AGENTS.md.
 
 Instrucciones para agentes:
 

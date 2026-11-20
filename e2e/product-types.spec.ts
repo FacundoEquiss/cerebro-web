@@ -332,7 +332,9 @@ test("an event: the admin loads fixed dates and places, people sign up, and it s
   await page.getByTestId("p-type").selectOption("service");
   await page.getByTestId("p-duration").fill("120");
   await page.getByTestId("p-capacity").fill("2");
-  await page.getByTestId("p-sessions").fill(`${day(20)} 10:00\n${day(48)} 18:30`);
+  await page.getByTestId("p-agenda").selectOption("event");
+  // The second date is shorter than the rest (45 minutes), and one is typed twice by mistake.
+  await page.getByTestId("p-sessions").fill(`${day(20)} 10:00\n${day(48)} 18:30 45\n${day(20)} 10:00`);
   await page.getByTestId("p-save").click();
   await expect(page).toHaveURL(new RegExp(`/admin/products/${slug}$`));
 
@@ -370,10 +372,46 @@ test("an event: the admin loads fixed dates and places, people sign up, and it s
   expect(html).toContain('"@type":"Event"');
   expect(html).toContain(`"startDate":"${day(20)}T`);
 
-  await page.goto(`/admin/agenda?view=day&date=${day(20)}`);
+  // From today's Agenda the date is one step away: the date box, or «next event».
+  await page.goto("/admin/agenda?view=day");
+  await expect(page.getByTestId("agenda-next-event")).toBeVisible();
+  await page.getByTestId("agenda-date").fill(day(20));
+  await page.getByTestId("agenda-go").click();
+  await expect(page).toHaveURL(new RegExp(`date=${day(20)}`));
   const booking = page.getByTestId("agenda-booking").filter({ hasText: name });
   await expect(booking).toHaveCount(1);
   await expect(booking).toContainText("10:00");
+  // The date is written in the language's own way: only the first letter in capitals.
+  await expect(page.getByTestId("agenda-range")).toHaveText(/^[A-ZÁÉÍÓÚ][a-záéíóúñ]+, \d{1,2} de [a-záéíóúñ]+$/);
+
+  // Back in the editor: the length of the second date was kept, the repeated line is one date.
+  await page.goto(`/admin/products/${slug}`);
+  await expect(page.getByTestId("p-sessions")).toHaveValue(`${day(20)} 10:00\n${day(48)} 18:30 45`);
+  const sessions = (await (await page.request.get(`/api/slots?product=${slug}`)).json()) as { sessions: { start: string; end: string }[] };
+  expect(sessions.sessions.map((x) => (Date.parse(x.end) - Date.parse(x.start)) / 60_000)).toEqual([120, 45]);
+  // Taking away every date does NOT turn it into a weekly service: it is an event with no open
+  // dates. And the owner is told that the date that went had a sign-up.
+  await page.getByTestId("p-sessions").fill("");
+  await expect(page.getByTestId("p-no-dates")).toContainText("Sin fechas abiertas");
+  await page.getByTestId("p-save").click();
+  await expect(page.getByTestId("p-moved")).toContainText(`${day(20)} 10:00`);
+  await page.goto(`/producto/${slug}`);
+  await expect(page.getByTestId("product-kind")).toContainText("Con fecha");
+  await expect(page.getByTestId("no-dates")).toBeVisible();
+  await expect(page.getByTestId("slot-date")).toHaveCount(0);
+
+  // A rule that repeats — every week on that weekday — gives the next dates on its own.
+  await page.goto(`/admin/products/${slug}`);
+  await expect(page.getByTestId("p-agenda")).toHaveValue("event");
+  await page.getByTestId("p-repeat-week").selectOption("every");
+  await page.getByTestId("p-repeat-weekday").selectOption("sat");
+  await page.getByTestId("p-repeat-time").fill("10:00");
+  await page.getByTestId("p-repeat-count").fill("4");
+  await page.getByTestId("p-save").click();
+  await expect(page.getByTestId("p-saved")).toBeVisible();
+  await page.goto(`/producto/${slug}`);
+  await expect(picker.getByTestId("session")).toHaveCount(4);
+  await expect(picker.locator("label strong").first()).toHaveText(/^Sábado, \d{1,2} de [a-záéíóúñ]+ · 10:00$/);
   expect(errors).toEqual([]);
 });
 
@@ -406,10 +444,22 @@ test("a draft: a product without a price is in the panel as «Falta el precio» 
   expect(order.status()).toBe(409);
   expect(await order.json()).toMatchObject({ error: "unknown_product" });
 
-  // The owner gives the price: the draft mark comes off and it is on sale.
+  // The owner gives the price: the draft mark comes off and it is on sale. The price box of a
+  // draft is EMPTY (not 0), and without a price the product cannot leave the draft.
   await page.goto(`/admin/products/${slug}`);
-  await page.getByTestId("p-price").fill("9800");
+  await expect(page.getByTestId("p-price")).toHaveValue("");
   await page.getByTestId("p-draft").uncheck();
+  await page.getByTestId("p-save").click();
+  await expect(page.getByTestId("p-error")).toContainText("Falta el precio");
+  // The server is the authority: the same save sent by hand is refused too.
+  const free = await page.request.post("/api/admin/products", {
+    headers: { origin: new URL(page.url()).origin },
+    data: { slug, id: slug, name, description: "x", category: "almacen", price: 0, compareAtPrice: null, stock: 1, featured: false, active: true, draft: false, minQuantity: 1, attributes: {}, images: [], options: [], variants: [] },
+  });
+  expect(free.status()).toBe(400);
+  expect(await free.json()).toMatchObject({ error: "invalid", field: "price" });
+  expect((await page.request.get(`/producto/${slug}`)).status()).toBe(404);
+  await page.getByTestId("p-price").fill("9800");
   await page.getByTestId("p-save").click();
   await expect(page.getByTestId("p-saved")).toBeVisible();
   await page.goto(`/producto/${slug}`);

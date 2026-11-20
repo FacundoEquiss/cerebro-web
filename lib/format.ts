@@ -76,3 +76,11 @@ export function describeLine(line: { name: string; variantLabel: string; quantit
     line.slot ? formatSlot(line.slot.start) : "",
   ].filter(Boolean).join(" — ");
 }
+
+/**
+ * «sábado, 6 de marzo» → «Sábado, 6 de marzo». Only the FIRST letter: capitalising every word
+ * (CSS `text-transform: capitalize`) turns «de marzo» into «De Marzo», which is wrong in Spanish.
+ */
+export function capitalFirst(text: string): string {
+  return text.charAt(0).toLocaleUpperCase(languageTag) + text.slice(1);
+}

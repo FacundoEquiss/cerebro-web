@@ -44,7 +44,7 @@ cerebro, «Preguntar sólo lo necesario») y nunca tapar un hueco con un dato in
 |---|---|---|
 | ☐ | 🧑 | La lista de productos: nombre, descripción, **tipo** (físico, digital, servicio, a presupuesto), precio y unidad (unidad, kg, m…), precio de lista, opciones (talles, colores…) y stock; en un servicio, la duración y el cupo por turno; en un digital, el archivo. Fotos sobre las que tengas derechos (ver el cerebro, «Multimedia»). |
 | ☐ | 🤖 | **Un precio que no tenés no se inventa**: cargá ese producto como borrador (`"price": null` en el archivo, o «Borrador» en el panel). No se muestra ni se vende; `npm run check:catalog` lista los borradores para llevárselos al dueño. |
-| ☐ | 🤖 | Los talleres y las clases sueltas son servicios con **fechas fijas** (`service.sessions`, o «Fechas fijas» en el panel), no la agenda semanal. |
+| ☐ | 🤖 | Los talleres y las clases sueltas son servicios con **fechas propias**, no la agenda semanal: una regla que se repite (`service.repeat`, «el primer sábado de cada mes») o fechas sueltas (`service.sessions`). En el panel: «Cómo se reserva → Evento o taller». |
 | ☐ | 🤖 | Cargarlos: editar `content/products.json` o —con una base de datos— crearlos en `/admin/products`. Las fotos que se suben por el panel se achican a WebP (1600 px) y necesitan texto alternativo. |
 | ☐ | 🤖 | Borrar los productos de demo y `public/products/*.svg`. Comprobar que un producto con opciones y sin variantes igual obliga a elegir. |
 

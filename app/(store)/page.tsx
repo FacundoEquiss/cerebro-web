@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { connection } from "next/server";
 import { ArrowRight, Blocks, MessageCircle, RefreshCw, ShieldCheck, Truck } from "lucide-react";
 import { brand } from "@/config/brand";
 import { commerce } from "@/config/commerce";
@@ -13,7 +14,9 @@ import { ProductGrid } from "@/components/catalog/ProductCard";
 import { JsonLd } from "@/components/ui/JsonLd";
 import styles from "./home.module.css";
 
-export const revalidate = 300;
+// Rendered per request: whether this is a demo is decided by the environment the server RUNS
+// with (a Docker image is built once and configured when it starts), never baked at build time.
+// The catalogue it shows is still read through the cache of the data layer.
 
 export function generateMetadata(): Metadata {
   return pageMetadata({ title: `${brand.name} — ${tr(brand.tagline)}`, absoluteTitle: true, description: tr(brand.description), path: "/" });
@@ -25,6 +28,7 @@ const REPO = "https://github.com/FacundoEquiss/cerebro-web";
 const ICONS = { truck: Truck, shield: ShieldCheck, message: MessageCircle, refresh: RefreshCw } as const;
 
 export default async function HomePage() {
+  await connection();
   const [products, categories] = await Promise.all([getProducts(), getCategories()]);
   const featured = sortProducts(products.filter((p) => p.featured), "featured");
   // Featured first, topped up with the rest so the grid always closes its last row (8 or 4).

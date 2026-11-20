@@ -9,11 +9,11 @@ import { CalendarClock, ChevronLeft, ChevronRight } from "lucide-react";
 import { commerce } from "@/config/commerce";
 import { fill, languageTag, t } from "@/i18n";
 import { getSession } from "@/lib/admin/auth";
-import { addDays, serviceRules, slotsOn, wallTime, weekdayOf, zonedInstant } from "@/lib/booking/slots";
+import { addDays, isEvent, serviceRules, slotsOn, upcomingSessions, wallTime, weekdayOf, zonedInstant } from "@/lib/booking/slots";
 import { data } from "@/lib/data";
 import type { Booking } from "@/lib/data/types";
 import { expireStaleOrders } from "@/lib/orders/expiry";
-import { formatSlotTime } from "@/lib/format";
+import { capitalFirst, formatSlotTime } from "@/lib/format";
 import styles from "./agenda.module.css";
 
 export const metadata: Metadata = { title: t.admin.agenda.title };
@@ -25,7 +25,7 @@ const WEEK_START = { mon: 0, tue: 1, wed: 2, thu: 3, fri: 4, sat: 5, sun: 6 } as
 
 const dayTitle = (date: string, long = false) => {
   const [y, m, d] = date.split("-").map(Number) as [number, number, number];
-  return new Intl.DateTimeFormat(languageTag, { weekday: long ? "long" : "short", day: "numeric", month: long ? "long" : "short", timeZone: "UTC" }).format(new Date(Date.UTC(y, m - 1, d)));
+  return capitalFirst(new Intl.DateTimeFormat(languageTag, { weekday: long ? "long" : "short", day: "numeric", month: long ? "long" : "short", timeZone: "UTC" }).format(new Date(Date.UTC(y, m - 1, d))));
 };
 
 export default async function AgendaPage({ searchParams }: { searchParams: Promise<{ view?: string; date?: string }> }) {
@@ -61,6 +61,10 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
     return seats;
   };
 
+  // The next date of an event that comes after the days on screen: one tap away, however far it is.
+  const lastShown = days.at(-1)!;
+  const nextEvent = services.filter(isEvent).flatMap((p) => upcomingSessions(p, now).filter((s) => s.date > lastShown).slice(0, 1).map((s) => ({ date: s.date, name: p.name }))).sort((x, y) => x.date.localeCompare(y.date))[0];
+
   const href = (v: string, d: string) => `/admin/agenda?view=${v}&date=${d}`;
   const stride = view === "day" ? 1 : 7;
   const title = view === "day" ? dayTitle(date, true) : `${dayTitle(days[0]!)} – ${dayTitle(days[6]!)}`;
@@ -80,6 +84,17 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
         <strong className={styles.range} data-testid="agenda-range">{title}</strong>
         <Link href={href(view, addDays(first, stride))} className={styles.arrow} aria-label={a.next} data-testid="agenda-next"><ChevronRight aria-hidden /></Link>
         <Link href={href(view, today)} className="btn btn-secondary">{a.today}</Link>
+        <form action="/admin/agenda" method="get" className={styles.jump}>
+          <input type="hidden" name="view" value={view} />
+          <label htmlFor="agenda-date" className="sr-only">{a.goTo}</label>
+          <input id="agenda-date" className="input" type="date" name="date" defaultValue={date} required data-testid="agenda-date" />
+          <button type="submit" className="btn btn-secondary" data-testid="agenda-go">{a.go}</button>
+        </form>
+        {nextEvent ? (
+          <Link href={href(view, nextEvent.date)} className="btn btn-secondary" data-testid="agenda-next-event">
+            <CalendarClock aria-hidden size={16} /> {fill(a.nextEvent, { name: nextEvent.name, date: dayTitle(nextEvent.date) })}
+          </Link>
+        ) : null}
         <span className={styles.count} data-testid="agenda-count">{bookings.length === 1 ? a.totalOne : fill(a.total, { n: bookings.length })}</span>
       </div>
 

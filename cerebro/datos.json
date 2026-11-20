@@ -1,11 +1,12 @@
 {
  "generado": "2026-11-20",
- "version": "1.2.0",
+ "version": "1.2.1",
  "idioma": "es",
  "enlaces": {
   "repositorio": "https://github.com/FacundoEquiss/cerebro-web",
   "demo": "https://cerebro-web-demo.vercel.app",
-  "crear": "npm create cerebro-web@latest mi-tienda"
+  "crear": "npm create cerebro-web@latest mi-tienda",
+  "crear_estado": "Todavía NO está publicado en npm: ese comando no funciona aún. Hasta que se publique, clonar el repositorio y seguir su AGENTS.md."
  },
  "raiz": {
   "id": "web",
@@ -318,7 +319,8 @@
        "Un borrador no aparece en la tienda, el buscador, el sitemap, los feeds ni los datos estructurados, y el servidor rechaza cualquier pedido que lo incluya.",
        "`npm run check:catalog` y `npm run doctor` listan los borradores: llevarle esa lista al dueño.",
        "Cuando el dueño da el precio, cargarlo y quitar la marca de borrador.",
-       "No confundir con «a presupuesto» (`quote`): ese tipo es para lo que se cotiza caso por caso."
+       "Precio 0 en algo que se vende no se acepta: es un campo vacío, no un producto gratis. Sin precio, queda en borrador.",
+       "No confundir con «a presupuesto» (`quote`): ese tipo es para lo que se cotiza caso por caso. Un `quote` con `\"price\": null` no es borrador: se muestra, sin precio público."
       ],
       "herramientas": [
        "`npm run check:catalog`",
@@ -473,16 +475,20 @@
       "resumen": "Talleres, clases sueltas, charlas y entradas: fechas fijas y lugares limitados, no una agenda semanal.",
       "para_que": "Un evento se vende por inscripción a una fecha; si se arma con la agenda semanal aparecen horarios que no existen.",
       "como": [
-       "Crear un producto de tipo `service` y cargarle las fechas en `service.sessions` (en el panel: «Fechas fijas», una por línea).",
+       "Crear un producto de tipo `service` y, en el panel, elegir «Evento o taller: fechas propias».",
+       "Si se repite (un taller mensual, una clase semanal), cargar la regla: `service.repeat` — «el primer sábado de cada mes a las 10:00» — y cuántas fechas quedan abiertas a la vez. Las fechas se calculan solas desde hoy: no hay que volver a cargarlas.",
+       "Si son fechas sueltas, cargarlas en `service.sessions` (en el panel: «Fechas sueltas», una por línea; si una dura distinto, los minutos al final). Regla y fechas sueltas se suman.",
        "Poner en `capacity` los lugares de cada fecha; la cantidad de la compra es la cantidad de lugares.",
        "La ficha muestra la lista de fechas con «Quedan N lugares» y el botón «Inscribirme»; cada fecha se reserva, se retiene y se libera como un turno.",
-       "Ver las inscripciones en la Agenda del panel. Las fechas pasadas dejan de ofrecerse solas: cargar las próximas.",
+       "Ver las inscripciones en la Agenda del panel (tiene «Próximo evento» e «Ir a una fecha»). Las fechas pasadas dejan de ofrecerse solas; sin regla de repetición hay que cargar las próximas, y `npm run check:catalog` avisa cuando no queda ninguna.",
+       "Dos fechas del mismo evento que se pisan comparten el cupo: si son actividades distintas, van como productos distintos.",
+       "Antes de mover o quitar una fecha, mirar si tiene inscripciones: el panel avisa al guardar, y a esas personas hay que avisarles.",
        "Definir con el dueño la política de cancelación y qué pasa si el evento se suspende.",
        "Necesita una base de datos, igual que los turnos."
       ],
       "herramientas": [
        "docs/product-types.es.md",
-       "editor de productos (fechas fijas)",
+       "editor de productos (evento: repetición y fechas sueltas)",
        "Agenda del panel"
       ],
       "error_comun": "Simular un taller mensual con la agenda semanal: ofrece días que no existen y promete lugares que nadie controla.",
@@ -6530,6 +6536,7 @@
       "para_que": "Entre «anda en mi máquina» y «cobra de verdad» hay una docena de pasos fuera del código; sin orden, se traban o se saltean.",
       "como": [
        "Correr `npm run doctor`: dice qué está listo y cuál es el único paso que sigue.",
+       "Cargar los datos reales del negocio (e-mail, WhatsApp, datos bancarios) en `config/`: `npm run check` y el build los aceptan. El control de «marca privada» solo corre en el repositorio de la plantilla.",
        "Seguir `docs/go-live.es.md` en orden: cada paso dice qué preguntarle al dueño, dónde hacer clic y qué pegar.",
        "Los nombres de los botones de cada proveedor cambian: guiarse por su documentación oficial, enlazada en cada paso.",
        "Las claves las crea y las pega el dueño en su hospedaje: nunca van al repositorio ni al chat.",

@@ -145,9 +145,12 @@ el panel, moverlo y los recordatorios.
 ## Productos de cualquier tipo
 
 Un producto marcado como **Borrador** (todavía falta el precio) muestra **Falta el precio** en la
-lista y no está en la tienda hasta que se carga el precio y se destilda la casilla. Un servicio
-con fechas en **Fechas fijas** es un evento: se vende por inscripción a esas fechas, y sus
-inscripciones se ven en la Agenda.
+lista y no está en la tienda hasta que se carga el precio y se destilda la casilla (su campo de
+precio arranca vacío; el precio 0 se rechaza en todo lo que está a la venta). Un servicio con
+**Cómo se reserva → Evento o taller** se vende por inscripción a sus propias fechas —una regla que
+se repite («el primer sábado de cada mes»), fechas sueltas, o las dos— y sus inscripciones se ven
+en la Agenda, que tiene **Próximo evento** e **Ir a una fecha**. Cuando al guardar se quita una
+fecha que ya tenía inscripciones, el editor dice cuál.
 
 El editor de productos tiene un bloque **Tipo y forma de venta**: físico (unidad de medida, paso,
 mínimo y máximo), digital (el archivo privado y el nombre que ve el cliente), servicio (duración

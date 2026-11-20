@@ -382,8 +382,8 @@
         "en": "Cooking workshop"
       },
       "description": {
-        "es": "Un taller presencial de tres horas, con cupo de 12 personas. Las fechas son de EJEMPLO: cargá las reales. Texto de EJEMPLO: describí acá lo tuyo.",
-        "en": "A three-hour in-person workshop, for up to 12 people. The dates are EXAMPLES: load the real ones. EXAMPLE text: describe your own here."
+        "es": "Un taller presencial de tres horas, con cupo de 12 personas. Las fechas son de EJEMPLO (el primer sábado de cada mes): cargá las reales. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "A three-hour in-person workshop, for up to 12 people. The dates are EXAMPLES (the first Saturday of each month): load the real ones. EXAMPLE text: describe your own here."
       },
       "category": "gastronomia",
       "type": "service",
@@ -395,17 +395,12 @@
       "service": {
         "durationMinutes": 180,
         "capacity": 12,
-        "sessions": [
-          {
-            "start": "2027-03-06T10:00"
-          },
-          {
-            "start": "2027-04-03T10:00"
-          },
-          {
-            "start": "2027-05-08T10:00"
-          }
-        ]
+        "repeat": {
+          "week": 1,
+          "weekday": "sat",
+          "time": "10:00",
+          "count": 3
+        }
       },
       "attributes": {},
       "createdAt": "2026-03-07T00:00:00.000Z",

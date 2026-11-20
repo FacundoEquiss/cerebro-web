@@ -25,7 +25,10 @@ bank transfer or message. Cards (7), e-mail (8) and the domain (9) can come righ
 - 🧑 Have an e-mail account for the business, and decide who will hold the accounts (they are the
   owner's, not the agent's).
 - 🤖 The store is already adapted: brand, catalogue and commercial rules
-  ([`GETTING-STARTED.md`](../GETTING-STARTED.md)). `npm run check` passes.
+  ([`GETTING-STARTED.md`](../GETTING-STARTED.md)), **with the real data**: the real e-mail,
+  WhatsApp, address and bank details go in `config/brand.ts` and `config/commerce.ts`.
+  `npm run check` and `npm run build` accept them — the scan for "private brand data" protects
+  the template's repository only and is skipped in a store. `npm run check` passes.
 - 🤖 The code is in a GitHub repository of the owner (the hosting service deploys from there):
   <https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-new-repository>.
 

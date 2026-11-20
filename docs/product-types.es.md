@@ -153,10 +153,10 @@ Un servicio tiene `service: { "durationMinutes": 30, "capacity": 1 }`.
 - **Lo que no está hecho**: recordatorios, que el cliente reprograme, una agenda por profesional,
   sincronizar calendarios, señas. Ver [`ROADMAP.md`](../ROADMAP.md).
 
-## Eventos: fechas fijas y lugares limitados
+## Eventos: fechas propias y lugares limitados
 
-Un taller, una clase suelta, una charla, una entrada: no pasa «todos los lunes a las 10», pasa en
-**estas fechas**. Es un servicio con una lista de sesiones:
+Un taller, una clase suelta, una charla, una entrada: no pasa «todos los lunes de 9 a 18», pasa en
+**sus propias fechas**. Es un servicio con una regla que se repite, una lista de fechas, o las dos:
 
 ```jsonc
 {
@@ -164,24 +164,43 @@ Un taller, una clase suelta, una charla, una entrada: no pasa «todos los lunes 
   "service": {
     "durationMinutes": 180,
     "capacity": 12,                                   // lugares de CADA fecha
-    "sessions": [{ "start": "2027-03-06T10:00" }, { "start": "2027-04-03T10:00", "durationMinutes": 240 }]
+    // «El primer sábado de cada mes a las 10:00», con las próximas 3 fechas abiertas:
+    "repeat": { "week": 1, "weekday": "sat", "time": "10:00", "count": 3 },
+    // …y/o fechas sueltas. Una fecha puede tener su propia duración:
+    "sessions": [{ "start": "2027-03-20T18:00", "durationMinutes": 240 }],
+    "blockedDates": ["2027-01-02"]                    // una fecha de la regla que no se hace
   }
 }
 ```
 
-En el panel: **Tipo → Servicio**, y una fecha por línea en **Fechas fijas**.
-
-- Cuando hay `sessions`, **sólo existen esas fechas**: la agenda semanal, los días cerrados, la
-  anticipación y la ventana del calendario no se aplican. `start` es hora de `booking.timeZone`.
+- **`repeat`** — `week` es `1`, `2`, `3`, `4`, `"last"` (el último de cada mes) o `"every"` (todas
+  las semanas); `weekday` es `mon`…`sun`; `time` es hora de `booking.timeZone`; `count` es cuántas
+  fechas próximas quedan abiertas a la vez (3 si no se indica, 24 como máximo). Las fechas se
+  calculan desde hoy: el evento **nunca se queda sin fechas** y nadie tiene que volver a cargarlas.
+- **`sessions`** — fechas explícitas, para lo que no sigue una regla. Se suman; una fecha escrita
+  dos veces es una sola.
+- En el panel: **Tipo → Servicio**, y en **Cómo se reserva → Evento o taller**. Ahí se elige la
+  repetición y se escriben las fechas sueltas, una por línea (`2027-03-20 18:00`, más los minutos
+  al final si esa fecha dura distinto: `2027-03-20 18:00 240`).
+- **Un evento sigue siendo evento aunque no le queden fechas**: la tienda dice «Por ahora no hay
+  fechas abiertas» en vez de caer en la agenda semanal. `npm run check:catalog` lo avisa.
+- La agenda semanal, la anticipación y la ventana del calendario no se aplican a un evento.
 - La tienda muestra una **lista de fechas** con «Quedan N lugares» y el botón **Inscribirme**; la
   cantidad es la cantidad de lugares. Una fecha que ya pasó deja de ofrecerse sola.
 - Todo lo demás es el motor de reservas de la sección anterior: los lugares se reservan al crear
   el pedido (sin sobreventa), las retenciones vencen, los topes por pedido y por comprador, la
-  Agenda, y la necesidad de un adaptador que guarde pedidos.
-- Datos estructurados: un `Event` por cada fecha próxima (inicio, fin y precio). `location` sólo
-  se declara si `brand.contact.address` está cargado: nunca se inventa.
-- `npm run check:catalog` avisa cuando a un evento no le quedan fechas. Las fechas de los presets
-  son ejemplos a futuro: cargá las reales.
+  Agenda (con **Próximo evento** e **Ir a una fecha**), y la necesidad de un adaptador que guarde
+  pedidos.
+- **Mover o quitar una fecha que tiene inscripciones**: las reservas siguen en sus pedidos y en la
+  Agenda. El panel avisa al guardar, con la fecha y los lugares; a esas personas les avisa el dueño.
+- **Dos fechas del mismo evento que se pisan comparten el cupo** (el motor cuenta lugares por
+  producto y horario). `npm run check:catalog` lo avisa. Dos actividades a la misma hora son dos
+  productos.
+- Datos estructurados: un `Event` por cada fecha próxima (inicio, fin y precio), con `SoldOut`
+  cuando la fecha está completa. `location` sólo se declara si `brand.contact.address` está
+  cargado: nunca se inventa.
+- `npm run check:catalog` también avisa de una fecha escrita dos veces y de una fecha a una hora
+  que los relojes saltean ese día (cambio de hora): nadie podría inscribirse.
 - **Lo que no está hecho**: lista de espera, entradas con código para controlar en la puerta, y
   precio o cupo distinto por fecha. Ver [`ROADMAP.md`](../ROADMAP.md).
 
@@ -194,8 +213,12 @@ Cuando el dueño todavía no dio el precio, **no lo inventes**. Cargá el produc
   `llms.txt` ni los datos estructurados, y el servidor rechaza cualquier pedido que lo incluya.
 - El panel lo lista con **Falta el precio**. `npm run check:catalog` y `npm run doctor` listan
   todos los borradores: esa es la lista de preguntas para el dueño.
-- Cuando llega el precio, cargalo y destildá la casilla. (Un producto que se cotiza caso por caso
-  no es un borrador: es el tipo `quote`.)
+- Cuando llega el precio, cargalo y destildá la casilla. El campo del precio de un borrador
+  arranca vacío, y **el precio 0 se rechaza en todo lo que está a la venta** (en el formulario y en
+  el servidor): 0 es un campo vacío, no un producto gratis.
+- **Un presupuesto es la excepción.** `type: "quote"` no tiene precio público por naturaleza, así
+  que ahí `"price": null` (o `0`) es lo normal: el producto se muestra, con su formulario de
+  consulta. Para ocultar un presupuesto que no está listo, marcalo con `"draft": true`.
 
 ## Presupuestos
 

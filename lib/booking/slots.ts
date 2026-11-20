@@ -6,7 +6,7 @@
 // saving changes and the server's own clock cannot move an appointment.
 
 import { commerce } from "@/config/commerce";
-import { OrderError, type Product, type ServiceSettings, type Slot, type Weekday, type WeeklyAvailability } from "@/lib/data/types";
+import { OrderError, type EventRepeat, type Product, type ServiceSettings, type Slot, type Weekday, type WeeklyAvailability } from "@/lib/data/types";
 
 const WEEKDAYS: Weekday[] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -117,12 +117,14 @@ export function addDays(date: string, days: number): string {
 const minutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
 const clock = (total: number) => `${pad(Math.floor(total / 60))}:${pad(total % 60)}`;
 
-/** An event is a service with fixed dates (`service.sessions`), even when none is left. */
+/** An event is a service with its own dates (a list, a rule that repeats, or both), even when none is left. */
 export function isEvent(product: { service?: ServiceSettings | null; type?: string }): boolean {
-  return Array.isArray(product.service?.sessions);
+  return Array.isArray(product.service?.sessions) || Boolean(product.service?.repeat);
 }
 
 const SESSION = /^(\d{4}-\d{2}-\d{2})T(([01]\d|2[0-3]):[0-5]\d)$/;
+export const REPEAT_DEFAULT_COUNT = 3;
+export const REPEAT_MAX_COUNT = 24;
 
 export interface SessionSlot extends DaySlot {
   date: string;
@@ -130,19 +132,50 @@ export interface SessionSlot extends DaySlot {
   slot: string;
 }
 
-/** The sessions of an event that have not started yet, in order. */
+const daysInMonth = (date: string) => new Date(Date.UTC(Number(date.slice(0, 4)), Number(date.slice(5, 7)), 0)).getUTCDate();
+
+/** True when `date` is the day a repeat rule names: «the 1st Saturday», «the last Friday», «every Tuesday». */
+export function matchesRepeat(date: string, repeat: Pick<EventRepeat, "week" | "weekday">): boolean {
+  if (weekdayOf(date) !== repeat.weekday) return false;
+  const day = Number(date.slice(8, 10));
+  if (repeat.week === "every") return true;
+  if (repeat.week === "last") return day + 7 > daysInMonth(date);
+  return Math.ceil(day / 7) === repeat.week;
+}
+
+/** The next dates of a repeat rule, from today (wall time of the store), as session starts. */
+export function repeatDates(repeat: EventRepeat | undefined, now: number, timeZone: string, blocked: readonly string[] = []): string[] {
+  if (!repeat || !TIME.test(repeat.time ?? "") || !WEEKDAYS.includes(repeat.weekday)) return [];
+  const count = Math.min(REPEAT_MAX_COUNT, Math.max(1, Math.trunc(repeat.count ?? REPEAT_DEFAULT_COUNT)));
+  const today = wallTime(now, timeZone).date;
+  const out: string[] = [];
+  // Two years of days is far more than any rule needs to give its dates.
+  for (let i = 0; i < 740 && out.length < count; i++) {
+    const date = addDays(today, i);
+    if (!matchesRepeat(date, repeat) || blocked.includes(date)) continue;
+    const start = existingInstant(date, repeat.time, timeZone);
+    if (start && start.getTime() > now) out.push(`${date}T${repeat.time}`);
+  }
+  return out;
+}
+
+/**
+ * The sessions of an event that have not started yet, in order: the dates of its list plus the
+ * ones its repeat rule gives. A date written twice is one session.
+ */
 export function upcomingSessions(product: Pick<Product, "service">, now: number, defaults?: BookingRules): SessionSlot[] {
   const rules = serviceRules(product, defaults);
-  const out: SessionSlot[] = [];
-  for (const session of product.service?.sessions ?? []) {
-    const m = SESSION.exec(session.start ?? "");
-    if (!m) continue;
+  const out = new Map<string, SessionSlot>();
+  const add = (slot: string, minutesLong: number) => {
+    const m = SESSION.exec(slot);
+    if (!m || out.has(slot)) return;
     const start = existingInstant(m[1]!, m[2]!, rules.timeZone);
-    if (!start || start.getTime() <= now) continue;
-    const minutesLong = Math.max(5, Math.trunc(session.durationMinutes ?? rules.durationMinutes));
-    out.push({ date: m[1]!, time: m[2]!, slot: `${m[1]}T${m[2]}`, start: start.toISOString(), end: new Date(start.getTime() + minutesLong * MINUTE).toISOString() });
-  }
-  return out.sort((a, b) => a.start.localeCompare(b.start));
+    if (!start || start.getTime() <= now) return;
+    out.set(slot, { date: m[1]!, time: m[2]!, slot, start: start.toISOString(), end: new Date(start.getTime() + minutesLong * MINUTE).toISOString() });
+  };
+  for (const session of product.service?.sessions ?? []) add(session.start ?? "", Math.max(5, Math.trunc(session.durationMinutes ?? rules.durationMinutes)));
+  for (const slot of repeatDates(product.service?.repeat, now, rules.timeZone, product.service?.blockedDates)) add(slot, rules.durationMinutes);
+  return [...out.values()].sort((a, b) => a.start.localeCompare(b.start));
 }
 
 export interface DaySlot extends Slot {

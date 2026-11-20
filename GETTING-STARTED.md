@@ -44,7 +44,7 @@ The agent should ask for everything in the 🧑 column **in one batch** at the s
 |---|---|---|
 | ☐ | 🧑 | The product list: name, description, **type** (physical, digital, service, on a quote), price and unit (piece, kg, m…), list price, options (sizes, colours…), stock; for a service, its duration and seats per slot; for a digital product, the file. Photos you own the rights to (see the brain, «Multimedia»). |
 | ☐ | 🤖 | **A price you do not have is not invented**: load that product as a draft (`"price": null` in the file, or "Draft" in the panel). It is not shown or sold; `npm run check:catalog` lists the drafts to take to the owner. |
-| ☐ | 🤖 | Workshops and one-off classes are services with **fixed dates** (`service.sessions`, or "Fixed dates" in the panel), not the weekly agenda. |
+| ☐ | 🤖 | Workshops and one-off classes are services with **their own dates**, not the weekly agenda: a rule that repeats (`service.repeat`, "the first Saturday of each month") or single dates (`service.sessions`). In the panel: "How it is booked → Event or workshop". |
 | ☐ | 🤖 | Load them: edit `content/products.json`, or — with a database — create them in `/admin/products`. Photos uploaded in the panel are shrunk to WebP (1600 px) and need alternative text. |
 | ☐ | 🤖 | Upload the file of each digital product from the panel (it goes to the private storage, never to `public/`). Buy one, mark it paid, download it. |
 | ☐ | 🤖 | Delete the example products, `public/products/*.svg`, `content/downloads/` and — once the store is yours — `content/presets/`. Check a product with options but no variants still forces the choice. |

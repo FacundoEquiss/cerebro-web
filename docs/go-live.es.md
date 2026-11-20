@@ -26,7 +26,11 @@ enseguida después.
 - 🧑 Tener una cuenta de e-mail del negocio y decidir a nombre de quién van las cuentas (son del
   dueño, no del agente).
 - 🤖 La tienda ya está adaptada: marca, catálogo y reglas comerciales
-  ([`GETTING-STARTED.es.md`](../GETTING-STARTED.es.md)). `npm run check` pasa.
+  ([`GETTING-STARTED.es.md`](../GETTING-STARTED.es.md)), **con los datos reales**: el e-mail, el
+  WhatsApp, la dirección y los datos bancarios reales van en `config/brand.ts` y
+  `config/commerce.ts`. `npm run check` y `npm run build` los aceptan: el control de «datos de
+  una marca privada» protege sólo el repositorio de la plantilla y en una tienda se saltea.
+  `npm run check` pasa.
 - 🤖 El código está en un repositorio de GitHub del dueño (el hospedaje publica desde ahí):
   <https://docs.github.com/es/repositories/creating-and-managing-repositories/creating-a-new-repository>.
 

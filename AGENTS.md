@@ -45,8 +45,10 @@ disagree, check the code: it is what runs.
    `purchase` event is sent by the server, once per order, with the order id as `event_id`.
 7. **No secrets in the repo, the browser or the logs.** Secrets are server-side environment
    variables validated in `lib/env.ts`. A `NEXT_PUBLIC_` variable is public.
-8. **No trace of any private brand** in this template: `npm run check` enforces it. Examples use
-   `example.com`.
+8. **No trace of any private brand in the TEMPLATE**: examples use `example.com`, and the brand
+   scan of `npm run check` enforces it in the template's own repository (in its CI, and on a
+   machine that has a `.brand-blocklist`). **In a store it is skipped**: a real store carries its
+   real e-mail, phone and bank details in `config/`, and its check, build and CI accept them.
 9. **English for code, comments and commits.** UI texts go in **both** `i18n/es.ts` and
    `i18n/en.ts`. Docs are bilingual (`X.md` and `X.es.md`).
 10. **Ask before**: publishing, spending money, sending messages to real people, changing
@@ -78,7 +80,7 @@ disagree, check the code: it is what runs.
 | `proxy.ts` | Guards `/admin` and `/api/admin` |
 | `stores/` | Browser state (the cart) |
 | `scripts/` | `check-brand`, `check-i18n`, `admin-hash`, `preset`, `generate-images`, `generate-samples`, `generate-seed`, `screenshots` |
-| `tests/fixtures/` | The store the tests run against (catalogue, home texts, brand, commercial rules) — never the owner's files |
+| `tests/fixtures/` | The store the tests run against (catalogue, home texts, brand, commercial rules, images, sample files) — never the owner's files |
 | `packages/create-cerebro-web/` | The one-command creator (`npm create cerebro-web`), not published to npm yet |
 | `tests/`, `e2e/` | Vitest unit tests, Playwright end-to-end tests |
 | `cerebro/` | The brain: `datos.json` (source), `armar.mjs` (builder), `dist/` (generated, committed) |
@@ -104,7 +106,7 @@ disagree, check the code: it is what runs.
 ## 4. Verify — it is not optional
 
 ```bash
-npm run check       # no private brand, dictionaries in step, YOUR catalogue is valid
+npm run check       # dictionaries in step, YOUR catalogue is valid (+ the brand scan, in the template only)
 npm run typecheck
 npm test
 npm run build
@@ -112,10 +114,14 @@ npm run test:e2e    # the production build, in a real browser, phone and compute
 ```
 
 **The tests have their own store.** The unit tests and the end-to-end tests run against
-`tests/fixtures/` — its own catalogue, home texts, brand and commercial rules — and never against
-`content/products.json`, `content/site.json`, `config/brand.ts` or `config/commerce.ts`. So they
-stay green whatever the business sells: after `npm run preset <name>`, and with a catalogue made
-by hand. If a test fails, the CODE changed, not the catalogue.
+`tests/fixtures/` — its own catalogue, home texts, brand, commercial rules, product images and
+sample files — and never against `content/products.json`, `content/site.json`, `config/brand.ts`,
+`config/commerce.ts`, `public/products/` or `content/downloads/`. So they stay green whatever the
+business sells: after `npm run preset <name>`, with a catalogue made by hand, and after deleting
+the example images and files. If a test fails, the CODE changed, not the catalogue.
+
+`npm run test:e2e` builds that test store into `.next-fixtures/` (ignored by git): `.next/` is
+always YOUR store, so `npm start` after the tests serves the real one.
 
 **After changing the catalogue** (products, categories, home texts), run:
 
@@ -149,7 +155,7 @@ model and admin panel are all yours to change. The demo (a mixed catalogue) is o
    to the business (products, categories, home texts, a suggested palette). Read the node of that
    line of business in the brain, branch **«Adaptar a tu rubro»**.
 2. Give every product its **type** — `physical`, `digital`, `service` (an appointment, or an
-   **event** when it has fixed dates in `service.sessions`) or `quote` — and, when it is
+   **event** when it has its own dates: `service.repeat` or `service.sessions`) or `quote` — and, when it is
    sold by weight or measure, its `unit`, `step` and minimum. [`docs/product-types.md`](docs/product-types.md)
    says what each one does and what the server guarantees.
 3. Replace **every** EXAMPLE with what the owner confirmed. A preset's prices, opening hours,

@@ -48,8 +48,11 @@ coinciden, revisá el código: es lo que corre.
    pedido como `event_id`.
 7. **Ningún secreto en el repo, el navegador ni los logs.** Los secretos son variables de entorno
    del servidor, validadas en `lib/env.ts`. Una variable `NEXT_PUBLIC_` es pública.
-8. **Sin rastros de ninguna marca privada** en esta plantilla: lo controla `npm run check`. Los
-   ejemplos usan `example.com`.
+8. **Sin rastros de ninguna marca privada en la PLANTILLA**: los ejemplos usan `example.com`, y
+   el control de marca de `npm run check` lo exige en el repositorio de la plantilla (en su CI, y
+   en una máquina que tiene `.brand-blocklist`). **En una tienda se saltea**: una tienda real lleva
+   su e-mail, su teléfono y sus datos bancarios reales en `config/`, y su check, su build y su CI
+   los aceptan.
 9. **Código, comentarios y commits en inglés.** Los textos de la interfaz van en **los dos**
    diccionarios, `i18n/es.ts` e `i18n/en.ts`. La documentación es bilingüe (`X.md` y `X.es.md`).
 10. **Preguntá antes de**: publicar, gastar plata, mandarle mensajes a gente real, cambiar datos
@@ -81,7 +84,7 @@ coinciden, revisá el código: es lo que corre.
 | `scripts/` | `check-brand`, `check-i18n`, `admin-hash`, `preset`, `generate-images`, `generate-samples`, `generate-seed`, `screenshots` |
 | `lib/booking/`, `lib/orders/download.ts`, `lib/admin/quotes.ts` | Turnos de un servicio, enlace de descarga firmado y presupuestos |
 | `db/migrations/` | Un archivo por cambio de esquema, para bases que ya existen |
-| `tests/fixtures/` | La tienda contra la que corren las pruebas (catálogo, textos, marca y reglas comerciales): nunca los archivos del dueño |
+| `tests/fixtures/` | La tienda contra la que corren las pruebas (catálogo, textos, marca, reglas comerciales, imágenes y archivos de ejemplo): nunca los archivos del dueño |
 | `packages/create-cerebro-web/` | El creador de un comando (`npm create cerebro-web`), todavía sin publicar en npm |
 | `tests/`, `e2e/` | Pruebas unitarias (Vitest) y de punta a punta (Playwright) |
 | `cerebro/` | El cerebro: `datos.json` (fuente), `armar.mjs` (generador), `dist/` (generado y commiteado) |
@@ -111,7 +114,7 @@ coinciden, revisá el código: es lo que corre.
 ## 4. Verificar: no es opcional
 
 ```bash
-npm run check       # sin marca privada, diccionarios parejos y TU catálogo válido
+npm run check       # diccionarios parejos y TU catálogo válido (+ el control de marca, sólo en la plantilla)
 npm run typecheck
 npm test
 npm run build
@@ -119,11 +122,15 @@ npm run test:e2e    # el build de producción, en un navegador real, celu y comp
 ```
 
 **Las pruebas tienen su propia tienda.** Las pruebas unitarias y las de punta a punta corren
-contra `tests/fixtures/` —su catálogo, sus textos de portada, su marca y sus reglas comerciales— y
-nunca contra `content/products.json`, `content/site.json`, `config/brand.ts` ni
-`config/commerce.ts`. Por eso siguen en verde venda lo que venda el negocio: después de
-`npm run preset <nombre>` y con un catálogo hecho a mano. Si una prueba falla, cambió el CÓDIGO,
-no el catálogo.
+contra `tests/fixtures/` —su catálogo, sus textos de portada, su marca, sus reglas comerciales, sus
+imágenes de producto y sus archivos de ejemplo— y nunca contra `content/products.json`,
+`content/site.json`, `config/brand.ts`, `config/commerce.ts`, `public/products/` ni
+`content/downloads/`. Por eso siguen en verde venda lo que venda el negocio: después de
+`npm run preset <nombre>`, con un catálogo hecho a mano y después de borrar las imágenes y los
+archivos de ejemplo. Si una prueba falla, cambió el CÓDIGO, no el catálogo.
+
+`npm run test:e2e` construye esa tienda de prueba en `.next-fixtures/` (ignorada por git): `.next/`
+es siempre TU tienda, así que `npm start` después de las pruebas sirve la real.
 
 **Después de cambiar el catálogo** (productos, categorías, textos de la portada), corré:
 
@@ -158,7 +165,7 @@ un ejemplo.
    parecido al negocio (productos, categorías, textos de la portada y una paleta sugerida). Leé
    el nodo de ese rubro en el cerebro, rama **«Adaptar a tu rubro»**.
 2. Dale a cada producto su **tipo** —`physical`, `digital`, `service` (un turno, o un **evento**
-   cuando tiene fechas fijas en `service.sessions`) o `quote`— y, si se vende
+   cuando tiene fechas propias: `service.repeat` o `service.sessions`) o `quote`— y, si se vende
    por peso o medida, su `unit`, `step` y mínimo. [`docs/product-types.es.md`](docs/product-types.es.md)
    dice qué hace cada uno y qué garantiza el servidor.
 3. Reemplazá **cada** EJEMPLO por lo que confirmó el dueño. Los precios, horarios, políticas y

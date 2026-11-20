@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from "react";
 import { fill, languageTag, t } from "@/i18n";
+import { capitalFirst } from "@/lib/format";
 import styles from "./SlotPicker.module.css";
 
 interface SlotOption {
@@ -15,7 +16,7 @@ interface SlotOption {
 
 const dayLabel = (date: string) => {
   const [y, m, d] = date.split("-").map(Number) as [number, number, number];
-  return new Intl.DateTimeFormat(languageTag, { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(y, m - 1, d)));
+  return capitalFirst(new Intl.DateTimeFormat(languageTag, { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(y, m - 1, d))));
 };
 
 export function SlotPicker({

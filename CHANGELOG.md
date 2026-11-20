@@ -13,49 +13,80 @@ All notable changes to this project are documented here. The format follows
 ### Added
 
 - **The tests have their own store** (`tests/fixtures/`: catalogue, home texts, brand and
-  commercial rules). `npm test` and `npm run test:e2e` no longer read `content/` or `config/`, so
-  they stay green after `npm run preset <name>` and with any catalogue made by hand. The
-  end-to-end build switches to the fixtures with `CEREBRO_FIXTURES=1` (`tsconfig.fixtures.json`).
+  commercial rules, product images and sample files). `npm test` and `npm run test:e2e` no longer
+  read `content/`, `config/`, `public/products/` or `content/downloads/`, so they stay green after
+  `npm run preset <name>`, with any catalogue made by hand, and after deleting the example images
+  and files. The end-to-end build switches to the fixtures with `CEREBRO_FIXTURES=1`
+  (`tsconfig.fixtures.json`) and is written to `.next-fixtures/`: `.next/` is always the real
+  store. `next.config.ts` imports nothing from `tests/`.
 - **`npm run check:catalog`** (part of `npm run check`): validates YOUR catalogue — slugs,
   categories, types, images, variants, quantity rules, dates — and lists drafts and texts still
-  marked EXAMPLE. A CI job applies every preset and runs the checks and the unit tests.
+  marked EXAMPLE. It answers a badly shaped file with a sentence, never a stack trace, and accepts
+  the ids a business already uses (`SKU_123`). A CI job applies every preset and runs the checks
+  and the unit tests — in the template's repository only.
 - **`docs/go-live.md`** (es/en): from zero to selling for an owner who does not program, written
   for an agent to lead them — database, schema, private bucket, variables, admin user, payments,
   e-mail, domain, demo off — with links to each provider's official documentation.
   **`npm run doctor`** says what is ready and the single next step.
 - **`packages/create-cerebro-web`**: `npm create cerebro-web@latest my-store` (clone or tarball,
-  preset, install, fresh git, next steps; `--preset`, `--no-install`, `--no-git`, `--yes`). **Not
+  preset, install, fresh git, next steps; `--preset`, `--no-install`, `--no-git`, `--yes`). The new
+  store keeps the brain, `AGENTS.md`, `CLAUDE.md` and `ROADMAP.md`, starts its own `CHANGELOG.md`
+  and passes its own `check`, `typecheck`, `test` and `build`. git and tar run without a shell
+  (folders with spaces work, on Windows too); a failed run removes the folder it made. **Not
   published to npm yet** — `PUBLISHING.md` has the steps for the owner; until then, `git clone`.
-- **Events with fixed dates**: a service with `service.sessions` is sold by sign-up to those
-  dates, each with its places — a list of dates with "N places left" and "Sign up" instead of the
-  weekly calendar — on the same booking engine (holds, limits, overlap, Agenda). `Event`
-  structured data; "Fixed dates" in the product editor; examples in three presets.
+- **Events with their own dates**: a service is sold by sign-up to dates, each with its places —
+  a list of dates with "N places left" and "Sign up" instead of the weekly calendar — on the same
+  booking engine (holds, limits, overlap, Agenda). The dates are a **rule that repeats**
+  (`service.repeat`: "the first Saturday of each month at 10:00", the next N open — it never runs
+  out), **single dates** (`service.sessions`, each with its own length if needed), or both.
+  `Event` structured data, `SoldOut` when a date is full. In the editor: "How it is booked →
+  Event or workshop"; an event with no date left stays an event; saving warns when a date with
+  sign-ups goes away. The Agenda has "Next event" and "Go to a date". The demo and the presets
+  use a repeating rule, so their example event always has dates.
 - **Drafts**: a product without a price (`"price": null`, or "Draft" in the panel) is hidden from
   the store, the search, the sitemap, the feeds, `llms.txt` and the structured data, and cannot be
-  ordered. The panel shows "Price missing"; `check:catalog` and `doctor` list them.
+  ordered. The panel shows "Price missing"; `check:catalog` and `doctor` list them. Price 0 is
+  refused on anything for sale (form, server and database). A `quote` with `"price": null` is not
+  a draft: a quote has no public price by nature.
 - The published brain links to the code and the demo (`enlaces` in `cerebro/datos.json`), and has
   new nodes: events, drafts, and "from zero to selling" (334 nodes).
 
 ### Changed
 
+- **The brand scan protects the template, not your store.** `scripts/check-brand.mjs` now runs
+  only in the template's own CI and on a machine that has a `.brand-blocklist`, and it is no
+  longer a `prebuild` step. A store with its real e-mail, phone and bank details passes
+  `npm run check`, `npm run build` and its CI.
 - **Example orders load only in demo mode.** A real store (`DEMO_MODE=false`) starts with an empty
   panel — they used to hold seats of real appointments. `DEMO_ORDERS=true|false` overrides it.
+  Example orders written to `.data/orders.json` while the folder was a demo are taken out once
+  demo mode is off.
+- **The home page is rendered per request**, so the demo block follows the environment the
+  server runs with (a Docker image configured at start), not the one it was built with.
+- Dates are written with only their first letter in capitals ("Sábado, 6 de marzo").
 - The words of a booking are neutral where a line may be an appointment or an event ("Date and
   time", "Your booking").
 - The admin product page offers "view in store" only for products that are on sale.
 
 ### Migrating from 0.2.0
 
-1. **Database**: run `db/migrations/0003_drafts.sql` and then `db/schema.sql` again (or only
-   `db/schema.sql`). It adds `products.draft` and hides drafts from the public key. Back up and
-   ask the owner first. Nothing is deleted; no existing product becomes a draft.
+1. **Database**: run `db/migrations/0003_drafts.sql` (or `db/schema.sql`; either one is enough).
+   The migration is complete on its own: it adds `products.draft`, hides drafts from the public
+   key and replaces the four functions that must know about drafts. Back up and ask the owner
+   first. Nothing is deleted; no existing product becomes a draft. **Do it before deploying the
+   0.3.0 code**: on a database without the migration, saving a product fails with a message that
+   names this file, instead of putting a draft on sale.
 2. **Your own data adapter**: `Product` has a new field, `draft`; `listProducts` must leave drafts
    out and `createOrder` must refuse them.
 3. **Tests you wrote against the demo catalogue** now run against `tests/fixtures/products.json`
    (the same products as the 0.2.0 demo). Tests that read `content/products.json` on purpose keep
    doing so.
 4. **Demo orders**: if you relied on the example orders outside demo mode, set `DEMO_ORDERS=true`.
-5. Nothing else changes for a store without events or drafts.
+5. **A product for sale with price 0** can no longer be saved from the panel: give it a price, mark
+   it as a draft, or make it a `quote`.
+6. **`prebuild` is gone.** If your deploy relied on `npm run build` running the brand scan, call
+   `npm run check` in your CI instead.
+7. Nothing else changes for a store without events or drafts.
 
 
 ## [0.2.0] - 2026-11-20

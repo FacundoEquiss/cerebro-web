@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ImagePlus, Plus, Trash2, FileUp } from "lucide-react";
 import { fill, paths, t } from "@/i18n";
 import { generateVariants, productInputSchema, slugify } from "@/lib/admin/products";
+import { isEvent } from "@/lib/booking/slots";
 import { selectionLabel } from "@/lib/data/availability";
-import { PRODUCT_TYPES, type Category, type Product, type ProductImage, type ProductOption, type ProductType, type Variant } from "@/lib/data/types";
+import { PRODUCT_TYPES, type Category, type Product, type ProductImage, type ProductOption, type ProductType, type Variant, type Weekday } from "@/lib/data/types";
 import { adminFetch } from "./api";
 import { shrinkImage } from "./image";
 import styles from "./ProductEditor.module.css";
@@ -54,7 +55,8 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
   const [slugTouched, setSlugTouched] = useState(!isNew);
   const [description, setDescription] = useState(product.description);
   const [category, setCategory] = useState(product.category);
-  const [price, setPrice] = useState(isNew ? "" : String(product.price));
+  // A draft without a price starts EMPTY, not at 0: unticking «draft» must ask for the price.
+  const [price, setPrice] = useState(isNew || (product.draft && product.price === 0) ? "" : String(product.price));
   const [compareAt, setCompareAt] = useState(product.compareAtPrice === null ? "" : String(product.compareAtPrice));
   const [stock, setStock] = useState(product.stock === null ? "" : String(product.stock));
   const [active, setActive] = useState(product.active);
@@ -111,8 +113,16 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
   const [maxQuantity, setMaxQuantity] = useState(product.maxQuantity === null ? "" : String(product.maxQuantity));
   const [duration, setDuration] = useState(String(product.service?.durationMinutes ?? 60));
   const [capacity, setCapacity] = useState(String(product.service?.capacity ?? 1));
-  // An event: fixed dates, one per line ("2026-12-05 10:00").
-  const [sessionsText, setSessionsText] = useState((product.service?.sessions ?? []).map((x) => x.start.replace("T", " ")).join("\n"));
+  // An event: its own dates instead of the weekly agenda. It stays an event with no date left.
+  const [eventKind, setEventKind] = useState(isEvent(product));
+  // One date per line ("2026-12-05 10:00"); a third number is the length of THAT date in minutes.
+  const [sessionsText, setSessionsText] = useState((product.service?.sessions ?? []).map((x) => `${x.start.replace("T", " ")}${x.durationMinutes ? ` ${x.durationMinutes}` : ""}`).join("\n"));
+  const repeat = product.service?.repeat;
+  const [repeatWeek, setRepeatWeek] = useState(repeat ? String(repeat.week) : "");
+  const [repeatWeekday, setRepeatWeekday] = useState<Weekday>(repeat?.weekday ?? "sat");
+  const [repeatTime, setRepeatTime] = useState(repeat?.time ?? "10:00");
+  const [repeatCount, setRepeatCount] = useState(String(repeat?.count ?? 3));
+  const [moved, setMoved] = useState<{ slot: string; seats: number }[]>([]);
   const [digital, setDigital] = useState(product.digital ?? { name: "", file: "" });
   const [fileBusy, setFileBusy] = useState(false);
   const pt = t.admin.productType;
@@ -130,11 +140,26 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
     else setError(pt.fileError);
   }
 
-  /** The service as typed. Dates written → an event; none → the weekly agenda. */
+  /** The dates as typed: unique, in order, each with its own length when one was written. */
+  function typedSessions() {
+    const seen = new Map<string, { start: string; durationMinutes?: number }>();
+    for (const line of sessionsText.split(/\n+/)) {
+      const [day, hour, minutes] = line.trim().split(/[\sT]+/);
+      if (!day) continue;
+      const start = `${day}T${hour ?? ""}`;
+      const long = Number(minutes);
+      if (!seen.has(start)) seen.set(start, { start, ...(minutes && Number.isFinite(long) ? { durationMinutes: long } : {}) });
+    }
+    return [...seen.values()].sort((x, y) => x.start.localeCompare(y.start));
+  }
+
+  /** The service as typed. «Event» keeps its list of dates even when it is empty; the weekly agenda has none. */
   function serviceDraft() {
-    const { sessions: _old, ...rest } = product.service ?? { durationMinutes: 60, capacity: 1 };
-    const starts = sessionsText.split(/\n+/).map((line) => line.trim().replace(/\s+/, "T")).filter(Boolean);
-    return { ...rest, durationMinutes: Number(duration) || 60, capacity: Number(capacity) || 1, ...(starts.length > 0 ? { sessions: starts.map((start) => ({ start })) } : {}) };
+    const { sessions: _old, repeat: _rule, ...rest } = product.service ?? { durationMinutes: 60, capacity: 1 };
+    const base = { ...rest, durationMinutes: Number(duration) || 60, capacity: Number(capacity) || 1 };
+    if (!eventKind) return base;
+    const week = repeatWeek === "last" || repeatWeek === "every" ? repeatWeek : ([1, 2, 3, 4] as const).find((n) => String(n) === repeatWeek);
+    return { ...base, sessions: typedSessions(), ...(week ? { repeat: { week, weekday: repeatWeekday, time: repeatTime, count: Number(repeatCount) || 3 } } : {}) };
   }
 
   async function submit(event: FormEvent) {
@@ -154,7 +179,7 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
       description: description.trim(),
       category,
       // A draft may have no price yet: it is stored as 0 and never sold.
-      price: isDraft && price.trim() === "" ? 0 : Number(price),
+      price: (isDraft || type === "quote") && price.trim() === "" ? 0 : Number(price),
       compareAtPrice: numberOrNull(compareAt),
       stock: parsedOptions.length > 0 ? null : numberOrNull(stock),
       featured,
@@ -175,19 +200,21 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
     };
     const parsed = productInputSchema.safeParse(draft);
     if (!parsed.success) {
-      setError(fill(ERRORS.invalid!, { field: String(parsed.error.issues[0]?.path[0] ?? "") }));
+      const issue = parsed.error.issues[0];
+      setError(issue?.message === "price_required" ? ERRORS.price_required! : fill(ERRORS.invalid!, { field: String(issue?.path[0] ?? "") }));
       return;
     }
     setSaving(true);
     setError("");
-    const result = await adminFetch<{ product?: Product }>("/api/admin/products", { json: parsed.data });
+    const result = await adminFetch<{ product?: Product; moved?: { slot: string; seats: number }[] }>("/api/admin/products", { json: parsed.data });
     setSaving(false);
     if (!result.ok || !result.data.product) {
       const code = result.data.error ?? "generic";
-      setError(code === "invalid" ? fill(ERRORS.invalid!, { field: result.data.field ?? "" }) : (ERRORS[code] ?? ERRORS.generic!));
+      setError(code === "invalid" ? (result.data.field === "price" ? ERRORS.price_required! : fill(ERRORS.invalid!, { field: result.data.field ?? "" })) : (ERRORS[code] ?? ERRORS.generic!));
       return;
     }
     setSaved(true);
+    setMoved(result.data.moved ?? []);
     if (isNew) router.replace(`/admin/products/${encodeURIComponent(result.data.product.id)}`);
     else router.refresh();
   }
@@ -284,10 +311,49 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
               </div>
             </div>
             <div className="field">
-              <label htmlFor="p-sessions">{pt.sessions}</label>
-              <textarea id="p-sessions" className="input" rows={3} value={sessionsText} onChange={(ev) => setSessionsText(ev.target.value)} placeholder={"2027-03-06 10:00\n2027-04-03 10:00"} data-testid="p-sessions" />
+              <label htmlFor="p-agenda">{pt.agenda}</label>
+              <select id="p-agenda" className="input" value={eventKind ? "event" : "weekly"} onChange={(ev) => setEventKind(ev.target.value === "event")} data-testid="p-agenda">
+                <option value="weekly">{pt.agendaWeekly}</option>
+                <option value="event">{pt.agendaEvent}</option>
+              </select>
             </div>
-            <p className="admin-note">{pt.sessionsHint} {pt.serviceHint}</p>
+            {eventKind ? (
+              <>
+                <div className={styles.grid3}>
+                  <div className="field">
+                    <label htmlFor="p-repeat-week">{pt.repeat}</label>
+                    <select id="p-repeat-week" className="input" value={repeatWeek} onChange={(ev) => setRepeatWeek(ev.target.value)} data-testid="p-repeat-week">
+                      <option value="">{pt.repeatNone}</option>
+                      {(["1", "2", "3", "4", "last", "every"] as const).map((w) => <option key={w} value={w}>{pt.repeatWeeks[w]}</option>)}
+                    </select>
+                  </div>
+                  {repeatWeek ? (
+                    <>
+                      <div className="field">
+                        <label htmlFor="p-repeat-weekday">{pt.repeatWeekday}</label>
+                        <select id="p-repeat-weekday" className="input" value={repeatWeekday} onChange={(ev) => setRepeatWeekday(ev.target.value as Weekday)} data-testid="p-repeat-weekday">
+                          {(["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const).map((d) => <option key={d} value={d}>{pt.weekdays[d]}</option>)}
+                        </select>
+                      </div>
+                      <div className="field">
+                        <label htmlFor="p-repeat-time">{pt.repeatTime}</label>
+                        <input id="p-repeat-time" className="input" type="time" value={repeatTime} onChange={(ev) => setRepeatTime(ev.target.value)} data-testid="p-repeat-time" />
+                      </div>
+                      <div className="field">
+                        <label htmlFor="p-repeat-count">{pt.repeatCount}</label>
+                        <input id="p-repeat-count" className="input" type="number" inputMode="numeric" min={1} max={24} step={1} value={repeatCount} onChange={(ev) => setRepeatCount(ev.target.value)} data-testid="p-repeat-count" />
+                      </div>
+                    </>
+                  ) : null}
+                </div>
+                <div className="field">
+                  <label htmlFor="p-sessions">{pt.sessions}</label>
+                  <textarea id="p-sessions" className="input" rows={3} value={sessionsText} onChange={(ev) => setSessionsText(ev.target.value)} placeholder={"2027-03-06 10:00\n2027-04-03 10:00 90"} aria-describedby="p-sessions-hint" data-testid="p-sessions" />
+                </div>
+                <p id="p-sessions-hint" className="admin-note">{pt.sessionsHint}</p>
+                {!repeatWeek && sessionsText.trim() === "" ? <p className="admin-banner" data-testid="p-no-dates">{pt.noOpenDates}</p> : null}
+              </>
+            ) : <p className="admin-note">{pt.serviceHint}</p>}
           </>
         ) : null}
         {type === "digital" ? (
@@ -419,6 +485,11 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
         <div aria-live="assertive">
           {error ? <p className="field-error" role="alert" data-testid="p-error">{error}</p> : null}
           {saved ? <p className={styles.saved} data-testid="p-saved">{e.saved}</p> : null}
+          {moved.length > 0 ? (
+            <p className="admin-banner" role="alert" data-testid="p-moved">
+              {pt.sessionsMoved} {moved.map((m) => `${m.slot.replace("T", " ")} (${fill(t.admin.agenda.seats, { n: m.seats })})`).join(" · ")}
+            </p>
+          ) : null}
           {!canWrite ? <p className="admin-note">{t.admin.readOnly}</p> : null}
         </div>
         <button type="submit" className="btn" aria-disabled={saving || undefined} data-testid="p-save">{saving ? e.saving : e.save}</button>

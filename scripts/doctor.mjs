@@ -28,7 +28,11 @@ function readEnvFile(file) {
 const T = {
   es: {
     title: "Estado de la tienda", ready: "Listo", todo: "Falta", info: "Para saber", next: "PRÓXIMO PASO", allDone: "Todo lo que se puede comprobar desde acá está listo. Hacé una compra de prueba de punta a punta.",
-    guide: "La guía paso a paso está en docs/go-live.es.md", source: "Variables leídas de",
+    guide: "La guía paso a paso está en docs/go-live.es.md",
+    source: (files) => (files.length > 0 ? `Variables leídas de ${files.join(" y ")}, más las del entorno de esta terminal.` : "Variables leídas del entorno de esta terminal (acá no hay .env ni .env.local)."),
+    envMissing: (f) => `No existe el archivo de variables ${f}.`,
+    brandMissing: "No está config/brand.ts: es el archivo con el nombre, el contacto y los colores de la tienda.",
+    adminSecretTodo: (n) => `El panel tiene ${n} usuario(s), pero falta ADMIN_SESSION_SECRET (u ORDER_SECRET): sin esa clave nadie puede iniciar sesión.`,
     catalogErr: (n) => `El catálogo tiene ${n} error(es): corré «npm run check:catalog».`,
     catalogOk: (n) => `El catálogo se puede leer (${n} productos).`,
     examples: (n) => `Quedan ${n} textos marcados como EJEMPLO en el catálogo o en la portada: reemplazalos por los reales (npm run check:catalog -- --all).`,
@@ -49,7 +53,11 @@ const T = {
   },
   en: {
     title: "State of the store", ready: "Ready", todo: "Missing", info: "Good to know", next: "NEXT STEP", allDone: "Everything that can be checked from here is ready. Make a test purchase from end to end.",
-    guide: "The step-by-step guide is docs/go-live.md", source: "Variables read from",
+    guide: "The step-by-step guide is docs/go-live.md",
+    source: (files) => (files.length > 0 ? `Variables read from ${files.join(" and ")}, plus the environment of this terminal.` : "Variables read from the environment of this terminal (there is no .env or .env.local here)."),
+    envMissing: (f) => `The variables file ${f} does not exist.`,
+    brandMissing: "config/brand.ts is not there: it is the file with the name, the contact details and the colours of the store.",
+    adminSecretTodo: (n) => `The admin panel has ${n} user(s), but ADMIN_SESSION_SECRET (or ORDER_SECRET) is missing: without that key nobody can sign in.`,
     catalogErr: (n) => `The catalogue has ${n} error(s): run "npm run check:catalog".`,
     catalogOk: (n) => `The catalogue can be read (${n} products).`,
     examples: (n) => `${n} texts in the catalogue or the home page are still marked EXAMPLE: replace them with the real ones (npm run check:catalog -- --all).`,
@@ -88,9 +96,11 @@ export function diagnose(root = here, env = {}, lang = "es") {
   else add(true, t.noExamples);
   if (catalog.drafts.length > 0) add(false, t.drafts(catalog.drafts));
 
-  const brand = existsSync(join(root, "config/brand.ts")) ? readFileSync(join(root, "config/brand.ts"), "utf8") : "";
+  const hasBrand = existsSync(join(root, "config/brand.ts"));
+  const brand = hasBrand ? readFileSync(join(root, "config/brand.ts"), "utf8") : "";
   const name = /\bname:\s*"([^"]*)"/.exec(brand)?.[1] ?? "";
-  if (name === "Tu Marca" || /email:\s*"[^"]*@example\.com"/.test(brand) || /whatsapp:\s*"0+"/.test(brand)) add(false, t.brandTodo);
+  if (!hasBrand) add(false, t.brandMissing);
+  else if (name === "Tu Marca" || /email:\s*"[^"]*@example\.com"/.test(brand) || /whatsapp:\s*"0+"/.test(brand)) add(false, t.brandTodo);
   else add(true, t.brandOk(name));
   const commerce = existsSync(join(root, "config/commerce.ts")) ? readFileSync(join(root, "config/commerce.ts"), "utf8") : "";
   // Only the VALUES count (texts between quotes), not the comments that explain the file.
@@ -108,7 +118,10 @@ export function diagnose(root = here, env = {}, lang = "es") {
 
   add((env.ORDER_SECRET ?? "").length >= 32, (env.ORDER_SECRET ?? "").length >= 32 ? t.secretOk : t.secretTodo);
   const admins = (env.ADMIN_USERS ?? "").split(/[,\n]/).filter((x) => x.includes(":scrypt.")).length;
-  add(admins > 0 && Boolean(env.ADMIN_SESSION_SECRET || env.ORDER_SECRET), admins > 0 ? t.adminOk(admins) : t.adminTodo);
+  const canSignIn = Boolean(env.ADMIN_SESSION_SECRET || env.ORDER_SECRET);
+  if (admins === 0) add(false, t.adminTodo);
+  else if (!canSignIn) add(false, t.adminSecretTodo(admins));
+  else add(true, t.adminOk(admins));
   const demo = env.DEMO_MODE === "true" || (env.DEMO_MODE !== "false" && admins === 0 && source === "json");
   add(!demo, demo ? t.demoTodo : t.demoOk);
 
@@ -138,14 +151,16 @@ export function diagnose(root = here, env = {}, lang = "es") {
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const args = process.argv.slice(2);
   const value = (flag) => (args.includes(flag) ? args[args.indexOf(flag) + 1] : undefined);
-  const files = value("--env") ? [value("--env")] : [".env", ".env.local"].map((f) => join(here, f));
+  const asked = value("--env");
+  const files = asked ? [asked] : [".env", ".env.local"].map((f) => join(here, f));
   const env = Object.assign({}, ...files.map(readEnvFile), Object.fromEntries(Object.entries(process.env).filter(([k]) => /^[A-Z0-9_]+$/.test(k))));
   const brand = existsSync(join(here, "config/brand.ts")) ? readFileSync(join(here, "config/brand.ts"), "utf8") : "";
   const lang = value("--lang") ?? /locale:\s*"(\w+)"/.exec(brand)?.[1] ?? "es";
   const { items, next, labels: t } = diagnose(here, env, lang);
   const used = files.filter((f) => existsSync(f)).map((f) => f.replace(`${here}/`, ""));
   console.log(`\n${t.title}\n${"─".repeat(t.title.length)}`);
-  console.log(`${t.source}: ${used.length > 0 ? used.join(", ") : "—"} + process.env\n`);
+  if (asked && !existsSync(asked)) console.log(`✗ ${t.envMissing(asked)}`);
+  console.log(`${t.source(used)}\n`);
   for (const [ok, label, mark] of [[true, t.ready, "✓"], [false, t.todo, "✗"], [null, t.info, "•"]]) {
     const list = items.filter((i) => i.ok === ok);
     if (list.length === 0) continue;

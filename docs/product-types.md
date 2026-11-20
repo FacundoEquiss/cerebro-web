@@ -147,10 +147,10 @@ A service has `service: { "durationMinutes": 30, "capacity": 1 }`.
 - **What is not built**: reminders, rescheduling by the customer, one calendar per member of
   staff, calendar sync, deposits. See [`ROADMAP.md`](../ROADMAP.md).
 
-## Events: fixed dates and limited places
+## Events: its own dates and limited places
 
-A workshop, a one-off class, a talk, a ticket: it does not happen "every Monday at 10", it happens
-on **these dates**. It is a service with a list of sessions:
+A workshop, a one-off class, a talk, a ticket: it does not happen "every Monday from 9 to 18", it
+happens on **its own dates**. It is a service with a rule that repeats, a list of dates, or both:
 
 ```jsonc
 {
@@ -158,24 +158,41 @@ on **these dates**. It is a service with a list of sessions:
   "service": {
     "durationMinutes": 180,
     "capacity": 12,                                   // places of EACH date
-    "sessions": [{ "start": "2027-03-06T10:00" }, { "start": "2027-04-03T10:00", "durationMinutes": 240 }]
+    // "The first Saturday of each month at 10:00", with the next 3 dates open:
+    "repeat": { "week": 1, "weekday": "sat", "time": "10:00", "count": 3 },
+    // …and/or single dates. A date may have its own length:
+    "sessions": [{ "start": "2027-03-20T18:00", "durationMinutes": 240 }],
+    "blockedDates": ["2027-01-02"]                    // a date the rule gives that will not happen
   }
 }
 ```
 
-In the admin panel: **Type → Service**, and one date per line in **Fixed dates**.
-
-- When `sessions` is there, **only those dates exist**: the weekly agenda, the closed days, the
-  notice and the calendar window do not apply. `start` is wall time of `booking.timeZone`.
+- **`repeat`** — `week` is `1`, `2`, `3`, `4`, `"last"` (of each month) or `"every"` (every week);
+  `weekday` is `mon`…`sun`; `time` is wall time of `booking.timeZone`; `count` is how many upcoming
+  dates are open at once (default 3, at most 24). The dates are worked out from today, so the
+  event **never runs out of dates** and nobody has to load them again.
+- **`sessions`** — explicit dates, for what does not follow a rule. Both add up; a date written
+  twice is one date.
+- In the admin panel: **Type → Service**, then **How it is booked → Event or workshop**. There
+  you choose the repetition and type single dates, one per line (`2027-03-20 18:00`, plus the
+  minutes at the end when that date has another length: `2027-03-20 18:00 240`).
+- **An event stays an event with no date left**: the store says "There are no open dates for now"
+  instead of falling back to the weekly agenda. `npm run check:catalog` warns about it.
+- The weekly agenda, the notice and the calendar window do not apply to an event.
 - The store shows a **list of dates** with "N places left" and the button **Sign up**; the quantity
   is the number of places. A date that passed stops being offered on its own.
 - Everything else is the booking engine of the section above: places reserved when the order is
-  created (no overselling), holds that lapse, the limits per order and per buyer, the Agenda, and
-  the need for an adapter that stores orders.
-- Structured data: one `Event` per upcoming date (start, end, price). `location` is only stated
-  when `brand.contact.address` is set — it is never made up.
-- `npm run check:catalog` warns when an event has no date left. The dates of the presets are
-  examples in the future: load the real ones.
+  created (no overselling), holds that lapse, the limits per order and per buyer, the Agenda (with
+  **Next event** and **Go to a date**), and the need for an adapter that stores orders.
+- **Moving or removing a date that has sign-ups**: the bookings stay in their orders and in the
+  Agenda. The panel warns when you save, naming the date and the places; those people have to be
+  told by the owner.
+- **Two dates of one event that overlap share the places** (the engine counts seats per product
+  and time). `npm run check:catalog` warns. Two activities at the same time are two products.
+- Structured data: one `Event` per upcoming date (start, end, price), with `SoldOut` when the
+  date is full. `location` is only stated when `brand.contact.address` is set — it is never made up.
+- `npm run check:catalog` also warns about a date written twice and about a date at an hour the
+  clocks skip that day (daylight saving): nobody could sign up for it.
 - **Not built**: a waiting list, tickets with a code to check at the door, a different price or
   number of places per date. See [`ROADMAP.md`](../ROADMAP.md).
 
@@ -188,8 +205,12 @@ When the owner has not given a price yet, **do not invent one**. Load the produc
   `llms.txt` and the structured data, and the server refuses any order that includes it.
 - The admin panel lists it with **Price missing**. `npm run check:catalog` and `npm run doctor`
   list every draft: that is the list of questions for the owner.
-- When the price arrives, type it and untick the box. (A product that is priced case by case is
-  not a draft: that is the type `quote`.)
+- When the price arrives, type it and untick the box. The price box of a draft starts empty, and
+  **price 0 is refused on anything that is for sale** (by the form and by the server): 0 is an
+  empty field, not a free product.
+- **A quote is the exception.** `type: "quote"` has no public price by nature, so `"price": null`
+  (or `0`) there is normal: the product is on show, with its enquiry form. To hide a quote that is
+  not ready, mark it `"draft": true`.
 
 ## Quotes
 

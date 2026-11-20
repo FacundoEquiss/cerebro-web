@@ -22,7 +22,7 @@ user shown on the admin login). To write from the panel locally, create a user w
 ## What a pull request must pass
 
 ```bash
-npm run check        # no private brand anywhere; es/en dictionaries in step
+npm run check        # no private brand anywhere (template only); es/en dictionaries in step
 npm run typecheck    # TypeScript, strict
 npm test             # unit tests, including the real SQL on an in-process PostgreSQL
 npm run build
@@ -59,8 +59,13 @@ attach screenshots (`npm run screenshots` takes them and fails on console errors
 
 ## Keeping your own brand out: `.brand-blocklist`
 
-`npm run check` always looks for generic leaks in every file: long numbers (account ids,
-phones), measurement and project ids, e-mail addresses that are not `example.com`.
+This scan protects **the template's repository**. It runs in the template's CI
+(`GITHUB_REPOSITORY`) and on any machine that has a `.brand-blocklist`; anywhere else — a store
+made from the template, its build, its CI — `npm run check` skips it and says so, because a real
+store keeps its real contact and bank details in `config/`. It is not part of `npm run build`.
+
+When it runs, it looks for generic leaks in every file: long numbers (account ids, phones),
+measurement and project ids, e-mail addresses that are not `example.com`.
 
 If you **derive this template from your own store** — or contribute back from a private fork —
 you can also give it your own words to catch (the brand, the owner's name, product names,
@@ -77,7 +82,7 @@ mydomain
 - The file is in `.gitignore` and **must never be committed**. Do not put those terms in the
   repository in any other form either — encoded and hashed lists can be reversed.
 - `BRAND_BLOCKLIST_FILE=/path/to/file` uses a file somewhere else.
-- Without the file only the generic patterns run, and the script says so.
+- In the template's CI (no file there) only the generic patterns run, and the script says so.
 - The brain builder (`npm run brain`) reads the same file.
 - To check the git history too: `git log -p --all --format=%s | node scripts/check-brand.mjs --stdin`.
 

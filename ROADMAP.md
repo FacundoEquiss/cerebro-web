@@ -15,7 +15,8 @@ Want one of these sooner? Open a proposal, or a pull request.
 
 - Tests that survive any catalogue (their own fixtures), `npm run check:catalog`, `npm run doctor`.
 - The "from zero to selling" guide; the one-command creator (to be published to npm).
-- Events with fixed dates and limited places; drafts for products without a price.
+- Events with their own dates and limited places — single dates or a rule that repeats ("the
+  first Saturday of each month") — and drafts for products without a price.
 
 ## Next (0.4)
 

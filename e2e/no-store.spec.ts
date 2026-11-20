@@ -101,3 +101,12 @@ test("a real store without a database: no booking, no quote form, no download â€
   await expect(page.getByTestId("contact-instead")).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+test("the demo block follows the environment the server RUNS with, not the one it was built with", async ({ page }) => {
+  // Both servers run the same build (made with DEMO_MODE=true).
+  await page.goto(`${DEMO}/`);
+  await expect(page.getByTestId("demo-block")).toBeVisible();
+  await page.goto(`${REAL}/`);
+  await expect(page.getByTestId("hero-cta")).toBeVisible();
+  await expect(page.getByTestId("demo-block")).toHaveCount(0);
+});

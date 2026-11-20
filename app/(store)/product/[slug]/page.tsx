@@ -3,8 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { commerce } from "@/config/commerce";
 import { fill, paths, t, tr } from "@/i18n";
-import { getCategory, getProduct, getProducts } from "@/lib/data";
-import { serviceRules } from "@/lib/booking/slots";
+import { data, getCategory, getProduct, getProducts } from "@/lib/data";
+import { isEvent, serviceRules, upcomingSessions, type Held } from "@/lib/booking/slots";
 import { env } from "@/lib/env";
 import { formatPrice, formatUnitPrice } from "@/lib/format";
 import { breadcrumbJsonLd, pageMetadata, productJsonLd } from "@/lib/seo";
@@ -51,6 +51,15 @@ export default async function ProductPage({ params }: Props) {
   // that can be booked are asked by the browser when the page opens (/api/slots).
   const rules = product.type === "service" ? serviceRules(product) : null;
   const booking = rules ? { timeZone: rules.timeZone, durationMinutes: rules.durationMinutes } : undefined;
+  // For the structured data of an event: which of its dates are already full (refreshed with the page).
+  let held: Held[] = [];
+  if (product.type === "service" && isEvent(product)) {
+    const sessions = upcomingSessions(product, Date.now()).slice(0, 12);
+    const adapter = await data();
+    if (sessions.length > 0 && adapter.storesOrders) {
+      held = await adapter.listBookings(sessions[0]!.start, sessions.reduce((max, x) => (x.end > max ? x.end : max), sessions[0]!.end)).catch(() => []);
+    }
+  }
 
   return (
     <div className="container page">
@@ -96,7 +105,7 @@ export default async function ProductPage({ params }: Props) {
       ) : null}
 
       {product.type === "quote" ? null : <TrackView name="view_item" items={[{ productId: product.id, name: product.name, price: product.price, quantity: 1 }]} />}
-      <JsonLd data={productJsonLd(product, category)} />
+      <JsonLd data={productJsonLd(product, category, held)} />
       <JsonLd data={breadcrumbJsonLd(trail)} />
     </div>
   );

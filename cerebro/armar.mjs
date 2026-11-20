@@ -135,7 +135,7 @@ Este cerebro es la guía de **Cerebro Web**, una base de tienda de código abier
 
 - Código (MIT): ${ENLACES.repositorio}
 - Demo en vivo: ${ENLACES.demo}
-- Para empezar: clonar el repositorio y seguir su \`AGENTS.md\` y su \`GETTING-STARTED.md\`.${ENLACES.crear ? ` Cuando el creador esté publicado en npm: \`${ENLACES.crear}\`.` : ''}
+- Para empezar: clonar el repositorio y seguir su \`AGENTS.md\` y su \`GETTING-STARTED.md\`.${ENLACES.crear ? ` Creador en un comando: \`${ENLACES.crear}\`. ${ENLACES.crear_estado || ''}` : ''}
 `;
 const llmsFull = `# Cerebro Web
 
