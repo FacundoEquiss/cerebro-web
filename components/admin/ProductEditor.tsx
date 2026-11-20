@@ -216,7 +216,7 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
     const parsed = productInputSchema.safeParse(draft);
     if (!parsed.success) {
       const issue = parsed.error.issues[0];
-      setError(issue?.message === "price_required" ? ERRORS.price_required! : issue?.message === "free_has_price" ? ERRORS.free_has_price! : fill(ERRORS.invalid!, { field: String(issue?.path[0] ?? "") }));
+      setError(issue?.message === "price_required" ? ERRORS.price_required! : issue?.message === "free_has_price" ? ERRORS.free_has_price! : issue?.message === "variant_price_zero" ? ERRORS.variant_price_zero! : fill(ERRORS.invalid!, { field: String(issue?.path[0] ?? "") }));
       return;
     }
     setSaving(true);

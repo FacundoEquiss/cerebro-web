@@ -187,6 +187,7 @@ export function sqlAdapter(id: string, gateway: SqlGateway): DataAdapter {
         hold_hours: bookingHoldHours(),
         max_slots: commerce.booking.maxSlotsPerOrder,
         max_unpaid_slots: commerce.booking.maxUnpaidPerBuyer,
+        max_free_seats: commerce.booking.maxFreeSeatsPerBuyer,
       };
       try {
         return toOrder(await gateway.call("create_order", [payload]));
@@ -242,6 +243,9 @@ export function sqlAdapter(id: string, gateway: SqlGateway): DataAdapter {
       return ((await gateway.call("admin_catalog", [])) as Record<string, unknown>[]).map(rowToProduct);
     },
     async saveProduct(input) {
+      // Free means 0 — checked here too, so a database that does not know `free` yet cannot
+      // store «free, 500» as an ordinary product at 500.
+      if (input.free && (input.price !== 0 || input.variants.some((v) => (v.price ?? 0) !== 0))) throw new AdminError("invalid", "price");
       try {
         let row = (await gateway.call("save_product", [input])) as Record<string, unknown> | null;
         gateway.invalidate?.();
@@ -255,6 +259,13 @@ export function sqlAdapter(id: string, gateway: SqlGateway): DataAdapter {
           if (input.draft && input.active) row = (await gateway.call("save_product", [{ ...input, active: false }])) as Record<string, unknown>;
         } else if (!("free" in row)) {
           migrationNeeded = "0004_free";
+        }
+        // A free product on a database without `free` (one that let the 0 through): it is not
+        // left on sale as "price 0, unmarked" — it is paused, and the answer names the migration.
+        if (input.free && !("free" in row)) {
+          await gateway.call("save_product", [{ ...input, active: false }]).catch(() => undefined);
+          gateway.invalidate?.();
+          throw new AdminError("needs_migration", "0004_free");
         }
         if (migrationNeeded) warnOnce(`migration:${migrationNeeded}`, `[data] The database is behind the code: run db/migrations/${migrationNeeded}.sql (see CHANGELOG.md).`);
         return { ...rowToProduct(row), ...(migrationNeeded ? { migrationNeeded } : {}) };

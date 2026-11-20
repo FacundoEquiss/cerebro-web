@@ -16,6 +16,19 @@ All notable changes to this project are documented here. The format follows
   asks for no way of paying when the order adds up to 0, and the server confirms that order at
   once — which is what hands over a free download. Shopping feeds leave free products out (they
   need a real price); the structured data states price 0.
+  - **Nothing is given away by accident.** An order is "nothing to pay" only when EVERY line is a
+    product marked free and no shipping is charged — decided from the catalogue, never from "the
+    total is 0". A line at price 0 on a product that is not free (a variant at 0, a legacy row) is
+    refused, and so is a quantity so small that a priced line rounds to 0. A variant at 0 on a
+    priced product cannot be saved. The same rules in `create_order` (SQL) and `priceOrder` (JS).
+  - **The order is born paid in the same transaction** that creates it (`create_order`, and the
+    `json` adapter): there is no second step that could fail. The order page says "confirmed" and
+    offers the download only when the order is paid.
+  - **Free places are capped per buyer**: `commerce.booking.maxFreeSeatsPerBuyer` (2) places per
+    e-mail per date, paid ones included — a free place costs nothing to take. For a free event
+    open to anyone, turn the antibot on too (`ANTIBOT_PROVIDER`).
+  - The minimum order does not apply to a cart of free products only. No `purchase` event is sent
+    for an order of 0: for the ad platforms a value of 0 is not a sale.
 - **"Skip these dates"** in the product editor (`service.blockedDates`), for appointments and for
   events.
 
@@ -41,10 +54,17 @@ All notable changes to this project are documented here. The format follows
 ### Migrating from 0.3.0
 
 1. **Database**: run `db/migrations/0004_free.sql` (or `db/schema.sql`). It adds `products.free`,
-   shows it in the public view and replaces `admin_catalog` and `save_product`. Back up and ask
-   the owner first. Nothing is deleted; no existing product becomes free.
-2. **A product on sale with price 0 in `content/products.json`** now needs `"free": true`.
-   Without it `npm run check` fails with the product's name and the store keeps it off sale.
+   shows it in the public view and replaces `create_order`, `admin_catalog` and `save_product`.
+   Back up and ask the owner first. Nothing is deleted; no existing product becomes free.
+2. **A PRODUCT THAT WAS ON SALE AT PRICE 0 DISAPPEARS FROM THE STORE until it is marked free** —
+   in every kind of store. It is kept off sale like a draft (the panel shows it as "Price
+   missing") and nothing is deleted. Before upgrading, find them:
+   - catalogue file (`content/products.json`, or `.data/catalog.json` in local `json` mode):
+     `npm run check:catalog` and `npm run doctor` name each one and say how to fix it — add
+     `"free": true` if it is free on purpose, or `"price": null` if the price is missing;
+   - database: `select id, name from products where active and not draft and price = 0 and type <> 'quote';`
+     then tick "Free" in the product editor (or give it a price).
+   The same goes for a **variant with price 0** on a priced product: leave its price empty.
 3. **An event with a date on a closed day** stops offering that date: `npm run check:catalog`
    lists them.
 4. **Your own data adapter**: `Product` has a new field, `free`.

@@ -636,7 +636,8 @@ describe("review of 0.2.0, in the database", () => {
     let checked = 0;
     for (const price of prices) {
       await db.query("update products set price = round($1::numeric, 2) where id = 'grid'", [price]);
-      const lines = quantities.map((quantity) => ({ productId: "grid", quantity }));
+      // (A line that would round to 0 is refused by both sides — tested with the free products.)
+      const lines = quantities.filter((quantity) => lineTotal({ unitPrice: Math.round(price * 100) / 100, quantity }) > 0).map((quantity) => ({ productId: "grid", quantity }));
       const sql = await adapter.createOrder(request({ idempotencyKey: nextKey(), lines }), free);
       const grid = (await adapter.listProducts()).find((p) => p.id === "grid")!;
       const js = priceOrder(request({ lines }), [grid], free);
@@ -647,7 +648,7 @@ describe("review of 0.2.0, in the database", () => {
       expect(js.total).toBe(sql.total);
       checked += lines.length;
     }
-    expect(checked).toBeGreaterThan(1000);
+    expect(checked).toBeGreaterThan(900);
     // The exact case of the review: 3.30 × 0.75 = 2.475 → 2.48 on both sides.
     await db.query("update products set price = 3.30 where id = 'grid'");
     const one = await adapter.createOrder(request({ idempotencyKey: nextKey(), lines: [{ productId: "grid", quantity: 0.75 }] }), free);
@@ -858,6 +859,10 @@ describe("a real 0.2.0 database (its whole schema) upgraded with migration 0003 
     // A draft: this database cannot hide it, so it is kept off the store the only way it knows.
     expect(await adapter.saveProduct(input({ price: 0, draft: true }))).toMatchObject({ id: "tea", active: false, migrationNeeded: "0003_drafts" });
     expect((await db.query("select id from public_catalog order by id")).rows).toEqual([{ id: "mug" }]);
+    // A free product: this database lets a 0 through and cannot mark it free, so it is stored
+    // paused and the answer names the migration.
+    await expect(adapter.saveProduct(input({ id: "gift", slug: "gift", price: 0, free: true }))).rejects.toMatchObject({ code: "needs_migration", detail: "0004_free" });
+    expect((await db.query("select id from public_catalog order by id")).rows).toEqual([{ id: "mug" }]);
     await db.close();
   });
 
@@ -869,6 +874,9 @@ describe("a real 0.2.0 database (its whole schema) upgraded with migration 0003 
     expect(saved).toMatchObject({ id: "tea", draft: true, price: 0, migrationNeeded: "0004_free" });
     // A free product cannot be stored there: the answer names the migration, it is not «check the data».
     await expect(adapter.saveProduct(input({ id: "gift", slug: "gift", price: 0, free: true }))).rejects.toMatchObject({ code: "needs_migration", detail: "0004_free" });
+    // «Free, 500» is refused by the adapter itself: this database would have stored it as a product at 500.
+    await expect(adapter.saveProduct(input({ id: "gift", slug: "gift", price: 500, free: true }))).rejects.toMatchObject({ code: "invalid", detail: "price" });
+    expect((await adapter.listAllProducts()).some((p) => p.id === "gift")).toBe(false);
     expect((await db.query("select id from public_catalog")).rows).toEqual([]);
     expect((await adapter.listAllProducts()).map((p) => [p.id, p.draft])).toEqual([["tea", true]]);
     await expect(adapter.createOrder(request({ idempotencyKey: "e".repeat(64), lines: [{ productId: "tea", quantity: 1 }] }), terms)).rejects.toMatchObject({ code: "unknown_product" });
@@ -885,7 +893,7 @@ describe("a real 0.2.0 database (its whole schema) upgraded with migration 0003 
     await db.close();
   });
 
-  it("with 0003 and 0004: a free product is saved, shown, ordered for 0 and confirmed without a payment", async () => {
+  it("with 0003 and 0004: a free product is saved, shown, and its order is born PAID in the same transaction", async () => {
     const { db, adapter } = await open();
     await db.exec(readFileSync("db/migrations/0003_drafts.sql", "utf8"));
     await db.exec(readFileSync("db/migrations/0004_free.sql", "utf8"));
@@ -898,15 +906,86 @@ describe("a real 0.2.0 database (its whole schema) upgraded with migration 0003 
     await expect(adapter.saveProduct(input({ id: "gift", slug: "gift", price: 500, free: true }))).rejects.toMatchObject({ code: "invalid", detail: "price" });
     await expect(adapter.saveProduct(input({ id: "oops", slug: "oops", price: 0 }))).rejects.toMatchObject({ code: "invalid", detail: "price" });
     const order = await adapter.createOrder(request({ idempotencyKey: "c3".repeat(32), shippingMethodId: "none", lines: [{ productId: "gift", quantity: 1 }] }), { price: 0, freeFrom: null });
-    expect(order).toMatchObject({ total: 0, status: "new" });
-    const paid = await adapter.setOrderStatus(order.id, "new", "paid", "system", "free");
-    expect(paid.paidAt).not.toBeNull();
+    expect(order).toMatchObject({ total: 0, status: "paid" });
+    expect(order.paidAt).not.toBeNull();
+    const stored = await adapter.getAdminOrder(order.id);
+    expect(stored?.history.map((h) => [h.type, h.to, h.actor])).toEqual([["created", "new", "store"], ["status", "paid", "store"]]);
+    // The same request again is the same paid order.
+    expect(await adapter.createOrder(request({ idempotencyKey: "c3".repeat(32), shippingMethodId: "none", lines: [{ productId: "gift", quantity: 1 }] }), { price: 0, freeFrom: null })).toMatchObject({ id: order.id, status: "paid" });
+    await db.close();
+  });
+
+  // What the review of 0.3.1 reproduced: an order could add up to 0 — and be confirmed as paid —
+  // without any product being free.
+  it("nothing is given away by accident: a total of 0 is only ever an order of FREE products", async () => {
+    const { db, adapter } = await open();
+    await db.exec(readFileSync("db/migrations/0003_drafts.sql", "utf8"));
+    await db.exec(readFileSync("db/migrations/0004_free.sql", "utf8"));
+    const terms0 = { price: 0, freeFrom: null };
+    let n = 0;
+    const order = (lines: { productId: string; quantity: number; variantId?: string; slot?: string }[], over: Record<string, unknown> = {}) =>
+      adapter.createOrder(request({ idempotencyKey: `k${++n}`.padEnd(64, "0"), shippingMethodId: "pickup", lines, ...over }), terms0);
+
+    // 1. A row at price 0 that nobody marked free (it was on sale before 0.3.1): hidden like a
+    //    draft, shown as a draft in the panel, and not orderable.
+    await db.exec("insert into products (id, slug, name, category, price) values ('legacy', 'legacy', 'Legacy', 'hogar', 0)");
+    expect((await adapter.listProducts()).some((p) => p.id === "legacy")).toBe(false);
+    expect((await adapter.listAllProducts()).find((p) => p.id === "legacy")).toMatchObject({ draft: true, free: false });
+    await expect(order([{ productId: "legacy", quantity: 1 }])).rejects.toMatchObject({ code: "unknown_product" });
+
+    // 2. A variant at 0 on a priced product: refused when saved…
+    const options = [{ id: "size", name: "Size", values: [{ id: "s", label: "S" }, { id: "m", label: "M" }] }];
+    const tee = input({ id: "tee", slug: "tee", price: 5000, options, variants: [{ id: "tee-s", options: { size: "s" }, stock: null, price: 0 }, { id: "tee-m", options: { size: "m" }, stock: null, price: null }] });
+    await expect(adapter.saveProduct(tee)).rejects.toMatchObject({ code: "invalid", detail: "price" });
+    // …and, if such a row is already in the database, refused when ordered.
+    await adapter.saveProduct({ ...(tee as object), variants: [{ id: "tee-s", options: { size: "s" }, stock: null, price: null }, { id: "tee-m", options: { size: "m" }, stock: null, price: null }] } as never);
+    await db.exec("update variants set price = 0 where id = 'tee-s'");
+    await expect(order([{ productId: "tee", variantId: "tee-s", quantity: 1 }])).rejects.toMatchObject({ code: "no_price", detail: "tee" });
+    expect(await order([{ productId: "tee", variantId: "tee-m", quantity: 1 }])).toMatchObject({ total: 5000, status: "new", paidAt: null });
+    // A free product has no priced variant either.
+    await expect(adapter.saveProduct(input({ id: "pin", slug: "pin", price: 0, free: true, options, variants: [{ id: "pin-s", options: { size: "s" }, stock: null, price: 300 }] }))).rejects.toMatchObject({ code: "invalid" });
+
+    // 3. Sold by weight: a quantity so small that the line rounds to 0 is refused.
+    await adapter.saveProduct(input({ id: "rice", slug: "rice", price: 4, unit: "kg", step: 0.001, minQuantity: 0.001 }));
+    await expect(order([{ productId: "rice", quantity: 0.001 }])).rejects.toMatchObject({ code: "quantity", detail: "rice" });
+    expect(await order([{ productId: "rice", quantity: 0.5 }])).toMatchObject({ total: 2, status: "new" });
+
+    // 4. Free + paid in one order is a normal order to pay; free + a shipping cost too.
+    await adapter.saveProduct(input({ id: "sample", slug: "sample", price: 0, free: true }));
+    expect(await order([{ productId: "sample", quantity: 1 }, { productId: "rice", quantity: 1 }])).toMatchObject({ total: 4, status: "new", paidAt: null });
+    expect(await adapter.createOrder(request({ idempotencyKey: "ship".padEnd(64, "0"), shippingMethodId: "delivery", lines: [{ productId: "sample", quantity: 1 }] }), { price: 6500, freeFrom: null })).toMatchObject({ total: 6500, status: "new", paidAt: null });
+    expect(await order([{ productId: "sample", quantity: 1 }])).toMatchObject({ total: 0, status: "paid" });
+    // The minimum order is about money: free products alone are not held to it (see the payload).
+    const withMinimum = async (lines: unknown[]) => (await db.query("select create_order($1::jsonb) as o", [JSON.stringify({ idempotency_key: `min${++n}`.padEnd(32, "0"), currency: "ARS", lines, shipping: { method: "pickup", price: 0, free_from: null }, payment_provider: "manual", payment_method: "bank_transfer", customer: { email: "min@example.com" }, minimum_order: 1000 })])).rows[0] as { o: { status: string } };
+    expect((await withMinimum([{ product_id: "sample", quantity: 1 }])).o.status).toBe("paid");
+    await expect(withMinimum([{ product_id: "sample", quantity: 1 }, { product_id: "rice", quantity: 1 }])).rejects.toThrow(/minimum_order/);
+    await db.close();
+  });
+
+  it("free places: one buyer cannot take them all — seats per e-mail per date are capped, paid ones included", async () => {
+    const { db, adapter } = await open();
+    await db.exec(readFileSync("db/migrations/0003_drafts.sql", "utf8"));
+    await db.exec(readFileSync("db/migrations/0004_free.sql", "utf8"));
+    const day = new Date(Date.now() + 40 * 86_400_000).toISOString().slice(0, 10);
+    await adapter.saveProduct(input({ id: "open", slug: "open", type: "service", price: 0, free: true, service: { durationMinutes: 60, capacity: 30, sessions: [{ start: `${day}T10:00` }, { start: `${day}T15:00` }] } }));
+    let n = 0;
+    const book = (email: string, seats: number, time = "10:00") => adapter.createOrder(request({ idempotencyKey: `b${++n}`.padEnd(64, "0"), shippingMethodId: "none", customer: { ...request().customer, email }, lines: [{ productId: "open", quantity: seats, slot: `${day}T${time}` }] }), { price: 0, freeFrom: null });
+    const cap = commerce.booking.maxFreeSeatsPerBuyer;
+    expect(await book("one@example.com", cap)).toMatchObject({ status: "paid" });
+    // Already paid, and still counted: the same person gets no more places on that date…
+    await expect(book("one@example.com", 1)).rejects.toMatchObject({ code: "free_seat_limit", detail: String(cap) });
+    await expect(book("ONE@example.com", 1)).rejects.toMatchObject({ code: "free_seat_limit" });
+    await expect(book("two@example.com", cap + 1)).rejects.toMatchObject({ code: "free_seat_limit" });
+    // …another date and another person are fine.
+    expect(await book("one@example.com", 1, "15:00")).toMatchObject({ status: "paid" });
+    expect(await book("two@example.com", 1)).toMatchObject({ status: "paid" });
+    expect((await db.query("select coalesce(sum(l.quantity), 0)::int as seats from order_lines l join orders o on o.id = l.order_id where lower(o.customer ->> 'email') = 'one@example.com'")).rows).toEqual([{ seats: cap + 1 }]);
     await db.close();
   });
 
   it("each migration carries its functions as db/schema.sql has them, word for word", () => {
     const schema = readFileSync("db/schema.sql", "utf8");
-    const carried: Record<string, string[]> = { "0003_drafts": ["create_order", "create_quote"], "0004_free": ["admin_catalog", "save_product"] };
+    const carried: Record<string, string[]> = { "0003_drafts": ["create_quote"], "0004_free": ["create_order", "admin_catalog", "save_product"] };
     for (const [file, names] of Object.entries(carried)) for (const name of names) {
       const migration = readFileSync(`db/migrations/${file}.sql`, "utf8");
       const body = new RegExp(`create or replace function ${name}\\([\\s\\S]*?\\n\\$\\$;\\n`).exec(schema)?.[0];

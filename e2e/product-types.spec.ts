@@ -538,5 +538,20 @@ test("a free product: «Gratis» in the store, nothing to pay at the checkout, a
   const orderId = (await page.getByTestId("order-id").innerText()).trim();
   await openOrder(page, orderId);
   await expect(page.getByTestId("detail-payment-status")).toHaveAttribute("data-paid", "yes");
+
+  // Asking again with «pay online» is the same paid order: no gateway is opened for nothing.
+  // And a priced product cannot carry a variant at 0 — that would be another way to total 0.
+  const origin = new URL(page.url()).origin;
+  const variantAtZero = await page.request.post("/api/admin/products", {
+    headers: { origin },
+    data: {
+      slug: `${slug}-talle`, name: `${name} con talles`, description: "x", category: "digital", price: 5000, compareAtPrice: null, stock: null, featured: false, active: true, minQuantity: 1, attributes: {}, images: [],
+      options: [{ id: "talle", name: "Talle", values: [{ id: "s", label: "S" }] }],
+      variants: [{ id: `${slug}-talle-s`, options: { talle: "s" }, stock: null, price: 0 }],
+    },
+  });
+  expect(variantAtZero.status()).toBe(400);
+  expect(await variantAtZero.json()).toMatchObject({ error: "invalid", field: "variants.0.price" });
+  expect((await page.request.get(`/producto/${slug}-talle`)).status()).toBe(404);
   expect(errors).toEqual([]);
 });

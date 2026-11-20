@@ -344,7 +344,7 @@ export class OrderError extends Error {
       | "quantity" | "minimum_order" | "shipping_method" | "address_required"
       | "slot_required" | "slot_invalid" | "slot_taken" | "quote_only" | "not_a_quote"
       | "quote_not_sent" | "quote_changed" | "quote_incomplete" | "not_found"
-      | "booking_limit" | "needs_store",
+      | "booking_limit" | "needs_store" | "no_price" | "free_seat_limit",
     public detail = "",
   ) {
     super(`${code}${detail ? `: ${detail}` : ""}`);

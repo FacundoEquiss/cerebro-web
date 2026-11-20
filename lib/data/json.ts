@@ -104,8 +104,10 @@ function holdsSeats(o: StoredOrder, now: number): boolean {
 function upgradeCatalog(c: Catalog): Catalog {
   for (const p of c.products) {
     p.type ??= "physical";
-    p.draft ??= false;
     p.free ??= false;
+    // A product on sale at 0 that nobody marked free (saved before 0.3.1): an empty price field.
+    // It is kept off the store like a draft until the owner marks it free or gives it a price.
+    p.draft = Boolean(p.draft) || (p.price === 0 && !p.free && p.type !== "quote");
     p.unit ??= "u";
     p.step ??= 1;
     p.maxQuantity ??= null;
@@ -329,11 +331,15 @@ export const jsonAdapter: DataAdapter = {
       if (existing) return publicOrder(existing);
       const catalog = await loadCatalog();
       const now = Date.now();
-      const priced = priceOrder(request, catalog.products.filter(forSale), shipping, { held: seatsHeld(orders, now), now });
+      const email = request.customer.email.toLowerCase();
+      // Every seat this buyer has, paid or not: what the cap on FREE places counts.
+      const buyerSeats = orders
+        .filter((o) => o.status !== "cancelled" && o.customer.email.toLowerCase() === email)
+        .flatMap((o) => o.lines.flatMap((l) => (l.slot ? [{ productId: l.productId, start: l.slot.start, end: l.slot.end, seats: l.quantity }] : [])));
+      const priced = priceOrder(request, catalog.products.filter(forSale), shipping, { held: seatsHeld(orders, now), buyerSeats, now });
       const slots = priced.lines.filter((l) => l.slot).length;
       if (slots > 0) {
         // One buyer cannot sit on many unpaid appointments at a time.
-        const email = request.customer.email.toLowerCase();
         const open = orders.filter((o) => o.status === "new" && o.paidAt === null && holdsSeats(o, now) && o.customer.email.toLowerCase() === email)
           .reduce((n, o) => n + o.lines.filter((l) => l.slot).length, 0);
         if (open + slots > commerce.booking.maxUnpaidPerBuyer) throw new OrderError("booking_limit", String(commerce.booking.maxUnpaidPerBuyer));
@@ -345,12 +351,12 @@ export const jsonAdapter: DataAdapter = {
         ...stored,
         customer: request.customer,
         attribution: request.attribution ?? {},
-        history: [event("created", "store", { to: "new" })],
+        history: [event("created", "store", { to: "new" }), ...(priced.nothingToPay ? [event("status", "store", { from: "new", to: "paid", text: "free" })] : [])],
         cancelReason: null,
         purchaseSentAt: null,
         idempotencyKey: key,
         // An unpaid order keeps its appointment for a limited time (lib/booking/hold.ts).
-        holdUntil: slots > 0 ? new Date(now + bookingHoldHours() * 3_600_000).toISOString() : null,
+        holdUntil: slots > 0 && !priced.nothingToPay ? new Date(now + bookingHoldHours() * 3_600_000).toISOString() : null,
       });
       await saveOrders();
       await saveCatalog();

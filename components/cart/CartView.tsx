@@ -26,7 +26,8 @@ export function CartView({ catalog }: { catalog: CartProduct[] }) {
   const valid = resolved.flatMap((r) => (r.item ? [r.item] : []));
   const subtotal = valid.reduce((sum, i) => sum + lineTotal(i), 0);
   const ships = needsShipping(valid);
-  const belowMinimum = commerce.minimumOrder > 0 && subtotal < commerce.minimumOrder;
+  // The minimum order is about money: a cart of free products only is not held to it.
+  const belowMinimum = commerce.minimumOrder > 0 && subtotal < commerce.minimumOrder && valid.some((i) => i.unitPrice > 0);
   const canCheckout = valid.length > 0 && !belowMinimum;
 
   return (

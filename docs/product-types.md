@@ -234,7 +234,20 @@ catalogue file, or the box **Free** in the product editor:
   field, and the store keeps that product off sale. Free means 0: `free` with a price is an error.
 - Shopping feeds leave free products out (they need a real price). The structured data states
   price 0.
-- A database needs `db/migrations/0004_free.sql`.
+- **Nothing to pay means every line is a free product** and no shipping is charged. The server
+  decides it from the catalogue and creates the order already paid, in the same step. A total
+  that merely adds up to 0 is never treated as paid: a line at 0 on a product that is not free (a
+  variant at 0, for instance) is refused, and so is a quantity so small that a priced line
+  rounds to 0. A free product has no priced variants; a priced product has no variant at 0.
+- **Free places are capped per person**: `commerce.booking.maxFreeSeatsPerBuyer` (2 by default)
+  places per e-mail per date of a free service or event, counting the ones already confirmed. A
+  free place costs nothing to take, and an e-mail is easy to change: for a free event open to
+  anyone, turn the antibot on (`ANTIBOT_PROVIDER`, see [`adapters.md`](adapters.md)).
+- The **minimum order** (`commerce.minimumOrder`) does not apply to a cart of free products only.
+- **No `purchase` event** is sent to the ad platforms for an order of 0: a value of 0 is not a
+  sale, and it would distort what they optimise for. The order is in the panel like any other.
+- A database needs `db/migrations/0004_free.sql`. A product that was on sale at price 0 before
+  0.3.1 is kept off the store until it is marked free: see the upgrade notes in the CHANGELOG.
 
 ## Quotes
 

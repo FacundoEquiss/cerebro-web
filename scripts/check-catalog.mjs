@@ -79,7 +79,8 @@ export function checkCatalog(root = here, now = Date.now()) {
   const warnings = [];
   const drafts = [];
   const examples = [];
-  const done = (products = 0) => ({ errors, warnings, drafts, examples, products });
+  const unpriced = []; // on sale at price 0 without `"free": true`
+  const done = (products = 0) => ({ errors, warnings, drafts, examples, unpriced, products });
   const file = join(root, "content/products.json");
   if (!existsSync(file)) {
     errors.push("content/products.json is not there: the store needs it (start from a preset with `npm run preset <name>`)");
@@ -129,7 +130,7 @@ export function checkCatalog(root = here, now = Date.now()) {
     const draft = p.draft === true || (p.price == null && type !== "quote");
     if (p.price != null && !amount(p.price)) errors.push(`${at}: the price must be a number (0 or more), or null while it is not known`);
     if (draft) drafts.push(String(p.id ?? p.slug ?? `#${i + 1}`));
-    else if (p.price === 0 && type !== "quote" && p.free !== true) errors.push(`${at} costs 0 without saying why: if it is free on purpose add "free": true; if the price is not known yet write "price": null (a draft). Until then the store keeps it off sale`);
+    else if (p.price === 0 && type !== "quote" && p.free !== true) unpriced.push(String(p.id ?? p.slug ?? `#${i + 1}`)), errors.push(`${at} costs 0 without saying why: if it is free on purpose add "free": true; if the price is not known yet write "price": null (a draft). Until then the store keeps it off sale`);
     if (p.free !== undefined && typeof p.free !== "boolean") errors.push(`${at}: \`free\` is true or false`);
     else if (p.free === true && p.price != null && p.price !== 0) errors.push(`${at} is marked free and has a price (${p.price}): a free product costs 0 — remove "free" or set the price to 0`);
     if (p.compareAtPrice != null && !amount(p.compareAtPrice)) errors.push(`${at}: \`compareAtPrice\` must be a number (0 or more) or null`);
@@ -162,6 +163,9 @@ export function checkCatalog(root = here, now = Date.now()) {
     for (const v of Array.isArray(p.variants) ? p.variants : []) {
       const ok = isObject(v) && options.length > 0 && options.every((o) => (Array.isArray(o.values) ? o.values : []).some((val) => val?.id === v.options?.[o.id]));
       if (!ok) errors.push(`${at}: the variant "${isObject(v) ? v.id : v}" does not match the declared options`);
+      else if (v.price != null && type !== "quote" && (p.free === true ? v.price !== 0 : v.price === 0)) {
+        errors.push(p.free === true ? `${at} is free and its variant "${v.id}" has a price: a free product costs 0 in every variant` : `${at}: the variant "${v.id}" has price 0: leave its price out to use the product's (nothing is sold for 0 unless the product says "free": true)`);
+      }
     }
     if (p.images != null && !Array.isArray(p.images)) errors.push(`${at}: \`images\` must be a list`);
     const images = Array.isArray(p.images) ? p.images : [];

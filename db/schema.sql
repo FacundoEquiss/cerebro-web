@@ -243,10 +243,13 @@ alter table product_files enable row level security;
 -- level security.
 -- ---------------------------------------------------------------------------------------------
 drop policy if exists public_read on products;
-create policy public_read on products for select using (active and not draft);
+-- On sale = active, not a draft, and with a price that is meant: above 0, or 0 on a product
+-- marked free (or a quote, which has no public price). An unmarked 0 is an empty field.
+create policy public_read on products for select using (active and not draft and (price > 0 or free or type = 'quote'));
 drop policy if exists public_read on variants;
 create policy public_read on variants for select
-  using (active and exists (select 1 from products p where p.id = variants.product_id and p.active and not p.draft));
+  using (active and exists (select 1 from products p where p.id = variants.product_id and p.active and not p.draft
+                              and (p.price > 0 or p.free or p.type = 'quote')));
 drop policy if exists public_read on categories;
 create policy public_read on categories for select using (true);
 
@@ -261,7 +264,7 @@ select
   ) as variants,
   p.type, p.unit, p.step, p.max_quantity, p.service, p.digital, p.free
 from products p
-where p.active and not p.draft;
+where p.active and not p.draft and (p.price > 0 or p.free or p.type = 'quote');
 
 create or replace view public_categories with (security_invoker = true) as
 select slug, name, description, position from categories;
@@ -347,6 +350,8 @@ declare
   v_shipping  numeric(12, 2);
   v_max       numeric := coalesce((p ->> 'max_quantity')::numeric, 20);
   v_taken     boolean;
+  v_all_free  boolean := true;
+  v_mine      numeric;
 begin
   if v_key is null or length(v_key) < 16 then
     raise exception 'ORDER_ERROR:empty:idempotency_key';
@@ -376,8 +381,11 @@ begin
     v_qty := round((v_line ->> 'quantity')::numeric, 3);
 
     -- Locked: the stock and the seats of this product are decided by one buyer at a time.
-    -- A draft (no price yet) is not for sale: for the store it does not exist.
-    select * into v_product from products where id = v_line ->> 'product_id' and active and not draft for update;
+    -- A draft (no price yet) is not for sale: for the store it does not exist. Neither does a
+    -- product at price 0 that is not marked free (an empty price field) — the same rule as the
+    -- public catalogue.
+    select * into v_product from products
+      where id = v_line ->> 'product_id' and active and not draft and (price > 0 or free or type = 'quote') for update;
     if not found then
       raise exception 'ORDER_ERROR:unknown_product:%', v_line ->> 'product_id';
     end if;
@@ -483,6 +491,28 @@ begin
       end if;
     end if;
 
+    -- NOTHING IS GIVEN AWAY BY ACCIDENT. A line costs 0 only when its product is marked free; a
+    -- variant at 0 on a priced product, or a quantity so small that the line rounds to 0, is refused.
+    if v_price = 0 and not v_product.free then
+      raise exception 'ORDER_ERROR:no_price:%', v_product.id;
+    end if;
+    if v_price > 0 and round(v_price * v_qty, 2) = 0 then
+      raise exception 'ORDER_ERROR:quantity:%', v_product.id;
+    end if;
+    v_all_free := v_all_free and v_product.free and v_price = 0;
+    -- A free place costs nothing to take, so the unpaid-booking limit does not stop one person
+    -- from taking them all: seats per buyer (e-mail) per date are capped, paid ones included.
+    if v_price = 0 and v_slot_from is not null then
+      select coalesce(sum(l.quantity), 0) into v_mine
+        from order_lines l join orders o on o.id = l.order_id
+        where l.product_id = v_product.id and l.slot_start < v_slot_to and l.slot_end > v_slot_from
+          and o.status <> 'cancelled'
+          and lower(o.customer ->> 'email') = lower(p #>> '{customer,email}');
+      if v_mine + v_qty > coalesce((p ->> 'max_free_seats')::int, 2) then
+        raise exception 'ORDER_ERROR:free_seat_limit:%', coalesce(p ->> 'max_free_seats', '2');
+      end if;
+    end if;
+
     select img ->> 'src' into v_image
       from jsonb_array_elements(v_product.images) with ordinality as i (img, ord)
       order by (case when img ? 'option' and v_selection @> (img -> 'option') then 0 else 1 end), ord
@@ -497,7 +527,8 @@ begin
     v_subtotal := v_subtotal + round(v_price * v_qty, 2);
   end loop;
 
-  if v_subtotal < coalesce((p ->> 'minimum_order')::numeric, 0) then
+  -- (The minimum order is about money: a cart of free products only is not held to it.)
+  if not v_all_free and v_subtotal < coalesce((p ->> 'minimum_order')::numeric, 0) then
     raise exception 'ORDER_ERROR:minimum_order:%', p ->> 'minimum_order';
   end if;
 
@@ -528,6 +559,14 @@ begin
                       then now() + make_interval(secs => (coalesce((p ->> 'hold_hours')::numeric, 12) * 3600)::double precision)
                       else null end
   where id = v_id;
+
+  -- NOTHING TO PAY: every line is a free product and the total is 0. The order is paid HERE, in
+  -- the same transaction that created it — never by a second call that could fail on its own.
+  if v_all_free and v_subtotal + v_shipping = 0 then
+    update orders set status = 'paid', paid_at = now(), hold_until = null where id = v_id;
+    insert into order_events (order_id, type, from_status, to_status, actor, text)
+    values (v_id, 'status', 'new', 'paid', 'store', 'free');
+  end if;
   return order_json(v_id);
 end;
 $$;
@@ -910,7 +949,9 @@ language sql stable security definer set search_path = public as $$
   select coalesce(jsonb_agg(jsonb_build_object(
     'id', p.id, 'slug', p.slug, 'name', p.name, 'description', p.description, 'category', p.category,
     'price', p.price, 'compare_at_price', p.compare_at_price, 'images', p.images, 'options', p.options,
-    'stock', p.stock, 'featured', p.featured, 'active', p.active, 'draft', p.draft, 'free', p.free, 'min_quantity', p.min_quantity,
+    'stock', p.stock, 'featured', p.featured, 'active', p.active,
+    -- A price of 0 that is not marked free is an empty field: the panel shows it as a draft.
+    'draft', p.draft or (p.price = 0 and not p.free and p.type <> 'quote'), 'free', p.free, 'min_quantity', p.min_quantity,
     'attributes', p.attributes, 'created_at', p.created_at,
     'type', p.type, 'unit', p.unit, 'step', p.step, 'max_quantity', p.max_quantity, 'service', p.service,
     'digital', case when p.digital is null then null
@@ -947,6 +988,15 @@ begin
     end if;
   elsif coalesce((p ->> 'price')::numeric, 0) = 0 and coalesce(p ->> 'type', 'physical') <> 'quote'
      and not coalesce((p ->> 'draft')::boolean, false) and (p ->> 'price') is not null then
+    raise exception 'PRODUCT_ERROR:price';
+  end if;
+
+  -- A variant with its own price follows the same rule: never 0 on a priced product, and no
+  -- price of its own on a free one.
+  if exists (select 1 from jsonb_array_elements(coalesce(p -> 'variants', '[]'::jsonb)) x
+             where (x ->> 'price') is not null
+               and (case when coalesce((p ->> 'free')::boolean, false) then (x ->> 'price')::numeric <> 0 else (x ->> 'price')::numeric = 0 end)
+               and coalesce(p ->> 'type', 'physical') <> 'quote') then
     raise exception 'PRODUCT_ERROR:price';
   end if;
 

@@ -75,7 +75,7 @@ describe("the json adapter and free products", () => {
     delete process.env.DEMO_ORDERS;
   });
 
-  it("saves a free product, refuses an unmarked 0, and an order for it is 0 and can be confirmed with no payment", async () => {
+  it("saves a free product, refuses an unmarked 0, and an order for it is born paid", async () => {
     const mod = await import("@/lib/data/json");
     mod.resetJsonStore();
     const adapter = mod.jsonAdapter;
@@ -86,8 +86,12 @@ describe("the json adapter and free products", () => {
     await expect(adapter.saveProduct({ ...gift, price: 300 })).rejects.toMatchObject({ code: "invalid", detail: "price" });
     expect((await adapter.listProducts()).find((p) => p.id === "gift")).toMatchObject({ free: true });
     const order = await adapter.createOrder(request({ idempotencyKey: "7".repeat(64), shippingMethodId: "none", lines: [{ productId: "gift", quantity: 1 }] }), { price: 0, freeFrom: null });
-    expect(order).toMatchObject({ total: 0, status: "new", paidAt: null });
-    expect((await adapter.setOrderStatus(order.id, "new", "paid", "system", "free")).paidAt).not.toBeNull();
+    // Born paid, in the same step that stored it: there is no second call that could fail.
+    expect(order).toMatchObject({ total: 0, status: "paid" });
+    expect(order.paidAt).not.toBeNull();
+    const stored = (await adapter.getAdminOrder(order.id))!;
+    expect(stored.history.map((h) => [h.type, h.to])).toEqual([["created", "new"], ["status", "paid"]]);
+    expect(JSON.parse(readFileSync(join(dir, "orders.json"), "utf8"))[0]).toMatchObject({ id: order.id, status: "paid" });
     expect(JSON.parse(readFileSync(join(dir, "catalog.json"), "utf8")).products.find((p: { id: string }) => p.id === "gift").free).toBe(true);
   });
 });
@@ -154,5 +158,122 @@ describe("closed days, a corrupt count and the hour the clocks skip", () => {
     writeFileSync(join(root, "content/products.json"), JSON.stringify({ categories: [{ slug: "c", name: "C" }], products: [{ id: "class", slug: "class", name: "Class", category: "c", price: 10, images: [], type: "service", service: { durationMinutes: 60, capacity: 2, blockedDates: "2027-05-01" } }] }));
     expect(checkCatalog(root, now).errors.join("\n")).toContain("service.blockedDates");
     rmSync(root, { recursive: true, force: true });
+  });
+});
+
+// What the review of 0.3.1 reproduced: a total of 0 — confirmed as paid — with no free product in it.
+describe("nothing is given away by accident (the JS side: priceOrder and the json adapter)", () => {
+  const options = [{ id: "size", name: "Size", values: [{ id: "s", label: "S" }, { id: "m", label: "M" }] }];
+  const tee = product({ id: "tee", price: 5000, options, stock: null, variants: [{ id: "tee-s", options: { size: "s" }, stock: null, price: 0 }, { id: "tee-m", options: { size: "m" }, stock: null, price: null }] });
+  const rice = product({ id: "rice", price: 4, unit: "kg", step: 0.001, minQuantity: 0.001, stock: null });
+  const sample = product({ id: "sample", price: 0, free: true, stock: null });
+  const legacy = product({ id: "legacy", price: 0, stock: null }); // price 0, not free
+  const terms = { price: 0, freeFrom: null };
+  const price = (lines: { productId: string; quantity: number; variantId?: string }[], shipping = terms) => priceOrder(request({ shippingMethodId: "pickup", lines }), [tee, rice, sample, legacy], shipping);
+
+  it("a line costs 0 only when its product is free", () => {
+    expect(() => price([{ productId: "tee", variantId: "tee-s", quantity: 1 }])).toThrowError(/no_price/);
+    expect(() => price([{ productId: "legacy", quantity: 1 }])).toThrowError(/no_price/);
+    expect(() => price([{ productId: "rice", quantity: 0.001 }])).toThrowError(/quantity/); // 4 × 0.001 rounds to 0
+    expect(price([{ productId: "rice", quantity: 0.5 }])).toMatchObject({ total: 2, nothingToPay: false });
+    expect(price([{ productId: "tee", variantId: "tee-m", quantity: 1 }])).toMatchObject({ total: 5000, nothingToPay: false });
+  });
+
+  it("«nothing to pay» is every line free AND nothing charged — a free product with a paid one, or with shipping, is paid as usual", () => {
+    expect(price([{ productId: "sample", quantity: 1 }])).toMatchObject({ total: 0, nothingToPay: true });
+    expect(price([{ productId: "sample", quantity: 1 }, { productId: "rice", quantity: 1 }])).toMatchObject({ total: 4, nothingToPay: false });
+    expect(price([{ productId: "sample", quantity: 1 }], { price: 6500, freeFrom: null })).toMatchObject({ total: 6500, nothingToPay: false });
+  });
+
+  it("the form refuses a variant at 0 on a priced product, and a priced variant on a free one", () => {
+    const form = (over: Record<string, unknown>) => productInputSchema.safeParse({ slug: "tee", name: "Tee", description: "", category: "c", price: 5000, compareAtPrice: null, stock: null, featured: false, active: true, minQuantity: 1, attributes: {}, images: [], options, variants: [{ id: "tee-s", options: { size: "s" }, stock: null, price: 0 }], ...over });
+    expect(form({}).error?.issues[0]).toMatchObject({ path: ["variants", 0, "price"], message: "variant_price_zero" });
+    expect(form({ variants: [{ id: "tee-s", options: { size: "s" }, stock: null, price: null }] }).success).toBe(true);
+    expect(form({ price: 0, free: true }).success).toBe(true);
+    expect(form({ price: 0, free: true, variants: [{ id: "tee-s", options: { size: "s" }, stock: null, price: 300 }] }).error?.issues[0]).toMatchObject({ message: "free_has_price" });
+  });
+
+  it("the minimum order is about money: a cart of free products only is not held to it", async () => {
+    const { commerce } = await import("@/config/commerce");
+    const before = commerce.minimumOrder;
+    (commerce as { minimumOrder: number }).minimumOrder = 1000;
+    try {
+      expect(price([{ productId: "sample", quantity: 1 }])).toMatchObject({ total: 0, nothingToPay: true });
+      expect(() => price([{ productId: "sample", quantity: 1 }, { productId: "rice", quantity: 1 }])).toThrowError(/minimum_order/);
+    } finally {
+      (commerce as { minimumOrder: number }).minimumOrder = before;
+    }
+  });
+
+  it("check:catalog and the doctor name the products at 0 that nobody marked, with the fix; a variant at 0 too", async () => {
+    const { diagnose } = await import("../scripts/doctor.mjs");
+    const root = mkdtempSync(join(tmpdir(), "unpriced-"));
+    mkdirSync(join(root, "content"));
+    const base = { name: "X", category: "c", images: [] };
+    writeFileSync(join(root, "content/products.json"), JSON.stringify({ categories: [{ slug: "c", name: "C" }], products: [
+      { ...base, id: "old-gift", slug: "old-gift", price: 0 },
+      { ...base, id: "tee", slug: "tee", price: 5000, options, variants: [{ id: "tee-s", options: { size: "s" }, stock: null, price: 0 }] },
+      { ...base, id: "pin", slug: "pin", price: 0, free: true, options, variants: [{ id: "pin-s", options: { size: "s" }, stock: null, price: 300 }] },
+    ] }));
+    const result = checkCatalog(root);
+    expect(result.unpriced).toEqual(["old-gift"]);
+    expect(result.errors.join("\n")).toContain('the variant "tee-s" has price 0');
+    expect(result.errors.join("\n")).toContain('is free and its variant "pin-s" has a price');
+    const said = (diagnose(root, {}, "es").items as { ok: boolean | null; text: string }[]).find((i) => i.text.includes("old-gift"));
+    expect(said).toMatchObject({ ok: false });
+    expect(said!.text).toContain('"free": true');
+    expect(said!.text).toContain("fuera de la venta");
+    rmSync(root, { recursive: true, force: true });
+  });
+});
+
+describe("the json adapter: free bookings and a catalogue saved before 0.3.1", () => {
+  let dir: string;
+  beforeAll(() => {
+    dir = mkdtempSync(join(tmpdir(), "free-seats-"));
+  });
+  afterAll(() => {
+    rmSync(dir, { recursive: true, force: true });
+    delete process.env.DATA_DIR;
+    delete process.env.DEMO_ORDERS;
+  });
+
+  it("one buyer cannot take every free place: seats per e-mail per date are capped, paid ones included", async () => {
+    process.env.DATA_DIR = dir;
+    process.env.DEMO_ORDERS = "false";
+    const { commerce } = await import("@/config/commerce");
+    const mod = await import("@/lib/data/json");
+    mod.resetJsonStore();
+    const adapter = mod.jsonAdapter;
+    const category = (await adapter.listCategories())[0]!.slug;
+    const day = new Date(Date.now() + 40 * 86_400_000).toISOString().slice(0, 10);
+    await adapter.saveProduct(product({ id: "open", slug: "open", category, type: "service", price: 0, free: true, stock: null, service: { durationMinutes: 60, capacity: 30, sessions: [{ start: `${day}T10:00` }, { start: `${day}T15:00` }] } }));
+    let n = 0;
+    const book = (email: string, seats: number, time = "10:00") => adapter.createOrder(request({ idempotencyKey: `s${++n}`.padEnd(64, "0"), shippingMethodId: "none", customer: { ...request().customer, email }, lines: [{ productId: "open", quantity: seats, slot: `${day}T${time}` }] }), { price: 0, freeFrom: null });
+    const cap = commerce.booking.maxFreeSeatsPerBuyer;
+    expect(await book("one@example.com", cap)).toMatchObject({ status: "paid" });
+    await expect(book("one@example.com", 1)).rejects.toMatchObject({ code: "free_seat_limit", detail: String(cap) });
+    await expect(book("ONE@example.com", 1)).rejects.toMatchObject({ code: "free_seat_limit" });
+    await expect(book("two@example.com", cap + 1)).rejects.toMatchObject({ code: "free_seat_limit" });
+    expect(await book("one@example.com", 1, "15:00")).toMatchObject({ status: "paid" });
+    expect(await book("two@example.com", 1)).toMatchObject({ status: "paid" });
+    // A paid (free) place does not lapse like an unpaid hold: it stays taken.
+    const taken = (await adapter.listBookings(new Date(`${day}T00:00:00Z`).toISOString(), new Date(`${day}T23:59:00Z`).toISOString())).reduce((sum, b) => sum + b.seats, 0);
+    expect(taken).toBe(cap + 2);
+  });
+
+  it("a catalogue saved before 0.3.1 with a product on sale at 0: kept off the store, shown as a draft in the panel", async () => {
+    const old = mkdtempSync(join(tmpdir(), "old-catalog-"));
+    process.env.DATA_DIR = old;
+    const mod = await import("@/lib/data/json");
+    mod.resetJsonStore();
+    const first = (await mod.jsonAdapter.listAllProducts())[0]!;
+    const { free: _f, ...legacy } = { ...first, id: "old-gift", slug: "old-gift", price: 0, draft: false, variants: [], options: [] };
+    writeFileSync(join(old, "catalog.json"), JSON.stringify({ categories: await mod.jsonAdapter.listCategories(), products: [legacy, first] }));
+    mod.resetJsonStore();
+    expect((await mod.jsonAdapter.listProducts()).map((p) => p.id)).toEqual([first.id]);
+    expect((await mod.jsonAdapter.listAllProducts()).find((p) => p.id === "old-gift")).toMatchObject({ draft: true, free: false });
+    await expect(mod.jsonAdapter.createOrder(request({ idempotencyKey: "o".repeat(64), lines: [{ productId: "old-gift", quantity: 1 }] }), { price: 0, freeFrom: null })).rejects.toMatchObject({ code: "unknown_product" });
+    rmSync(old, { recursive: true, force: true });
   });
 });

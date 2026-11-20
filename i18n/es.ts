@@ -150,6 +150,8 @@ export const es = {
       booking_limit: "Llegaste al máximo de turnos que se pueden reservar sin pagar ({detail}). Pagá o cancelá uno para reservar otro.",
       slot_required: "Elegí un día y un horario para el turno.",
       slot_invalid: "Ese horario ya no está disponible. Volvé al producto y elegí otro.",
+      no_price: "Uno de los productos todavía no tiene precio y no se puede pedir. Sacalo del carrito o escribinos.",
+      free_seat_limit: "Cada persona puede tomar hasta {detail} lugares gratis por fecha.",
       slot_taken: "Ese horario se acaba de ocupar. Volvé al producto y elegí otro.",
       quote_only: "Ese producto se cotiza a pedido: pedí el presupuesto desde su página.",
       not_a_quote: "Ese producto tiene precio: agregalo al carrito para comprarlo.",
@@ -761,6 +763,7 @@ export const es = {
       errors: {
         invalid: "Revisá los datos del producto ({field}).",
         price_required: "Falta el precio. Si todavía no lo sabés, dejá el producto como borrador.",
+        variant_price_zero: "Una variante tiene precio 0. Dejá su precio vacío para que use el del producto, o marcá el producto como «Gratis».",
         free_has_price: "Un producto gratis no lleva precio: dejá el precio vacío o destildá «Gratis».",
         needs_migration: "No se guardó: la base de datos necesita la migración {migration} (db/migrations) para aceptar esto.",
         slug_taken: "Ya hay un producto con esa dirección.",

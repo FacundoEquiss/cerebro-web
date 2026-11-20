@@ -245,7 +245,23 @@ Una descarga gratuita, una muestra, una clase abierta: precio 0 **a propósito**
   un error.
 - Los feeds de shopping dejan afuera los productos gratis (necesitan un precio real). Los datos
   estructurados declaran precio 0.
-- Una base de datos necesita `db/migrations/0004_free.sql`.
+- **«No hay nada que pagar» es que todas las líneas sean productos gratis** y no se cobre envío.
+  El servidor lo decide con el catálogo y crea el pedido ya pagado, en el mismo paso. Un total
+  que simplemente suma 0 nunca se toma por pagado: una línea en 0 de un producto que no está
+  marcado gratis (una variante en 0, por ejemplo) se rechaza, igual que una cantidad tan chica que
+  una línea con precio redondea a 0. Un producto gratis no tiene variantes con precio; un producto
+  con precio no tiene variantes en 0.
+- **Los lugares gratis tienen tope por persona**: `commerce.booking.maxFreeSeatsPerBuyer` (2 si
+  no se cambia) lugares por e-mail por fecha de un servicio o evento gratis, contando los ya
+  confirmados. Un lugar gratis no cuesta nada tomarlo, y un e-mail es fácil de cambiar: para un
+  evento gratis abierto a cualquiera, encendé el antibot (`ANTIBOT_PROVIDER`, ver
+  [`adapters.es.md`](adapters.es.md)).
+- El **pedido mínimo** (`commerce.minimumOrder`) no se aplica a un carrito sólo de productos gratis.
+- **No se manda evento `purchase`** a las plataformas de anuncios por un pedido de 0: un valor de 0
+  no es una venta, y les distorsionaría lo que optimizan. El pedido está en el panel como cualquiera.
+- Una base de datos necesita `db/migrations/0004_free.sql`. Un producto que estaba a la venta con
+  precio 0 antes de la 0.3.1 queda fuera de la tienda hasta que se lo marca gratis: ver las notas
+  de actualización del CHANGELOG.
 
 ## Presupuestos
 

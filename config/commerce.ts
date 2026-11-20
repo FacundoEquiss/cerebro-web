@@ -87,6 +87,13 @@ export const commerce = {
     /** Most UNPAID appointments one buyer (by e-mail) may be holding at a time. */
     maxUnpaidPerBuyer: 3,
     /**
+     * Most places ONE buyer (by e-mail) may take on the same date of a FREE service or event,
+     * across all their orders — a free place costs nothing, so the limit above does not stop one
+     * person from taking them all. For a free event open to anyone, also turn the antibot on
+     * (ANTIBOT_PROVIDER): an e-mail address is easy to change.
+     */
+    maxFreeSeatsPerBuyer: 2,
+    /**
      * Hours an UNPAID order keeps its slot. After that the seat is free again at once (nothing has
      * to run for it), and the order is cancelled by the usual clean-up. Shorter than
      * ORDER_EXPIRY_HOURS on purpose: time is the stock of a service. The server variable

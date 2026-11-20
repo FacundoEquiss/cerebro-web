@@ -42,11 +42,19 @@ export interface PricedOrder {
   shippingMethodId: string;
   shippingPrice: number;
   total: number;
+  /**
+   * Every line is a product marked free, at 0, and nothing is charged for shipping: there is
+   * nothing to pay, so the order is created already paid. Decided HERE, from the catalogue —
+   * never from "the total happens to be 0".
+   */
+  nothingToPay: boolean;
 }
 
 export interface PricingContext {
   /** Seats already held by other orders (cancelled and lapsed ones excluded), from the store. */
   held?: Held[];
+  /** Seats this same buyer already has (unpaid AND paid), for the cap on free places. */
+  buyerSeats?: Held[];
   now?: number;
 }
 
@@ -69,6 +77,7 @@ export function priceOrder(
   const wanted = new Map<string, number>(); // units asked per variant/product, across lines
   const bookedHere: Held[] = []; // seats asked by THIS order, line by line
   let serviceLines = 0;
+  let allFree = true;
   const lines: OrderLine[] = [];
 
   for (const line of request.lines) {
@@ -102,6 +111,15 @@ export function priceOrder(
     wanted.set(stockKey, asked);
     if (asked > unitsAvailable(product, variant)) throw new OrderError("out_of_stock", product.id);
 
+    // NOTHING IS GIVEN AWAY BY ACCIDENT. A line costs 0 only when its product is marked free: a
+    // variant at 0 on a priced product is refused, and so is a quantity so small that a priced
+    // line rounds to 0 (0.001 kg of something cheap).
+    const price = unitPrice(product, variant);
+    if (price === 0 && !product.free) throw new OrderError("no_price", product.id);
+    if (price > 0 && lineTotal({ unitPrice: price, quantity }) === 0) throw new OrderError("quantity", product.id);
+    const freeLine = product.free && price === 0;
+    allFree &&= freeLine;
+
     let slot = null;
     if (product.type === "service") {
       // The slot must be one this service really offers now, and it must have room.
@@ -112,6 +130,11 @@ export function priceOrder(
       const capacity = Math.max(1, Math.trunc(product.service?.capacity ?? 1));
       const taken = seatsOverlapping(context.held ?? [], product.id, slot.start, slot.end) + seatsOverlapping(bookedHere, product.id, slot.start, slot.end);
       if (taken + quantity > capacity) throw new OrderError("slot_taken", product.id);
+      // A free place costs nothing to take: seats per buyer per date are capped, paid ones included.
+      if (freeLine) {
+        const mine = seatsOverlapping(context.buyerSeats ?? [], product.id, slot.start, slot.end) + seatsOverlapping(bookedHere, product.id, slot.start, slot.end);
+        if (mine + quantity > commerce.booking.maxFreeSeatsPerBuyer) throw new OrderError("free_seat_limit", String(commerce.booking.maxFreeSeatsPerBuyer));
+      }
       bookedHere.push({ productId: product.id, start: slot.start, end: slot.end, seats: quantity });
     }
 
@@ -121,7 +144,7 @@ export function priceOrder(
       name: product.name,
       variantLabel: selectionLabel(product, selection),
       quantity,
-      unitPrice: unitPrice(product, variant),
+      unitPrice: price,
       image: lineImage(product, selection),
       type: product.type,
       unit: product.unit,
@@ -132,12 +155,14 @@ export function priceOrder(
   // Each line is rounded to cents on its own, and the subtotal adds the rounded lines: that is
   // what the customer sees line by line, and what create_order() does in SQL.
   const subtotal = roundMoney(lines.reduce((sum, l) => sum + lineTotal(l), 0));
-  if (subtotal < commerce.minimumOrder) throw new OrderError("minimum_order", String(commerce.minimumOrder));
+  // (The minimum order is about money: a cart of free products only is not held to it.)
+  if (!allFree && subtotal < commerce.minimumOrder) throw new OrderError("minimum_order", String(commerce.minimumOrder));
   // SHIPPING ONLY IF SOMETHING IS SHIPPED. A booking and a download travel nowhere.
   const ships = needsShipping(lines);
   const methodId = ships ? request.shippingMethodId : NO_SHIPPING;
   const shipping = ships ? roundMoney(shippingPrice(terms ?? shippingTerms(methodId), subtotal)) : 0;
-  return { lines, subtotal, shippingMethodId: methodId, shippingPrice: shipping, total: roundMoney(subtotal + shipping) };
+  const total = roundMoney(subtotal + shipping);
+  return { lines, subtotal, shippingMethodId: methodId, shippingPrice: shipping, total, nothingToPay: allFree && total === 0 };
 }
 
 /** Builds the official `Order` from a priced request. */
@@ -152,8 +177,9 @@ export function buildOrder(id: string, request: OrderRequest, priced: PricedOrde
     total: priced.total,
     paymentProvider: request.paymentProvider,
     paymentMethod: request.paymentMethod,
-    status: "new",
-    paidAt: null,
+    // Nothing to pay (free products only): the order is born paid, in the same step.
+    status: priced.nothingToPay ? "paid" : "new",
+    paidAt: priced.nothingToPay ? createdAt : null,
     tracking: null,
     quote: null,
   };

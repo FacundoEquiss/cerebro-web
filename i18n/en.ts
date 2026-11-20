@@ -150,6 +150,8 @@ export const en: Dictionary = {
       booking_limit: "You reached the maximum number of appointments that can be held unpaid ({detail}). Pay or cancel one to book another.",
       slot_required: "Choose a day and a time for the appointment.",
       slot_invalid: "That time is no longer available. Go back to the product and choose another one.",
+      no_price: "One of the products has no price yet and cannot be ordered. Take it out of the cart or write to us.",
+      free_seat_limit: "Each person can take up to {detail} free places per date.",
       slot_taken: "That time was just taken. Go back to the product and choose another one.",
       quote_only: "That product is priced on request: ask for the quote from its page.",
       not_a_quote: "That product has a price: add it to the cart to buy it.",
@@ -761,6 +763,7 @@ export const en: Dictionary = {
       errors: {
         invalid: "Check the product data ({field}).",
         price_required: "The price is missing. If you do not know it yet, leave the product as a draft.",
+        variant_price_zero: "A variant has price 0. Leave its price empty to use the product's, or mark the product as \"Free\".",
         free_has_price: "A free product has no price: leave the price empty or untick \"Free\".",
         needs_migration: "Not saved: the database needs migration {migration} (db/migrations) to accept this.",
         slug_taken: "There is already a product with that address.",

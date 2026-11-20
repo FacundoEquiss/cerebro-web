@@ -37,6 +37,7 @@ const T = {
     catalogOk: (n) => `El catálogo se puede leer (${n} productos).`,
     examples: (n) => `Quedan ${n} textos marcados como EJEMPLO en el catálogo o en la portada: reemplazalos por los reales (npm run check:catalog -- --all).`,
     noExamples: "El catálogo y la portada ya no tienen textos de ejemplo.",
+    unpriced: (ids) => `${ids.length} producto(s) con precio 0 sin marcar, que la tienda deja fuera de la venta: ${ids.join(", ")}. Si son gratis a propósito agregales "free": true (o la casilla «Gratis» del panel); si falta el precio, "price": null.`,
     drafts: (ids) => `${ids.length} producto(s) en borrador, sin precio, que no se venden: ${ids.join(", ")}. Pedile el precio al dueño.`,
     brandTodo: "La marca todavía es la de ejemplo (nombre, e-mail o WhatsApp de config/brand.ts).", brandOk: (n) => `La marca está cargada: ${n}.`,
     commerceTodo: (n) => `config/commerce.ts tiene ${n} dato(s) de EJEMPLO o por COMPLETAR (envíos, datos bancarios, plazos).`, commerceOk: "Las reglas comerciales no tienen datos de ejemplo.",
@@ -62,6 +63,7 @@ const T = {
     catalogOk: (n) => `The catalogue can be read (${n} products).`,
     examples: (n) => `${n} texts in the catalogue or the home page are still marked EXAMPLE: replace them with the real ones (npm run check:catalog -- --all).`,
     noExamples: "The catalogue and the home page have no example texts left.",
+    unpriced: (ids) => `${ids.length} product(s) at price 0 without a mark, which the store keeps off sale: ${ids.join(", ")}. If they are free on purpose add "free": true (or the "Free" box in the panel); if the price is missing, "price": null.`,
     drafts: (ids) => `${ids.length} draft product(s) without a price, not for sale: ${ids.join(", ")}. Ask the owner for the price.`,
     brandTodo: "The brand is still the example one (name, e-mail or WhatsApp in config/brand.ts).", brandOk: (n) => `The brand is filled in: ${n}.`,
     commerceTodo: (n) => `config/commerce.ts has ${n} EXAMPLE or FILL IN value(s) (shipping, bank details, lead times).`, commerceOk: "The commercial rules have no example values.",
@@ -94,6 +96,7 @@ export function diagnose(root = here, env = {}, lang = "es") {
   else add(true, t.catalogOk(catalog.products));
   if (catalog.examples.length > 0) add(false, t.examples(catalog.examples.length));
   else add(true, t.noExamples);
+  if (catalog.unpriced.length > 0) add(false, t.unpriced(catalog.unpriced));
   if (catalog.drafts.length > 0) add(false, t.drafts(catalog.drafts));
 
   const hasBrand = existsSync(join(root, "config/brand.ts"));

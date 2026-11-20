@@ -71,6 +71,13 @@ export const productInputSchema = z.object({
   // stays a draft. A quote is the one type whose price comes later, per request.
   if (form.free && form.price !== 0) ctx.addIssue({ code: "custom", path: ["price"], message: "free_has_price" });
   else if (!form.free && !form.draft && form.type !== "quote" && form.price === 0) ctx.addIssue({ code: "custom", path: ["price"], message: "price_required" });
+  // A variant with its own price follows the same rule: never 0 on a priced product, none on a free one.
+  if (form.type !== "quote") {
+    form.variants.forEach((v, i) => {
+      if (v.price == null) return;
+      if (form.free ? v.price !== 0 : v.price === 0) ctx.addIssue({ code: "custom", path: ["variants", i, "price"], message: form.free ? "free_has_price" : "variant_price_zero" });
+    });
+  }
 });
 
 export type ProductForm = z.infer<typeof productInputSchema>;

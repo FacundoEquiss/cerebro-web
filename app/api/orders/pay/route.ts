@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     // The receipt proves whose order it is; the database knows what it is worth and its status NOW.
     const stored = adapter.storesOrders ? await adapter.getAdminOrder(id) : null;
     const order = stored ?? receipt.order;
-    if (order.paidAt || order.status !== "new" || order.paymentMethod !== "online" || payments().id === "manual") return back();
+    if (order.paidAt || order.total <= 0 || order.status !== "new" || order.paymentMethod !== "online" || payments().id === "manual") return back();
     const url = await startPayment(order, { name: stored?.customer.name ?? "", email: stored?.customer.email ?? "" }, stored?.attribution ?? {}, token);
     return url ? NextResponse.redirect(url, 303) : back();
   } catch (err) {
