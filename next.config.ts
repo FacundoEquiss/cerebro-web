@@ -1,16 +1,22 @@
+import { readFileSync } from "node:fs";
 import type { NextConfig } from "next";
 import { brand as ownBrand } from "./config/brand";
-import { brand as fixtureBrand } from "./tests/fixtures/config/brand";
 import { redirects as customRedirects } from "./config/redirects";
-import { INTERNAL_ROUTES, LOCALIZED_ROUTES, ROUTES_WITH_CHILDREN, type RouteKey } from "./i18n/routes";
+import { INTERNAL_ROUTES, LOCALIZED_ROUTES, ROUTES_WITH_CHILDREN, type Locale, type RouteKey } from "./i18n/routes";
 
 // THE TESTS RUN AGAINST THEIR OWN STORE. With CEREBRO_FIXTURES=1 (set only by the end-to-end
 // test server) the build reads the catalogue, the home texts, the brand and the commercial rules
 // from tests/fixtures/ instead of the owner's files — through the path aliases of
-// tsconfig.fixtures.json — so a store with any catalogue keeps a green test suite.
+// tsconfig.fixtures.json — and is written to its own folder (.next-fixtures), so `.next` is
+// always the real store. Nothing here imports from tests/: a project without that folder
+// builds and runs the same.
 const fixtures = process.env.CEREBRO_FIXTURES === "1";
-const brand = fixtures ? fixtureBrand : ownBrand;
-const localized = LOCALIZED_ROUTES[brand.locale];
+/** The language of the fixture store (its routes are translated), read as text: no import from tests/. */
+function fixtureLocale(): Locale {
+  const found = /\blocale:\s*"([a-z]{2})"/.exec(readFileSync("tests/fixtures/config/brand.ts", "utf8"))?.[1];
+  return found && found in LOCALIZED_ROUTES ? (found as Locale) : ownBrand.locale;
+}
+const localized = LOCALIZED_ROUTES[fixtures ? fixtureLocale() : ownBrand.locale];
 const keys = Object.keys(INTERNAL_ROUTES) as RouteKey[];
 const translated = keys.filter((k) => localized[k] !== INTERNAL_ROUTES[k]);
 
@@ -31,7 +37,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  ...(fixtures ? { typescript: { tsconfigPath: "tsconfig.fixtures.json" } } : {}),
+  ...(fixtures ? { typescript: { tsconfigPath: "tsconfig.fixtures.json" }, distDir: ".next-fixtures" } : {}),
   // `output: "standalone"` makes `next build` emit a self-contained server (used by the Dockerfile).
   output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   env: { NEXT_PUBLIC_APP_ENV: appEnv },
@@ -40,7 +46,7 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["pg"],
   // The example files of the digital products are read from disk at request time: make sure
   // they travel with the server (serverless bundles and the standalone output).
-  outputFileTracingIncludes: { "/api/downloads/**/*": ["./content/downloads/**/*"] },
+  outputFileTracingIncludes: { "/api/downloads/**/*": [fixtures ? "./tests/fixtures/downloads/**/*" : "./content/downloads/**/*"] },
 
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

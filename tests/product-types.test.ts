@@ -208,7 +208,7 @@ describe("digital products: the download link", () => {
   });
 
   it("keeps the files out of public/ and the storage key out of the storefront", () => {
-    expect(existsSync("content/downloads/sample-guide.pdf")).toBe(true);
+    expect(existsSync("tests/fixtures/downloads/sample-guide.pdf")).toBe(true);
     const everything = (dir: string): string[] => readdirSync(dir, { withFileTypes: true }).flatMap((f) => (f.isDirectory() ? everything(join(dir, f.name)) : [join(dir, f.name)]));
     expect(everything("public").filter((f) => /\.(pdf|zip|epub)$/i.test(f))).toEqual([]);
   });
@@ -514,16 +514,20 @@ describe.skipIf(!HAS_PRESETS)("presets: a starting catalogue per line of busines
     for (const key of ["heroEyebrow", "heroTitle", "heroText", "heroCta"]) expect(preset.home[key]).toMatchObject({ es: expect.any(String), en: expect.any(String) });
     expect(preset.home.benefits.length).toBeGreaterThanOrEqual(3);
     expect(preset.home.faq.length).toBeGreaterThanOrEqual(3);
+    // The example images and files ship with the template. An owner who removed them (the store
+    // has its own photos) still has valid presets: what is left is checked, nothing is demanded.
+    const imagesThere = products.some((p) => p.images.some((image) => existsSync(join("public", image.src))));
+    const samplesThere = existsSync("content/downloads");
     for (const p of products) {
       expect(categories.some((c) => c.slug === p.category)).toBe(true);
       expect(p.description).toMatch(/EJEMPLO|EXAMPLE/);
       expect(p.images.length).toBeGreaterThanOrEqual(1);
       // Placeholders drawn by a script: no photo with rights attached.
-      for (const image of p.images) expect(readFileSync(join("public", image.src), "utf8")).toContain("<svg");
+      if (imagesThere) for (const image of p.images) expect(readFileSync(join("public", image.src), "utf8")).toContain("<svg");
       if (p.type === "quote") expect(p.price).toBe(0);
       else expect(p.price).toBeGreaterThan(0);
       if (p.type === "service") expect(p.service).toMatchObject({ durationMinutes: expect.any(Number), capacity: expect.any(Number) });
-      if (p.type === "digital") expect(existsSync(join("content/downloads", p.digital!.file!))).toBe(true);
+      if (p.type === "digital" && samplesThere) expect(existsSync(join("content/downloads", p.digital!.file!))).toBe(true);
       expect(validQuantity(p, p.minQuantity, commerce.maxQuantityPerLine)).toBe(true);
     }
   });

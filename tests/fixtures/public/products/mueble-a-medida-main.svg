@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Made-to-measure furniture">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2efeb"/><stop offset="1" stop-color="#e7e2da"/></linearGradient></defs>
+<rect width="800" height="1000" fill="url(#bg)"/><ellipse cx="400" cy="850" rx="250" ry="24" fill="#000000" opacity=".09"/><path d="M150 430H650L610 500H190Z" fill="#a4764a"/><rect x="190" y="500" width="420" height="30" fill="#835e3b"/><path d="M220 530H256V800H236ZM544 530H580L564 800H544ZM300 530H326V720H312ZM474 530H500L488 720H474Z" fill="#735334"/><path d="M200 452H600" stroke="#c8ad92" stroke-width="6"/>
+</svg>

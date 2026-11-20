@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Specialty coffee">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0edea"/><stop offset="1" stop-color="#e3dfd9"/></linearGradient></defs>
+<rect width="800" height="1000" fill="url(#bg)"/><ellipse cx="400" cy="850" rx="250" ry="24" fill="#000000" opacity=".09"/><path d="M270 300H530L560 800H240Z" fill="#6b4a35"/><path d="M270 300H530L522 250H278Z" fill="#503828"/><path d="M258 360H542" stroke="#563b2a" stroke-width="8"/><rect x="308" y="470" width="184" height="170" rx="14" fill="#ffffff" opacity=".9"/><ellipse cx="400" cy="555" rx="36" ry="52" fill="#604330" transform="rotate(24 400 555)"/><path d="M386 508Q420 555 414 602" fill="none" stroke="#ffffff" stroke-width="7"/>
+</svg>

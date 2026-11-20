@@ -16,6 +16,8 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/**/*.test.ts"],
+    // The sample files of the digital products come from tests/fixtures/downloads (lib/storage).
+    env: { CEREBRO_FIXTURES: "1" },
     // The SQL tests start an in-process PostgreSQL: give them room.
     testTimeout: 30_000,
     hookTimeout: 60_000,

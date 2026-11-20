@@ -6,7 +6,8 @@
 // The password is hashed here, on every start: no hash and no secret live in the repository.
 import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { readFileSync, rmSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { cpSync, existsSync, readFileSync, rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { hashPassword } from "./admin-hash.mjs";
@@ -20,6 +21,17 @@ const dataDir = join(root, ".data", "e2e");
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const base = Number(port);
   const next = join(root, "node_modules/next/dist/bin/next");
+  // With CEREBRO_FIXTURES=1 the store is the one of tests/fixtures. Its images are served from
+  // public/fixtures/ (a copy made here, ignored by git, removed on the way out).
+  const fixtures = process.env.CEREBRO_FIXTURES === "1";
+  const fixtureImages = join(root, "public", "fixtures");
+  if (fixtures) {
+    rmSync(fixtureImages, { recursive: true, force: true });
+    cpSync(join(root, "tests/fixtures/public"), fixtureImages, { recursive: true });
+  }
+  // --build: a fresh production build first (the fixtures build goes to .next-fixtures).
+  if (process.argv.includes("--build")) execFileSync(process.execPath, [next, "build"], { cwd: root, stdio: "inherit", env: process.env });
+  else if (fixtures && !existsSync(join(root, ".next-fixtures"))) throw new Error("no fixtures build yet: run this with --build");
   const admin = { ADMIN_USERS: `${E2E_ADMIN.email}:${hashPassword(E2E_ADMIN.password)}`, ADMIN_SESSION_SECRET: randomBytes(32).toString("base64url") };
   // THREE servers on the SAME build:
   //   port      the store with a data folder that works (orders are stored);
@@ -49,9 +61,15 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
       },
     });
   });
-  for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => children.forEach((c) => c.kill(signal)));
+  for (const signal of ["SIGINT", "SIGTERM"]) {
+    process.on(signal, () => {
+      if (fixtures) rmSync(fixtureImages, { recursive: true, force: true });
+      children.forEach((c) => c.kill(signal));
+    });
+  }
   children[0].on("exit", (code) => {
     children.forEach((c) => c.kill());
+    if (fixtures) rmSync(fixtureImages, { recursive: true, force: true });
     process.exit(code ?? 0);
   });
 }

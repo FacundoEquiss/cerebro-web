@@ -36,13 +36,16 @@ export default defineConfig({
     // The real thing: a fresh production build, started with `next start` on an empty data folder.
     // (Always rebuilt: pages cached by a previous run would remember products that no longer exist.)
     {
-      command: "npm run build && node scripts/e2e-server.mjs",
+      command: "node scripts/e2e-server.mjs --build",
       url: `http://localhost:${PORT}/robots.txt`,
       reuseExistingServer: false,
       timeout: 240_000,
       // CEREBRO_FIXTURES=1: the build and the servers use the store of tests/fixtures (catalogue,
-      // home texts, brand, commercial rules), never the owner's — see next.config.ts.
+      // home texts, brand, commercial rules, images, sample files), never the owner's, and build
+      // into .next-fixtures: `.next` stays the real store — see next.config.ts.
       env: { PORT: String(PORT), DEMO_MODE: "true", CEREBRO_FIXTURES: "1" },
+      // Asked to stop (not killed): it removes the copy of the fixture images it made in public/.
+      gracefulShutdown: { signal: "SIGTERM" as const, timeout: 5000 },
       // (the same command also serves PORT + 2 and PORT + 3: the store without a place to keep orders)
     },
     ...(HAS_PRESETS ? [{
@@ -53,6 +56,7 @@ export default defineConfig({
       reuseExistingServer: false,
       timeout: 360_000,
       env: { PRESET: "servicios", PRESET_PORT: String(PRESET_PORT), CEREBRO_FIXTURES: "" },
+      gracefulShutdown: { signal: "SIGTERM" as const, timeout: 5000 },
     }] : []),
   ],
 });

@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Group yoga class">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0efef"/><stop offset="1" stop-color="#e4e1e1"/></linearGradient></defs>
+<rect width="800" height="1000" fill="url(#bg)"/><ellipse cx="400" cy="850" rx="250" ry="24" fill="#000000" opacity=".09"/><rect x="170" y="560" width="460" height="150" rx="20" fill="#7a6ab0"/><circle cx="210" cy="635" r="76" fill="#685a96"/><circle cx="210" cy="635" r="46" fill="#a99ecc"/><circle cx="210" cy="635" r="18" fill="#554a7b"/><path d="M330 560V710M430 560V710M530 560V710" stroke="#6e5f9e" stroke-width="6"/><circle cx="520" cy="380" r="54" fill="#afa6d0"/><path d="M520 434V520M450 470H590" stroke="#afa6d0" stroke-width="22" stroke-linecap="round"/>
+</svg>

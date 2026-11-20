@@ -61,7 +61,11 @@ export function privateName(original: string, random: string): string | null {
 
 const privateDir = () => path.join(/* turbopackIgnore: true */ path.resolve(/* turbopackIgnore: true */ process.env.DATA_DIR || ".data"), "private");
 /** The example files of the presets (generated, harmless). Not under public/: they are only served to paid orders. */
-const samplesDir = () => path.join(/* turbopackIgnore: true */ process.cwd(), "content", "downloads");
+// (The test suite brings its own sample files: tests/fixtures/downloads, with CEREBRO_FIXTURES=1.)
+const samplesDir = () =>
+  process.env.CEREBRO_FIXTURES === "1"
+    ? path.join(/* turbopackIgnore: true */ process.cwd(), "tests", "fixtures", "downloads")
+    : path.join(/* turbopackIgnore: true */ process.cwd(), "content", "downloads");
 
 async function openIfThere(file: string): Promise<PrivateFile | null> {
   try {

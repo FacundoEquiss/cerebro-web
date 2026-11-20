@@ -117,7 +117,7 @@
       "variants": [],
       "images": [
         {
-          "src": "/products/auriculares-inalambricos-main.svg",
+          "src": "/fixtures/products/auriculares-inalambricos-main.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -126,7 +126,7 @@
           }
         },
         {
-          "src": "/products/auriculares-inalambricos-scene.svg",
+          "src": "/fixtures/products/auriculares-inalambricos-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -194,7 +194,7 @@
       "variants": [],
       "images": [
         {
-          "src": "/products/cafe-en-grano-main.svg",
+          "src": "/fixtures/products/cafe-en-grano-main.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -203,7 +203,7 @@
           }
         },
         {
-          "src": "/products/cafe-en-grano-scene.svg",
+          "src": "/fixtures/products/cafe-en-grano-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -241,7 +241,7 @@
       "variants": [],
       "images": [
         {
-          "src": "/products/corte-de-pelo-main.svg",
+          "src": "/fixtures/products/corte-de-pelo-main.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -250,7 +250,7 @@
           }
         },
         {
-          "src": "/products/corte-de-pelo-scene.svg",
+          "src": "/fixtures/products/corte-de-pelo-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -288,7 +288,7 @@
       "variants": [],
       "images": [
         {
-          "src": "/products/guia-en-pdf-main.svg",
+          "src": "/fixtures/products/guia-en-pdf-main.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -297,7 +297,7 @@
           }
         },
         {
-          "src": "/products/guia-en-pdf-scene.svg",
+          "src": "/fixtures/products/guia-en-pdf-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -387,7 +387,7 @@
       ],
       "images": [
         {
-          "src": "/products/taza-de-ceramica-white.svg",
+          "src": "/fixtures/products/taza-de-ceramica-white.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -399,7 +399,7 @@
           }
         },
         {
-          "src": "/products/taza-de-ceramica-sage.svg",
+          "src": "/fixtures/products/taza-de-ceramica-sage.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -411,7 +411,7 @@
           }
         },
         {
-          "src": "/products/taza-de-ceramica-mustard.svg",
+          "src": "/fixtures/products/taza-de-ceramica-mustard.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -423,7 +423,7 @@
           }
         },
         {
-          "src": "/products/taza-de-ceramica-detail.svg",
+          "src": "/fixtures/products/taza-de-ceramica-detail.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -432,7 +432,7 @@
           }
         },
         {
-          "src": "/products/taza-de-ceramica-scene.svg",
+          "src": "/fixtures/products/taza-de-ceramica-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -469,7 +469,7 @@
       "variants": [],
       "images": [
         {
-          "src": "/products/torta-por-kilo-main.svg",
+          "src": "/fixtures/products/torta-por-kilo-main.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -478,7 +478,7 @@
           }
         },
         {
-          "src": "/products/torta-por-kilo-scene.svg",
+          "src": "/fixtures/products/torta-por-kilo-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -512,7 +512,7 @@
       "variants": [],
       "images": [
         {
-          "src": "/products/camisetas-estampadas-para-eventos-main.svg",
+          "src": "/fixtures/products/camisetas-estampadas-para-eventos-main.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -521,7 +521,7 @@
           }
         },
         {
-          "src": "/products/camisetas-estampadas-para-eventos-scene.svg",
+          "src": "/fixtures/products/camisetas-estampadas-para-eventos-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -716,7 +716,7 @@
       ],
       "images": [
         {
-          "src": "/products/camiseta-basica-algodon-white.svg",
+          "src": "/fixtures/products/camiseta-basica-algodon-white.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -728,7 +728,7 @@
           }
         },
         {
-          "src": "/products/camiseta-basica-algodon-black.svg",
+          "src": "/fixtures/products/camiseta-basica-algodon-black.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -740,7 +740,7 @@
           }
         },
         {
-          "src": "/products/camiseta-basica-algodon-olive.svg",
+          "src": "/fixtures/products/camiseta-basica-algodon-olive.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -752,7 +752,7 @@
           }
         },
         {
-          "src": "/products/camiseta-basica-algodon-detail.svg",
+          "src": "/fixtures/products/camiseta-basica-algodon-detail.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -761,7 +761,7 @@
           }
         },
         {
-          "src": "/products/camiseta-basica-algodon-scene.svg",
+          "src": "/fixtures/products/camiseta-basica-algodon-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -795,7 +795,7 @@
       "variants": [],
       "images": [
         {
-          "src": "/products/cargador-usb-c-30-w-main.svg",
+          "src": "/fixtures/products/cargador-usb-c-30-w-main.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -804,7 +804,7 @@
           }
         },
         {
-          "src": "/products/cargador-usb-c-30-w-scene.svg",
+          "src": "/fixtures/products/cargador-usb-c-30-w-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -841,7 +841,7 @@
       "variants": [],
       "images": [
         {
-          "src": "/products/mix-de-frutos-secos-main.svg",
+          "src": "/fixtures/products/mix-de-frutos-secos-main.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -850,7 +850,7 @@
           }
         },
         {
-          "src": "/products/mix-de-frutos-secos-scene.svg",
+          "src": "/fixtures/products/mix-de-frutos-secos-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -914,7 +914,7 @@
       "variants": [],
       "images": [
         {
-          "src": "/products/clase-grupal-de-yoga-main.svg",
+          "src": "/fixtures/products/clase-grupal-de-yoga-main.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -923,7 +923,7 @@
           }
         },
         {
-          "src": "/products/clase-grupal-de-yoga-scene.svg",
+          "src": "/fixtures/products/clase-grupal-de-yoga-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -961,7 +961,7 @@
       "variants": [],
       "images": [
         {
-          "src": "/products/pack-de-plantillas-main.svg",
+          "src": "/fixtures/products/pack-de-plantillas-main.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -970,7 +970,7 @@
           }
         },
         {
-          "src": "/products/pack-de-plantillas-scene.svg",
+          "src": "/fixtures/products/pack-de-plantillas-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1004,7 +1004,7 @@
       "variants": [],
       "images": [
         {
-          "src": "/products/vela-aromatica-de-soja-sand.svg",
+          "src": "/fixtures/products/vela-aromatica-de-soja-sand.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1013,7 +1013,7 @@
           }
         },
         {
-          "src": "/products/vela-aromatica-de-soja-detail.svg",
+          "src": "/fixtures/products/vela-aromatica-de-soja-detail.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1022,7 +1022,7 @@
           }
         },
         {
-          "src": "/products/vela-aromatica-de-soja-scene.svg",
+          "src": "/fixtures/products/vela-aromatica-de-soja-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1056,7 +1056,7 @@
       "variants": [],
       "images": [
         {
-          "src": "/products/docena-de-empanadas-main.svg",
+          "src": "/fixtures/products/docena-de-empanadas-main.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1065,7 +1065,7 @@
           }
         },
         {
-          "src": "/products/docena-de-empanadas-scene.svg",
+          "src": "/fixtures/products/docena-de-empanadas-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1099,7 +1099,7 @@
       "variants": [],
       "images": [
         {
-          "src": "/products/mueble-a-medida-main.svg",
+          "src": "/fixtures/products/mueble-a-medida-main.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1108,7 +1108,7 @@
           }
         },
         {
-          "src": "/products/mueble-a-medida-scene.svg",
+          "src": "/fixtures/products/mueble-a-medida-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1206,7 +1206,7 @@
       "variants": [],
       "images": [
         {
-          "src": "/products/sudadera-con-capucha-grey.svg",
+          "src": "/fixtures/products/sudadera-con-capucha-grey.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1218,7 +1218,7 @@
           }
         },
         {
-          "src": "/products/sudadera-con-capucha-navy.svg",
+          "src": "/fixtures/products/sudadera-con-capucha-navy.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1230,7 +1230,7 @@
           }
         },
         {
-          "src": "/products/sudadera-con-capucha-sand.svg",
+          "src": "/fixtures/products/sudadera-con-capucha-sand.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1242,7 +1242,7 @@
           }
         },
         {
-          "src": "/products/sudadera-con-capucha-detail.svg",
+          "src": "/fixtures/products/sudadera-con-capucha-detail.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1251,7 +1251,7 @@
           }
         },
         {
-          "src": "/products/sudadera-con-capucha-scene.svg",
+          "src": "/fixtures/products/sudadera-con-capucha-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1285,7 +1285,7 @@
       "variants": [],
       "images": [
         {
-          "src": "/products/cuaderno-a5-tapa-dura-terracotta.svg",
+          "src": "/fixtures/products/cuaderno-a5-tapa-dura-terracotta.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1294,7 +1294,7 @@
           }
         },
         {
-          "src": "/products/cuaderno-a5-tapa-dura-detail.svg",
+          "src": "/fixtures/products/cuaderno-a5-tapa-dura-detail.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1303,7 +1303,7 @@
           }
         },
         {
-          "src": "/products/cuaderno-a5-tapa-dura-scene.svg",
+          "src": "/fixtures/products/cuaderno-a5-tapa-dura-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1337,7 +1337,7 @@
       "variants": [],
       "images": [
         {
-          "src": "/products/lamina-decorativa-30x40-navy.svg",
+          "src": "/fixtures/products/lamina-decorativa-30x40-navy.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1346,7 +1346,7 @@
           }
         },
         {
-          "src": "/products/lamina-decorativa-30x40-detail.svg",
+          "src": "/fixtures/products/lamina-decorativa-30x40-detail.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1355,7 +1355,7 @@
           }
         },
         {
-          "src": "/products/lamina-decorativa-30x40-scene.svg",
+          "src": "/fixtures/products/lamina-decorativa-30x40-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1440,7 +1440,7 @@
       "variants": [],
       "images": [
         {
-          "src": "/products/almohadon-de-lino-natural.svg",
+          "src": "/fixtures/products/almohadon-de-lino-natural.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1452,7 +1452,7 @@
           }
         },
         {
-          "src": "/products/almohadon-de-lino-sage.svg",
+          "src": "/fixtures/products/almohadon-de-lino-sage.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1464,7 +1464,7 @@
           }
         },
         {
-          "src": "/products/almohadon-de-lino-terracotta.svg",
+          "src": "/fixtures/products/almohadon-de-lino-terracotta.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1476,7 +1476,7 @@
           }
         },
         {
-          "src": "/products/almohadon-de-lino-detail.svg",
+          "src": "/fixtures/products/almohadon-de-lino-detail.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1485,7 +1485,7 @@
           }
         },
         {
-          "src": "/products/almohadon-de-lino-scene.svg",
+          "src": "/fixtures/products/almohadon-de-lino-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1560,7 +1560,7 @@
       ],
       "images": [
         {
-          "src": "/products/manta-tejida-grey.svg",
+          "src": "/fixtures/products/manta-tejida-grey.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1572,7 +1572,7 @@
           }
         },
         {
-          "src": "/products/manta-tejida-mustard.svg",
+          "src": "/fixtures/products/manta-tejida-mustard.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1584,7 +1584,7 @@
           }
         },
         {
-          "src": "/products/manta-tejida-detail.svg",
+          "src": "/fixtures/products/manta-tejida-detail.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1593,7 +1593,7 @@
           }
         },
         {
-          "src": "/products/manta-tejida-scene.svg",
+          "src": "/fixtures/products/manta-tejida-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1668,7 +1668,7 @@
       ],
       "images": [
         {
-          "src": "/products/mochila-urbana-olive.svg",
+          "src": "/fixtures/products/mochila-urbana-olive.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1680,7 +1680,7 @@
           }
         },
         {
-          "src": "/products/mochila-urbana-black.svg",
+          "src": "/fixtures/products/mochila-urbana-black.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1692,7 +1692,7 @@
           }
         },
         {
-          "src": "/products/mochila-urbana-detail.svg",
+          "src": "/fixtures/products/mochila-urbana-detail.svg",
           "width": 800,
           "height": 1000,
           "alt": {
@@ -1701,7 +1701,7 @@
           }
         },
         {
-          "src": "/products/mochila-urbana-scene.svg",
+          "src": "/fixtures/products/mochila-urbana-scene.svg",
           "width": 800,
           "height": 1000,
           "alt": {
