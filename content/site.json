@@ -1,0 +1,130 @@
+{
+  "_note": "Which preset the store started from, and the texts of the home page (hero, benefits, frequently asked questions). EXAMPLE texts: replace them with the real ones. Written by `npm run preset <name>`; edit it freely afterwards. `home: null` falls back to the texts of i18n/.",
+  "preset": "mixto",
+  "home": {
+    "heroEyebrow": {
+      "es": "Tienda de ejemplo",
+      "en": "Example store"
+    },
+    "heroTitle": {
+      "es": "Todo lo que vendés, en un solo lugar",
+      "en": "Everything you sell, in one place"
+    },
+    "heroText": {
+      "es": "Productos, venta por peso, descargas, turnos y trabajos a medida: lo que sea que ofrezca tu negocio. Este es un texto de ejemplo: contá acá qué vendés y por qué elegirte.",
+      "en": "Products, sale by weight, downloads, appointments and made-to-measure work: whatever your business offers. This is example text: say here what you sell and why people should choose you."
+    },
+    "heroCta": {
+      "es": "Ver la tienda",
+      "en": "Browse the shop"
+    },
+    "benefits": [
+      {
+        "icon": "truck",
+        "title": {
+          "es": "Envío sólo si hace falta",
+          "en": "Shipping only when needed"
+        },
+        "text": {
+          "es": "Los turnos y las descargas no llevan envío. EJEMPLO: describí tus opciones reales.",
+          "en": "Appointments and downloads have no shipping. EXAMPLE: describe your real options."
+        }
+      },
+      {
+        "icon": "shield",
+        "title": {
+          "es": "Compra protegida",
+          "en": "Protected purchase"
+        },
+        "text": {
+          "es": "El total se confirma en nuestro servidor antes de pagar. EJEMPLO.",
+          "en": "The total is confirmed on our server before you pay. EXAMPLE."
+        }
+      },
+      {
+        "icon": "message",
+        "title": {
+          "es": "Atención directa",
+          "en": "Direct support"
+        },
+        "text": {
+          "es": "Te responde una persona por WhatsApp o e-mail. EJEMPLO.",
+          "en": "A person replies by WhatsApp or e-mail. EXAMPLE."
+        }
+      },
+      {
+        "icon": "refresh",
+        "title": {
+          "es": "Cambios y cancelaciones",
+          "en": "Changes and cancellations"
+        },
+        "text": {
+          "es": "COMPLETAR con la política real del negocio.",
+          "en": "FILL IN with the real policy of the business."
+        }
+      }
+    ],
+    "faq": [
+      {
+        "q": {
+          "es": "¿Cómo compro?",
+          "en": "How do I buy?"
+        },
+        "a": {
+          "es": "Elegí lo que necesitás —con sus opciones, la cantidad o el horario— y agregalo al carrito. Al finalizar la compra completás tus datos y elegís la forma de pago; si hay algo para enviar, también la entrega.",
+          "en": "Pick what you need — with its options, the quantity or the time — and add it to the cart. At checkout you fill in your details and choose how to pay; if something is shipped, also the delivery."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Qué medios de pago aceptan?",
+          "en": "Which payment methods do you accept?"
+        },
+        "a": {
+          "es": "EJEMPLO: transferencia bancaria o coordinando por WhatsApp. COMPLETAR con los medios reales del negocio.",
+          "en": "EXAMPLE: bank transfer or arranging it by WhatsApp. FILL IN with the real methods of the business."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Cómo recibo un producto digital?",
+          "en": "How do I get a digital product?"
+        },
+        "a": {
+          "es": "Cuando se confirma el pago, el enlace de descarga aparece en la página de tu pedido y te llega por e-mail.",
+          "en": "When the payment is confirmed, the download link appears on your order page and is e-mailed to you."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Cómo reservo un turno?",
+          "en": "How do I book an appointment?"
+        },
+        "a": {
+          "es": "En la página del servicio elegís el día y el horario. El turno queda reservado al confirmar el pedido. COMPLETAR con la política de cancelación.",
+          "en": "On the service page you choose the day and the time. The slot is reserved when you confirm the order. FILL IN with the cancellation policy."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Y si necesito algo a medida?",
+          "en": "What if I need something made to measure?"
+        },
+        "a": {
+          "es": "Los productos «a presupuesto» no tienen precio publicado: contanos qué necesitás y te enviamos la cotización para que la aceptes y pagues.",
+          "en": "Products “on a quote” have no published price: tell us what you need and we send you the quote to accept and pay."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Cuánto tarda mi pedido?",
+          "en": "How long does my order take?"
+        },
+        "a": {
+          "es": "Los productos en stock se preparan en {min} a {max} días hábiles. EJEMPLO.",
+          "en": "In-stock products are prepared in {min} to {max} business days. EXAMPLE."
+        }
+      }
+    ]
+  }
+}

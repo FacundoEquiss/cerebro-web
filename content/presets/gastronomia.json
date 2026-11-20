@@ -1,0 +1,484 @@
+{
+  "_note": "EXAMPLE PRESET. Every product, price and text here is an EXAMPLE: replace them with the real ones. Apply it with `npm run preset gastronomia` (it becomes content/products.json and content/site.json, and its palette goes to config/brand.ts). Texts can be a plain string or { \"es\": \"…\", \"en\": \"…\" }. See docs/product-types.md for `type`, `unit`, `step`, `service` and `digital`.",
+  "id": "gastronomia",
+  "name": {
+    "es": "Gastronomía y delivery",
+    "en": "Food and delivery"
+  },
+  "description": {
+    "es": "Platos con tamaños, venta por kilo a pedido y catering a presupuesto.",
+    "en": "Dishes with sizes, made-to-order sale by the kilo and catering on a quote."
+  },
+  "palette": {
+    "background": "#fbf5ee",
+    "surface": "#ffffff",
+    "ink": "#2a1d14",
+    "muted": "#75604f",
+    "line": "#eedfce",
+    "action": "#b3401f",
+    "onAction": "#ffffff",
+    "highlight": "#1f6b4a"
+  },
+  "home": {
+    "heroEyebrow": {
+      "es": "Local de ejemplo",
+      "en": "Example restaurant"
+    },
+    "heroTitle": {
+      "es": "Pedí hoy, lo preparamos en el momento",
+      "en": "Order today, we cook it fresh"
+    },
+    "heroText": {
+      "es": "Texto de ejemplo: contá acá qué cocinás, tus horarios y tu zona de entrega.",
+      "en": "Example text: say here what you cook, your opening hours and your delivery area."
+    },
+    "heroCta": {
+      "es": "Ver el menú",
+      "en": "See the menu"
+    },
+    "benefits": [
+      {
+        "icon": "truck",
+        "title": {
+          "es": "Delivery y retiro",
+          "en": "Delivery and pickup"
+        },
+        "text": {
+          "es": "COMPLETAR con la zona y los horarios reales.",
+          "en": "FILL IN with the real area and hours."
+        }
+      },
+      {
+        "icon": "shield",
+        "title": {
+          "es": "Alérgenos",
+          "en": "Allergens"
+        },
+        "text": {
+          "es": "COMPLETAR con la información real de alérgenos.",
+          "en": "FILL IN with the real allergen information."
+        }
+      },
+      {
+        "icon": "message",
+        "title": {
+          "es": "Pedidos por WhatsApp",
+          "en": "Orders by WhatsApp"
+        },
+        "text": {
+          "es": "EJEMPLO.",
+          "en": "EXAMPLE."
+        }
+      }
+    ],
+    "faq": [
+      {
+        "q": {
+          "es": "¿Hasta dónde llegan?",
+          "en": "How far do you deliver?"
+        },
+        "a": {
+          "es": "COMPLETAR con la zona real de entrega y su costo.",
+          "en": "FILL IN with the real delivery area and its cost."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Cuánto demora?",
+          "en": "How long does it take?"
+        },
+        "a": {
+          "es": "COMPLETAR con los tiempos reales de preparación y entrega.",
+          "en": "FILL IN with the real preparation and delivery times."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Qué medios de pago aceptan?",
+          "en": "Which payment methods do you accept?"
+        },
+        "a": {
+          "es": "EJEMPLO: transferencia bancaria o coordinando por WhatsApp. COMPLETAR con los medios reales del negocio.",
+          "en": "EXAMPLE: bank transfer or arranging it by WhatsApp. FILL IN with the real methods of the business."
+        }
+      }
+    ]
+  },
+  "categories": [
+    {
+      "slug": "gastronomia",
+      "name": {
+        "es": "Gastronomía",
+        "en": "Food"
+      },
+      "description": {
+        "es": "Comidas para pedir y trabajos a pedido. Texto de EJEMPLO.",
+        "en": "Food to order and made-to-order work. EXAMPLE text."
+      }
+    }
+  ],
+  "products": [
+    {
+      "id": "docena-de-empanadas",
+      "slug": "docena-de-empanadas",
+      "name": {
+        "es": "Docena de empanadas",
+        "en": "A dozen empanadas"
+      },
+      "description": {
+        "es": "Doce empanadas al horno, surtidas. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Twelve assorted baked empanadas. EXAMPLE text: describe your own here."
+      },
+      "category": "gastronomia",
+      "type": "physical",
+      "price": 21600,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-03-03T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/docena-de-empanadas-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Docena de empanadas",
+            "en": "A dozen empanadas"
+          },
+          "placeholder": {
+            "shape": "plate",
+            "color": "#c9863a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/docena-de-empanadas-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Docena de empanadas, vista de ambiente",
+            "en": "A dozen empanadas, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "plate",
+            "color": "#c9863a",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "hamburguesa-completa",
+      "slug": "hamburguesa-completa",
+      "name": {
+        "es": "Hamburguesa completa",
+        "en": "Loaded burger"
+      },
+      "description": {
+        "es": "Con queso, lechuga, tomate y papas. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "With cheese, lettuce, tomato and fries. EXAMPLE text: describe your own here."
+      },
+      "category": "gastronomia",
+      "type": "physical",
+      "price": 12900,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-02-22T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/hamburguesa-completa-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Hamburguesa completa",
+            "en": "Loaded burger"
+          },
+          "placeholder": {
+            "shape": "burger",
+            "color": "#b4532a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/hamburguesa-completa-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Hamburguesa completa, vista de ambiente",
+            "en": "Loaded burger, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "burger",
+            "color": "#b4532a",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pizza-de-muzzarella",
+      "slug": "pizza-de-muzzarella",
+      "name": {
+        "es": "Pizza de muzzarella",
+        "en": "Mozzarella pizza"
+      },
+      "description": {
+        "es": "Masa de fermentación lenta, salsa de tomate y muzzarella. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Slow-fermented dough, tomato sauce and mozzarella. EXAMPLE text: describe your own here."
+      },
+      "category": "gastronomia",
+      "type": "physical",
+      "price": 14500,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-02-27T00:00:00.000Z",
+      "options": [
+        {
+          "id": "tamano",
+          "name": {
+            "es": "Tamaño",
+            "en": "Size"
+          },
+          "values": [
+            {
+              "id": "chica",
+              "label": {
+                "es": "Chica",
+                "en": "Small"
+              }
+            },
+            {
+              "id": "grande",
+              "label": {
+                "es": "Grande",
+                "en": "Large"
+              }
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "id": "pizza-de-muzzarella-chica",
+          "options": {
+            "tamano": "chica"
+          },
+          "stock": null,
+          "price": 11500
+        },
+        {
+          "id": "pizza-de-muzzarella-grande",
+          "options": {
+            "tamano": "grande"
+          },
+          "stock": null,
+          "price": 14500
+        }
+      ],
+      "images": [
+        {
+          "src": "/products/pizza-de-muzzarella-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Pizza de muzzarella",
+            "en": "Mozzarella pizza"
+          },
+          "placeholder": {
+            "shape": "pizza",
+            "color": "#d9a441",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/pizza-de-muzzarella-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Pizza de muzzarella, vista de ambiente",
+            "en": "Mozzarella pizza, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "pizza",
+            "color": "#d9a441",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "torta-por-kilo",
+      "slug": "torta-por-kilo",
+      "name": {
+        "es": "Torta artesanal por kilo",
+        "en": "Handmade cake by the kilo"
+      },
+      "description": {
+        "es": "Torta hecha a pedido. Se vende por kilo, desde uno, de a medio. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Cake made to order. Sold by the kilo, from one, in half-kilo steps. EXAMPLE text: describe your own here."
+      },
+      "category": "gastronomia",
+      "type": "physical",
+      "price": 26000,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "unit": "kg",
+      "step": 0.5,
+      "maxQuantity": 6,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-03-01T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/torta-por-kilo-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Torta artesanal por kilo",
+            "en": "Handmade cake by the kilo"
+          },
+          "placeholder": {
+            "shape": "cake",
+            "color": "#d7a6a0",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/torta-por-kilo-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Torta artesanal por kilo, vista de ambiente",
+            "en": "Handmade cake by the kilo, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "cake",
+            "color": "#d7a6a0",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "limonada-1-l",
+      "slug": "limonada-1-l",
+      "name": {
+        "es": "Limonada 1 l",
+        "en": "Lemonade 1 l"
+      },
+      "description": {
+        "es": "Limonada con menta y jengibre. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Lemonade with mint and ginger. EXAMPLE text: describe your own here."
+      },
+      "category": "gastronomia",
+      "type": "physical",
+      "price": 5200,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": 20,
+      "attributes": {},
+      "createdAt": "2026-02-05T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/limonada-1-l-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Limonada 1 l",
+            "en": "Lemonade 1 l"
+          },
+          "placeholder": {
+            "shape": "bottle",
+            "color": "#e3c64b",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/limonada-1-l-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Limonada 1 l, vista de ambiente",
+            "en": "Lemonade 1 l, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "bottle",
+            "color": "#e3c64b",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "catering-para-eventos",
+      "slug": "catering-para-eventos",
+      "name": {
+        "es": "Catering para eventos",
+        "en": "Event catering"
+      },
+      "description": {
+        "es": "Armamos el menú según la cantidad de personas y el tipo de evento. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "We put the menu together for your number of guests and kind of event. EXAMPLE text: describe your own here."
+      },
+      "category": "gastronomia",
+      "type": "quote",
+      "price": 0,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 10,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-02-10T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/catering-para-eventos-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Catering para eventos",
+            "en": "Event catering"
+          },
+          "placeholder": {
+            "shape": "tray",
+            "color": "#8a6a4a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/catering-para-eventos-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Catering para eventos, vista de ambiente",
+            "en": "Event catering, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "tray",
+            "color": "#8a6a4a",
+            "view": "scene"
+          }
+        }
+      ]
+    }
+  ]
+}

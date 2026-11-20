@@ -1,0 +1,2165 @@
+{
+  "_note": "EXAMPLE PRESET. Every product, price and text here is an EXAMPLE: replace them with the real ones. Apply it with `npm run preset mixto` (it becomes content/products.json and content/site.json, and its palette goes to config/brand.ts). Texts can be a plain string or { \"es\": \"…\", \"en\": \"…\" }. See docs/product-types.md for `type`, `unit`, `step`, `service` and `digital`.",
+  "id": "mixto",
+  "name": {
+    "es": "Mixto (la demo)",
+    "en": "Mixed (the demo)"
+  },
+  "description": {
+    "es": "Un producto de cada tipo y de varios rubros: para ver todo lo que la base sabe hacer.",
+    "en": "One product of each type, from several lines of business: to see everything the base can do."
+  },
+  "palette": {
+    "background": "#f7f6f3",
+    "surface": "#ffffff",
+    "ink": "#17191c",
+    "muted": "#5d6269",
+    "line": "#e4e2dc",
+    "action": "#1f4a40",
+    "onAction": "#ffffff",
+    "highlight": "#b4532a"
+  },
+  "home": {
+    "heroEyebrow": {
+      "es": "Tienda de ejemplo",
+      "en": "Example store"
+    },
+    "heroTitle": {
+      "es": "Todo lo que vendés, en un solo lugar",
+      "en": "Everything you sell, in one place"
+    },
+    "heroText": {
+      "es": "Productos, venta por peso, descargas, turnos y trabajos a medida: lo que sea que ofrezca tu negocio. Este es un texto de ejemplo: contá acá qué vendés y por qué elegirte.",
+      "en": "Products, sale by weight, downloads, appointments and made-to-measure work: whatever your business offers. This is example text: say here what you sell and why people should choose you."
+    },
+    "heroCta": {
+      "es": "Ver la tienda",
+      "en": "Browse the shop"
+    },
+    "benefits": [
+      {
+        "icon": "truck",
+        "title": {
+          "es": "Envío sólo si hace falta",
+          "en": "Shipping only when needed"
+        },
+        "text": {
+          "es": "Los turnos y las descargas no llevan envío. EJEMPLO: describí tus opciones reales.",
+          "en": "Appointments and downloads have no shipping. EXAMPLE: describe your real options."
+        }
+      },
+      {
+        "icon": "shield",
+        "title": {
+          "es": "Compra protegida",
+          "en": "Protected purchase"
+        },
+        "text": {
+          "es": "El total se confirma en nuestro servidor antes de pagar. EJEMPLO.",
+          "en": "The total is confirmed on our server before you pay. EXAMPLE."
+        }
+      },
+      {
+        "icon": "message",
+        "title": {
+          "es": "Atención directa",
+          "en": "Direct support"
+        },
+        "text": {
+          "es": "Te responde una persona por WhatsApp o e-mail. EJEMPLO.",
+          "en": "A person replies by WhatsApp or e-mail. EXAMPLE."
+        }
+      },
+      {
+        "icon": "refresh",
+        "title": {
+          "es": "Cambios y cancelaciones",
+          "en": "Changes and cancellations"
+        },
+        "text": {
+          "es": "COMPLETAR con la política real del negocio.",
+          "en": "FILL IN with the real policy of the business."
+        }
+      }
+    ],
+    "faq": [
+      {
+        "q": {
+          "es": "¿Cómo compro?",
+          "en": "How do I buy?"
+        },
+        "a": {
+          "es": "Elegí lo que necesitás —con sus opciones, la cantidad o el horario— y agregalo al carrito. Al finalizar la compra completás tus datos y elegís la forma de pago; si hay algo para enviar, también la entrega.",
+          "en": "Pick what you need — with its options, the quantity or the time — and add it to the cart. At checkout you fill in your details and choose how to pay; if something is shipped, also the delivery."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Qué medios de pago aceptan?",
+          "en": "Which payment methods do you accept?"
+        },
+        "a": {
+          "es": "EJEMPLO: transferencia bancaria o coordinando por WhatsApp. COMPLETAR con los medios reales del negocio.",
+          "en": "EXAMPLE: bank transfer or arranging it by WhatsApp. FILL IN with the real methods of the business."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Cómo recibo un producto digital?",
+          "en": "How do I get a digital product?"
+        },
+        "a": {
+          "es": "Cuando se confirma el pago, el enlace de descarga aparece en la página de tu pedido y te llega por e-mail.",
+          "en": "When the payment is confirmed, the download link appears on your order page and is e-mailed to you."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Cómo reservo un turno?",
+          "en": "How do I book an appointment?"
+        },
+        "a": {
+          "es": "En la página del servicio elegís el día y el horario. El turno queda reservado al confirmar el pedido. COMPLETAR con la política de cancelación.",
+          "en": "On the service page you choose the day and the time. The slot is reserved when you confirm the order. FILL IN with the cancellation policy."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Y si necesito algo a medida?",
+          "en": "What if I need something made to measure?"
+        },
+        "a": {
+          "es": "Los productos «a presupuesto» no tienen precio publicado: contanos qué necesitás y te enviamos la cotización para que la aceptes y pagues.",
+          "en": "Products “on a quote” have no published price: tell us what you need and we send you the quote to accept and pay."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Cuánto tarda mi pedido?",
+          "en": "How long does my order take?"
+        },
+        "a": {
+          "es": "Los productos en stock se preparan en {min} a {max} días hábiles. EJEMPLO.",
+          "en": "In-stock products are prepared in {min} to {max} business days. EXAMPLE."
+        }
+      }
+    ]
+  },
+  "categories": [
+    {
+      "slug": "tecnologia",
+      "name": {
+        "es": "Tecnología",
+        "en": "Technology"
+      },
+      "description": {
+        "es": "Audio, carga y accesorios para tus equipos. Texto de EJEMPLO.",
+        "en": "Audio, charging and accessories for your devices. EXAMPLE text."
+      }
+    },
+    {
+      "slug": "almacen",
+      "name": {
+        "es": "Almacén",
+        "en": "Pantry"
+      },
+      "description": {
+        "es": "Productos por peso y envasados. Texto de EJEMPLO.",
+        "en": "Products by weight and packaged goods. EXAMPLE text."
+      }
+    },
+    {
+      "slug": "servicios",
+      "name": {
+        "es": "Servicios",
+        "en": "Services"
+      },
+      "description": {
+        "es": "Reservá tu turno: elegís día y horario. Texto de EJEMPLO.",
+        "en": "Book your appointment: choose the day and the time. EXAMPLE text."
+      }
+    },
+    {
+      "slug": "digital",
+      "name": {
+        "es": "Digitales",
+        "en": "Digital"
+      },
+      "description": {
+        "es": "Archivos y cursos que descargás después del pago. Texto de EJEMPLO.",
+        "en": "Files and courses you download after paying. EXAMPLE text."
+      }
+    },
+    {
+      "slug": "hogar",
+      "name": {
+        "es": "Hogar y deco",
+        "en": "Home and decor"
+      },
+      "description": {
+        "es": "Objetos para la casa, simples y bien hechos. Texto de EJEMPLO.",
+        "en": "Simple, well-made objects for the home. EXAMPLE text."
+      }
+    },
+    {
+      "slug": "gastronomia",
+      "name": {
+        "es": "Gastronomía",
+        "en": "Food"
+      },
+      "description": {
+        "es": "Comidas para pedir y trabajos a pedido. Texto de EJEMPLO.",
+        "en": "Food to order and made-to-order work. EXAMPLE text."
+      }
+    },
+    {
+      "slug": "indumentaria",
+      "name": {
+        "es": "Moda",
+        "en": "Fashion"
+      },
+      "description": {
+        "es": "Prendas y accesorios para todos los días. Texto de EJEMPLO.",
+        "en": "Everyday clothes and accessories. EXAMPLE text."
+      }
+    },
+    {
+      "slug": "a-medida",
+      "name": {
+        "es": "A medida",
+        "en": "Made to measure"
+      },
+      "description": {
+        "es": "Trabajos que se cotizan: pedí tu presupuesto. Texto de EJEMPLO.",
+        "en": "Work that is quoted: ask for your price. EXAMPLE text."
+      }
+    }
+  ],
+  "products": [
+    {
+      "id": "auriculares-inalambricos",
+      "slug": "auriculares-inalambricos",
+      "name": {
+        "es": "Auriculares inalámbricos",
+        "en": "Wireless headphones"
+      },
+      "description": {
+        "es": "Auriculares con cancelación de ruido y estuche de carga. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Headphones with noise cancelling and a charging case. EXAMPLE text: describe your own here."
+      },
+      "category": "tecnologia",
+      "type": "physical",
+      "price": 89900,
+      "compareAtPrice": 104900,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": 12,
+      "attributes": {
+        "googleCategory": "Electronics > Audio > Audio Components > Headphones & Headsets"
+      },
+      "createdAt": "2026-03-02T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/auriculares-inalambricos-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Auriculares inalámbricos",
+            "en": "Wireless headphones"
+          },
+          "placeholder": {
+            "shape": "headphones",
+            "color": "#2b2f36",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/auriculares-inalambricos-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Auriculares inalámbricos, vista de ambiente",
+            "en": "Wireless headphones, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "headphones",
+            "color": "#2b2f36",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "cafe-en-grano",
+      "slug": "cafe-en-grano",
+      "name": {
+        "es": "Café de especialidad",
+        "en": "Specialty coffee"
+      },
+      "description": {
+        "es": "Café tostado de la semana. Se vende por kilo, desde un cuarto. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "This week's roast. Sold by the kilo, from a quarter. EXAMPLE text: describe your own here."
+      },
+      "category": "almacen",
+      "type": "physical",
+      "price": 28000,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 0.25,
+      "unit": "kg",
+      "step": 0.25,
+      "maxQuantity": 5,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-03-06T00:00:00.000Z",
+      "options": [
+        {
+          "id": "molienda",
+          "name": {
+            "es": "Molienda",
+            "en": "Grind"
+          },
+          "values": [
+            {
+              "id": "grano",
+              "label": {
+                "es": "En grano",
+                "en": "Whole bean"
+              }
+            },
+            {
+              "id": "filtro",
+              "label": {
+                "es": "Molido para filtro",
+                "en": "Ground for filter"
+              }
+            },
+            {
+              "id": "espresso",
+              "label": {
+                "es": "Molido para espresso",
+                "en": "Ground for espresso"
+              }
+            }
+          ]
+        }
+      ],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/cafe-en-grano-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Café de especialidad",
+            "en": "Specialty coffee"
+          },
+          "placeholder": {
+            "shape": "coffee",
+            "color": "#6b4a35",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/cafe-en-grano-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Café de especialidad, vista de ambiente",
+            "en": "Specialty coffee, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "coffee",
+            "color": "#6b4a35",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "corte-de-pelo",
+      "slug": "corte-de-pelo",
+      "name": {
+        "es": "Corte de pelo",
+        "en": "Haircut"
+      },
+      "description": {
+        "es": "Corte con lavado. Elegís día y horario. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Haircut with a wash. You choose the day and the time. EXAMPLE text: describe your own here."
+      },
+      "category": "servicios",
+      "type": "service",
+      "price": 12000,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "service": {
+        "durationMinutes": 30,
+        "capacity": 1
+      },
+      "attributes": {},
+      "createdAt": "2026-03-04T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/corte-de-pelo-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Corte de pelo",
+            "en": "Haircut"
+          },
+          "placeholder": {
+            "shape": "scissors",
+            "color": "#3d4f5c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/corte-de-pelo-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Corte de pelo, vista de ambiente",
+            "en": "Haircut, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "scissors",
+            "color": "#3d4f5c",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "guia-en-pdf",
+      "slug": "guia-en-pdf",
+      "name": {
+        "es": "Guía práctica en PDF",
+        "en": "Practical guide (PDF)"
+      },
+      "description": {
+        "es": "Una guía de 40 páginas para empezar. La descargás después del pago. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "A 40-page guide to get started. You download it after paying. EXAMPLE text: describe your own here."
+      },
+      "category": "digital",
+      "type": "digital",
+      "price": 7900,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "digital": {
+        "name": "guia-de-ejemplo.pdf",
+        "file": "sample-guide.pdf"
+      },
+      "attributes": {},
+      "createdAt": "2026-03-01T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/guia-en-pdf-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Guía práctica en PDF",
+            "en": "Practical guide (PDF)"
+          },
+          "placeholder": {
+            "shape": "ebook",
+            "color": "#2f6f7a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/guia-en-pdf-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Guía práctica en PDF, vista de ambiente",
+            "en": "Practical guide (PDF), lifestyle view"
+          },
+          "placeholder": {
+            "shape": "ebook",
+            "color": "#2f6f7a",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "taza-de-ceramica",
+      "slug": "taza-de-ceramica",
+      "name": {
+        "es": "Taza de cerámica",
+        "en": "Ceramic mug"
+      },
+      "description": {
+        "es": "Taza de cerámica esmaltada de 350 ml, apta para microondas y lavavajillas. Texto de EJEMPLO.",
+        "en": "350 ml glazed ceramic mug, microwave and dishwasher safe. EXAMPLE text."
+      },
+      "category": "hogar",
+      "type": "physical",
+      "price": 11900,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-03-27T00:00:00.000Z",
+      "options": [
+        {
+          "id": "color",
+          "name": {
+            "es": "Color",
+            "en": "Colour"
+          },
+          "values": [
+            {
+              "id": "white",
+              "label": {
+                "es": "Blanco",
+                "en": "White"
+              },
+              "swatch": "#f1efe9"
+            },
+            {
+              "id": "sage",
+              "label": {
+                "es": "Salvia",
+                "en": "Sage"
+              },
+              "swatch": "#9aa58c"
+            },
+            {
+              "id": "mustard",
+              "label": {
+                "es": "Mostaza",
+                "en": "Mustard"
+              },
+              "swatch": "#c99a3b"
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "id": "taza-de-ceramica-white",
+          "options": {
+            "color": "white"
+          },
+          "stock": 14
+        },
+        {
+          "id": "taza-de-ceramica-sage",
+          "options": {
+            "color": "sage"
+          },
+          "stock": 14
+        },
+        {
+          "id": "taza-de-ceramica-mustard",
+          "options": {
+            "color": "mustard"
+          },
+          "stock": 14
+        }
+      ],
+      "images": [
+        {
+          "src": "/products/taza-de-ceramica-white.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Taza de cerámica en color blanco",
+            "en": "Ceramic mug in white"
+          },
+          "option": {
+            "color": "white"
+          },
+          "placeholder": {
+            "shape": "mug",
+            "color": "#f1efe9",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/taza-de-ceramica-sage.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Taza de cerámica en color salvia",
+            "en": "Ceramic mug in sage"
+          },
+          "option": {
+            "color": "sage"
+          },
+          "placeholder": {
+            "shape": "mug",
+            "color": "#9aa58c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/taza-de-ceramica-mustard.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Taza de cerámica en color mostaza",
+            "en": "Ceramic mug in mustard"
+          },
+          "option": {
+            "color": "mustard"
+          },
+          "placeholder": {
+            "shape": "mug",
+            "color": "#c99a3b",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/taza-de-ceramica-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de taza de cerámica",
+            "en": "Close-up of ceramic mug"
+          },
+          "placeholder": {
+            "shape": "mug",
+            "color": "#f1efe9",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/taza-de-ceramica-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Taza de cerámica, vista de ambiente",
+            "en": "Ceramic mug, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "mug",
+            "color": "#c99a3b",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "torta-por-kilo",
+      "slug": "torta-por-kilo",
+      "name": {
+        "es": "Torta artesanal por kilo",
+        "en": "Handmade cake by the kilo"
+      },
+      "description": {
+        "es": "Torta hecha a pedido. Se vende por kilo, desde uno, de a medio. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Cake made to order. Sold by the kilo, from one, in half-kilo steps. EXAMPLE text: describe your own here."
+      },
+      "category": "gastronomia",
+      "type": "physical",
+      "price": 26000,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "unit": "kg",
+      "step": 0.5,
+      "maxQuantity": 6,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-03-01T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/torta-por-kilo-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Torta artesanal por kilo",
+            "en": "Handmade cake by the kilo"
+          },
+          "placeholder": {
+            "shape": "cake",
+            "color": "#d7a6a0",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/torta-por-kilo-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Torta artesanal por kilo, vista de ambiente",
+            "en": "Handmade cake by the kilo, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "cake",
+            "color": "#d7a6a0",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "camisetas-estampadas-para-eventos",
+      "slug": "camisetas-estampadas-para-eventos",
+      "name": {
+        "es": "Camisetas estampadas para eventos",
+        "en": "Printed tees for events"
+      },
+      "description": {
+        "es": "Camisetas con tu diseño para equipos y eventos. Pedido mínimo: 10 unidades. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Tees with your design for teams and events. Minimum order: 10 units. EXAMPLE text: describe your own here."
+      },
+      "category": "a-medida",
+      "type": "quote",
+      "price": 0,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 10,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-03-04T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/camisetas-estampadas-para-eventos-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Camisetas estampadas para eventos",
+            "en": "Printed tees for events"
+          },
+          "placeholder": {
+            "shape": "tee",
+            "color": "#c9863a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/camisetas-estampadas-para-eventos-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Camisetas estampadas para eventos, vista de ambiente",
+            "en": "Printed tees for events, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "tee",
+            "color": "#c9863a",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "camiseta-basica-algodon",
+      "slug": "camiseta-basica-algodon",
+      "name": {
+        "es": "Camiseta básica de algodón",
+        "en": "Basic cotton tee"
+      },
+      "description": {
+        "es": "Camiseta de algodón peinado de 180 g, corte recto y cuello redondo reforzado. Una prenda simple para usar todos los días. Texto de EJEMPLO: describí acá tu producto real.",
+        "en": "Combed cotton tee, 180 gsm, straight fit with a reinforced crew neck. A simple piece for every day. EXAMPLE text: describe your real product here."
+      },
+      "category": "indumentaria",
+      "type": "physical",
+      "price": 18900,
+      "compareAtPrice": 22900,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {
+        "gender": "unisex",
+        "ageGroup": "adult",
+        "material": "Algodón",
+        "googleCategory": "Apparel & Accessories > Clothing > Shirts & Tops"
+      },
+      "createdAt": "2026-01-14T00:00:00.000Z",
+      "options": [
+        {
+          "id": "size",
+          "name": {
+            "es": "Talle",
+            "en": "Size"
+          },
+          "values": [
+            {
+              "id": "s",
+              "label": "S"
+            },
+            {
+              "id": "m",
+              "label": "M"
+            },
+            {
+              "id": "l",
+              "label": "L"
+            },
+            {
+              "id": "xl",
+              "label": "XL"
+            }
+          ]
+        },
+        {
+          "id": "color",
+          "name": {
+            "es": "Color",
+            "en": "Colour"
+          },
+          "values": [
+            {
+              "id": "white",
+              "label": {
+                "es": "Blanco",
+                "en": "White"
+              },
+              "swatch": "#f1efe9"
+            },
+            {
+              "id": "black",
+              "label": {
+                "es": "Negro",
+                "en": "Black"
+              },
+              "swatch": "#23262b"
+            },
+            {
+              "id": "olive",
+              "label": {
+                "es": "Oliva",
+                "en": "Olive"
+              },
+              "swatch": "#6b7353"
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "id": "camiseta-basica-algodon-s-white",
+          "options": {
+            "size": "s",
+            "color": "white"
+          },
+          "stock": 8
+        },
+        {
+          "id": "camiseta-basica-algodon-s-black",
+          "options": {
+            "size": "s",
+            "color": "black"
+          },
+          "stock": 6
+        },
+        {
+          "id": "camiseta-basica-algodon-s-olive",
+          "options": {
+            "size": "s",
+            "color": "olive"
+          },
+          "stock": 6
+        },
+        {
+          "id": "camiseta-basica-algodon-m-white",
+          "options": {
+            "size": "m",
+            "color": "white"
+          },
+          "stock": 8
+        },
+        {
+          "id": "camiseta-basica-algodon-m-black",
+          "options": {
+            "size": "m",
+            "color": "black"
+          },
+          "stock": 6
+        },
+        {
+          "id": "camiseta-basica-algodon-m-olive",
+          "options": {
+            "size": "m",
+            "color": "olive"
+          },
+          "stock": 2
+        },
+        {
+          "id": "camiseta-basica-algodon-l-white",
+          "options": {
+            "size": "l",
+            "color": "white"
+          },
+          "stock": 8
+        },
+        {
+          "id": "camiseta-basica-algodon-l-black",
+          "options": {
+            "size": "l",
+            "color": "black"
+          },
+          "stock": 6
+        },
+        {
+          "id": "camiseta-basica-algodon-l-olive",
+          "options": {
+            "size": "l",
+            "color": "olive"
+          },
+          "stock": 6
+        },
+        {
+          "id": "camiseta-basica-algodon-xl-white",
+          "options": {
+            "size": "xl",
+            "color": "white"
+          },
+          "stock": 8
+        },
+        {
+          "id": "camiseta-basica-algodon-xl-black",
+          "options": {
+            "size": "xl",
+            "color": "black"
+          },
+          "stock": 2
+        },
+        {
+          "id": "camiseta-basica-algodon-xl-olive",
+          "options": {
+            "size": "xl",
+            "color": "olive"
+          },
+          "stock": 0
+        }
+      ],
+      "images": [
+        {
+          "src": "/products/camiseta-basica-algodon-white.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Camiseta básica de algodón en color blanco",
+            "en": "Basic cotton tee in white"
+          },
+          "option": {
+            "color": "white"
+          },
+          "placeholder": {
+            "shape": "tee",
+            "color": "#f1efe9",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/camiseta-basica-algodon-black.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Camiseta básica de algodón en color negro",
+            "en": "Basic cotton tee in black"
+          },
+          "option": {
+            "color": "black"
+          },
+          "placeholder": {
+            "shape": "tee",
+            "color": "#23262b",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/camiseta-basica-algodon-olive.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Camiseta básica de algodón en color oliva",
+            "en": "Basic cotton tee in olive"
+          },
+          "option": {
+            "color": "olive"
+          },
+          "placeholder": {
+            "shape": "tee",
+            "color": "#6b7353",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/camiseta-basica-algodon-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de camiseta básica de algodón",
+            "en": "Close-up of basic cotton tee"
+          },
+          "placeholder": {
+            "shape": "tee",
+            "color": "#f1efe9",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/camiseta-basica-algodon-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Camiseta básica de algodón, vista de ambiente",
+            "en": "Basic cotton tee, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "tee",
+            "color": "#6b7353",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "cargador-usb-c-30-w",
+      "slug": "cargador-usb-c-30-w",
+      "name": {
+        "es": "Cargador USB-C de 30 W",
+        "en": "30 W USB-C charger"
+      },
+      "description": {
+        "es": "Cargador compacto de carga rápida con cable incluido. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Compact fast charger with a cable included. EXAMPLE text: describe your own here."
+      },
+      "category": "tecnologia",
+      "type": "physical",
+      "price": 21900,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": 30,
+      "attributes": {},
+      "createdAt": "2026-02-11T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/cargador-usb-c-30-w-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Cargador USB-C de 30 W",
+            "en": "30 W USB-C charger"
+          },
+          "placeholder": {
+            "shape": "charger",
+            "color": "#e9e6df",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/cargador-usb-c-30-w-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Cargador USB-C de 30 W, vista de ambiente",
+            "en": "30 W USB-C charger, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "charger",
+            "color": "#e9e6df",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "mix-de-frutos-secos",
+      "slug": "mix-de-frutos-secos",
+      "name": {
+        "es": "Mix de frutos secos",
+        "en": "Mixed nuts"
+      },
+      "description": {
+        "es": "Almendras, nueces y castañas, sin sal. Se vende por kilo, desde 100 gramos. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Almonds, walnuts and cashews, unsalted. Sold by the kilo, from 100 grams. EXAMPLE text: describe your own here."
+      },
+      "category": "almacen",
+      "type": "physical",
+      "price": 19500,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 0.1,
+      "unit": "kg",
+      "step": 0.1,
+      "maxQuantity": 3,
+      "stock": 25,
+      "attributes": {},
+      "createdAt": "2026-02-18T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/mix-de-frutos-secos-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Mix de frutos secos",
+            "en": "Mixed nuts"
+          },
+          "placeholder": {
+            "shape": "jar",
+            "color": "#b98a4e",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/mix-de-frutos-secos-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Mix de frutos secos, vista de ambiente",
+            "en": "Mixed nuts, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "jar",
+            "color": "#b98a4e",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "clase-grupal-de-yoga",
+      "slug": "clase-grupal-de-yoga",
+      "name": {
+        "es": "Clase grupal de yoga",
+        "en": "Group yoga class"
+      },
+      "description": {
+        "es": "Clase de 60 minutos para todos los niveles. Cupo limitado. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "A 60-minute class for every level. Limited places. EXAMPLE text: describe your own here."
+      },
+      "category": "servicios",
+      "type": "service",
+      "price": 6500,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": null,
+      "service": {
+        "durationMinutes": 60,
+        "capacity": 8,
+        "weekly": {
+          "mon": [
+            [
+              "18:00",
+              "20:00"
+            ]
+          ],
+          "wed": [
+            [
+              "18:00",
+              "20:00"
+            ]
+          ],
+          "fri": [
+            [
+              "18:00",
+              "20:00"
+            ]
+          ],
+          "sat": [
+            [
+              "10:00",
+              "12:00"
+            ]
+          ]
+        }
+      },
+      "attributes": {},
+      "createdAt": "2026-02-28T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/clase-grupal-de-yoga-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Clase grupal de yoga",
+            "en": "Group yoga class"
+          },
+          "placeholder": {
+            "shape": "mat",
+            "color": "#7a6ab0",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/clase-grupal-de-yoga-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Clase grupal de yoga, vista de ambiente",
+            "en": "Group yoga class, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "mat",
+            "color": "#7a6ab0",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pack-de-plantillas",
+      "slug": "pack-de-plantillas",
+      "name": {
+        "es": "Pack de plantillas editables",
+        "en": "Editable template pack"
+      },
+      "description": {
+        "es": "Plantillas listas para completar y adaptar. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Templates ready to fill in and adapt. EXAMPLE text: describe your own here."
+      },
+      "category": "digital",
+      "type": "digital",
+      "price": 12900,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": null,
+      "digital": {
+        "name": "plantillas-de-ejemplo.pdf",
+        "file": "sample-templates.pdf"
+      },
+      "attributes": {},
+      "createdAt": "2026-02-19T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/pack-de-plantillas-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Pack de plantillas editables",
+            "en": "Editable template pack"
+          },
+          "placeholder": {
+            "shape": "file",
+            "color": "#b4603c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/pack-de-plantillas-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Pack de plantillas editables, vista de ambiente",
+            "en": "Editable template pack, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "file",
+            "color": "#b4603c",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vela-aromatica-de-soja",
+      "slug": "vela-aromatica-de-soja",
+      "name": {
+        "es": "Vela aromática de soja",
+        "en": "Soy scented candle"
+      },
+      "description": {
+        "es": "Vela de cera de soja en frasco de vidrio, con unas 40 horas de duración. Texto de EJEMPLO.",
+        "en": "Soy wax candle in a glass jar, about 40 hours of burn time. EXAMPLE text."
+      },
+      "category": "hogar",
+      "type": "physical",
+      "price": 13200,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": 18,
+      "attributes": {},
+      "createdAt": "2026-04-14T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/vela-aromatica-de-soja-sand.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Vela aromática de soja en color arena",
+            "en": "Soy scented candle in sand"
+          },
+          "placeholder": {
+            "shape": "candle",
+            "color": "#cdb99a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/vela-aromatica-de-soja-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de vela aromática de soja",
+            "en": "Close-up of soy scented candle"
+          },
+          "placeholder": {
+            "shape": "candle",
+            "color": "#cdb99a",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/vela-aromatica-de-soja-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Vela aromática de soja, vista de ambiente",
+            "en": "Soy scented candle, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "candle",
+            "color": "#cdb99a",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "docena-de-empanadas",
+      "slug": "docena-de-empanadas",
+      "name": {
+        "es": "Docena de empanadas",
+        "en": "A dozen empanadas"
+      },
+      "description": {
+        "es": "Doce empanadas al horno, surtidas. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Twelve assorted baked empanadas. EXAMPLE text: describe your own here."
+      },
+      "category": "gastronomia",
+      "type": "physical",
+      "price": 21600,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-03-03T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/docena-de-empanadas-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Docena de empanadas",
+            "en": "A dozen empanadas"
+          },
+          "placeholder": {
+            "shape": "plate",
+            "color": "#c9863a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/docena-de-empanadas-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Docena de empanadas, vista de ambiente",
+            "en": "A dozen empanadas, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "plate",
+            "color": "#c9863a",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "mueble-a-medida",
+      "slug": "mueble-a-medida",
+      "name": {
+        "es": "Mueble a medida",
+        "en": "Made-to-measure furniture"
+      },
+      "description": {
+        "es": "Mesas y estantes a la medida de tu espacio. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Tables and shelves made to fit your space. EXAMPLE text: describe your own here."
+      },
+      "category": "a-medida",
+      "type": "quote",
+      "price": 0,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-02-21T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/mueble-a-medida-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Mueble a medida",
+            "en": "Made-to-measure furniture"
+          },
+          "placeholder": {
+            "shape": "table",
+            "color": "#a4764a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/mueble-a-medida-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Mueble a medida, vista de ambiente",
+            "en": "Made-to-measure furniture, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "table",
+            "color": "#a4764a",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "sudadera-con-capucha",
+      "slug": "sudadera-con-capucha",
+      "name": {
+        "es": "Sudadera con capucha",
+        "en": "Hooded sweatshirt"
+      },
+      "description": {
+        "es": "Abrigo de algodón frisado con capucha forrada y bolsillo canguro. Se confecciona a pedido en el talle y color que elijas. Texto de EJEMPLO.",
+        "en": "Brushed cotton hoodie with a lined hood and kangaroo pocket. Made to order in the size and colour you choose. EXAMPLE text."
+      },
+      "category": "indumentaria",
+      "type": "physical",
+      "price": 42500,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {
+        "gender": "unisex",
+        "ageGroup": "adult",
+        "material": "Algodón frisado",
+        "googleCategory": "Apparel & Accessories > Clothing > Outerwear"
+      },
+      "createdAt": "2026-01-23T00:00:00.000Z",
+      "options": [
+        {
+          "id": "size",
+          "name": {
+            "es": "Talle",
+            "en": "Size"
+          },
+          "values": [
+            {
+              "id": "s",
+              "label": "S"
+            },
+            {
+              "id": "m",
+              "label": "M"
+            },
+            {
+              "id": "l",
+              "label": "L"
+            },
+            {
+              "id": "xl",
+              "label": "XL"
+            }
+          ]
+        },
+        {
+          "id": "color",
+          "name": {
+            "es": "Color",
+            "en": "Colour"
+          },
+          "values": [
+            {
+              "id": "grey",
+              "label": {
+                "es": "Gris",
+                "en": "Grey"
+              },
+              "swatch": "#8d9094"
+            },
+            {
+              "id": "navy",
+              "label": {
+                "es": "Azul marino",
+                "en": "Navy"
+              },
+              "swatch": "#27374f"
+            },
+            {
+              "id": "sand",
+              "label": {
+                "es": "Arena",
+                "en": "Sand"
+              },
+              "swatch": "#cdb99a"
+            }
+          ]
+        }
+      ],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/sudadera-con-capucha-grey.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Sudadera con capucha en color gris",
+            "en": "Hooded sweatshirt in grey"
+          },
+          "option": {
+            "color": "grey"
+          },
+          "placeholder": {
+            "shape": "hoodie",
+            "color": "#8d9094",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/sudadera-con-capucha-navy.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Sudadera con capucha en color azul marino",
+            "en": "Hooded sweatshirt in navy"
+          },
+          "option": {
+            "color": "navy"
+          },
+          "placeholder": {
+            "shape": "hoodie",
+            "color": "#27374f",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/sudadera-con-capucha-sand.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Sudadera con capucha en color arena",
+            "en": "Hooded sweatshirt in sand"
+          },
+          "option": {
+            "color": "sand"
+          },
+          "placeholder": {
+            "shape": "hoodie",
+            "color": "#cdb99a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/sudadera-con-capucha-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de sudadera con capucha",
+            "en": "Close-up of hooded sweatshirt"
+          },
+          "placeholder": {
+            "shape": "hoodie",
+            "color": "#8d9094",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/sudadera-con-capucha-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Sudadera con capucha, vista de ambiente",
+            "en": "Hooded sweatshirt, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "hoodie",
+            "color": "#cdb99a",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "cuaderno-a5-tapa-dura",
+      "slug": "cuaderno-a5-tapa-dura",
+      "name": {
+        "es": "Cuaderno A5 de tapa dura",
+        "en": "A5 hardcover notebook"
+      },
+      "description": {
+        "es": "Cuaderno de 96 hojas lisas, tapa dura forrada en tela y elástico de cierre. Texto de EJEMPLO.",
+        "en": "96 plain sheets, cloth-bound hard cover and elastic closure. EXAMPLE text."
+      },
+      "category": "hogar",
+      "type": "physical",
+      "price": 8900,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": 25,
+      "attributes": {},
+      "createdAt": "2026-03-18T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/cuaderno-a5-tapa-dura-terracotta.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Cuaderno A5 de tapa dura en color terracota",
+            "en": "A5 hardcover notebook in terracotta"
+          },
+          "placeholder": {
+            "shape": "notebook",
+            "color": "#b4603c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/cuaderno-a5-tapa-dura-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de cuaderno a5 de tapa dura",
+            "en": "Close-up of a5 hardcover notebook"
+          },
+          "placeholder": {
+            "shape": "notebook",
+            "color": "#b4603c",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/cuaderno-a5-tapa-dura-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Cuaderno A5 de tapa dura, vista de ambiente",
+            "en": "A5 hardcover notebook, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "notebook",
+            "color": "#b4603c",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "lamina-decorativa-30x40",
+      "slug": "lamina-decorativa-30x40",
+      "name": {
+        "es": "Lámina decorativa 30 × 40",
+        "en": "Art print 30 × 40"
+      },
+      "description": {
+        "es": "Lámina impresa en papel de 250 g con tintas de larga duración. No incluye marco. Texto de EJEMPLO.",
+        "en": "Printed on 250 gsm paper with long-lasting inks. Frame not included. EXAMPLE text."
+      },
+      "category": "hogar",
+      "type": "physical",
+      "price": 15800,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": 0,
+      "attributes": {},
+      "createdAt": "2026-04-23T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/lamina-decorativa-30x40-navy.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Lámina decorativa 30 × 40 en color azul marino",
+            "en": "Art print 30 × 40 in navy"
+          },
+          "placeholder": {
+            "shape": "print",
+            "color": "#27374f",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/lamina-decorativa-30x40-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de lámina decorativa 30 × 40",
+            "en": "Close-up of art print 30 × 40"
+          },
+          "placeholder": {
+            "shape": "print",
+            "color": "#27374f",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/lamina-decorativa-30x40-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Lámina decorativa 30 × 40, vista de ambiente",
+            "en": "Art print 30 × 40, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "print",
+            "color": "#27374f",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "almohadon-de-lino",
+      "slug": "almohadon-de-lino",
+      "name": {
+        "es": "Almohadón de lino",
+        "en": "Linen cushion"
+      },
+      "description": {
+        "es": "Funda de lino lavado con cierre invisible y relleno incluido. Se confecciona a pedido en la medida y el color que elijas. Texto de EJEMPLO.",
+        "en": "Washed linen cover with an invisible zip, insert included. Made to order in the size and colour you choose. EXAMPLE text."
+      },
+      "category": "hogar",
+      "type": "physical",
+      "price": 21500,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-04-05T00:00:00.000Z",
+      "options": [
+        {
+          "id": "size",
+          "name": {
+            "es": "Talle",
+            "en": "Size"
+          },
+          "values": [
+            {
+              "id": "40x40",
+              "label": "40x40"
+            },
+            {
+              "id": "50x50",
+              "label": "50x50"
+            }
+          ]
+        },
+        {
+          "id": "color",
+          "name": {
+            "es": "Color",
+            "en": "Colour"
+          },
+          "values": [
+            {
+              "id": "natural",
+              "label": {
+                "es": "Natural",
+                "en": "Natural"
+              },
+              "swatch": "#ddd2bd"
+            },
+            {
+              "id": "sage",
+              "label": {
+                "es": "Salvia",
+                "en": "Sage"
+              },
+              "swatch": "#9aa58c"
+            },
+            {
+              "id": "terracotta",
+              "label": {
+                "es": "Terracota",
+                "en": "Terracotta"
+              },
+              "swatch": "#b4603c"
+            }
+          ]
+        }
+      ],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/almohadon-de-lino-natural.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Almohadón de lino en color natural",
+            "en": "Linen cushion in natural"
+          },
+          "option": {
+            "color": "natural"
+          },
+          "placeholder": {
+            "shape": "cushion",
+            "color": "#ddd2bd",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/almohadon-de-lino-sage.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Almohadón de lino en color salvia",
+            "en": "Linen cushion in sage"
+          },
+          "option": {
+            "color": "sage"
+          },
+          "placeholder": {
+            "shape": "cushion",
+            "color": "#9aa58c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/almohadon-de-lino-terracotta.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Almohadón de lino en color terracota",
+            "en": "Linen cushion in terracotta"
+          },
+          "option": {
+            "color": "terracotta"
+          },
+          "placeholder": {
+            "shape": "cushion",
+            "color": "#b4603c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/almohadon-de-lino-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de almohadón de lino",
+            "en": "Close-up of linen cushion"
+          },
+          "placeholder": {
+            "shape": "cushion",
+            "color": "#ddd2bd",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/almohadon-de-lino-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Almohadón de lino, vista de ambiente",
+            "en": "Linen cushion, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "cushion",
+            "color": "#b4603c",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "manta-tejida",
+      "slug": "manta-tejida",
+      "name": {
+        "es": "Manta tejida",
+        "en": "Knitted throw"
+      },
+      "description": {
+        "es": "Manta de punto grueso de 130 × 170 cm, suave y abrigada, para el sillón o los pies de la cama. Texto de EJEMPLO.",
+        "en": "Chunky knit throw, 130 × 170 cm, soft and warm, for the sofa or the foot of the bed. EXAMPLE text."
+      },
+      "category": "hogar",
+      "type": "physical",
+      "price": 38900,
+      "compareAtPrice": 45000,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-05-02T00:00:00.000Z",
+      "options": [
+        {
+          "id": "color",
+          "name": {
+            "es": "Color",
+            "en": "Colour"
+          },
+          "values": [
+            {
+              "id": "grey",
+              "label": {
+                "es": "Gris",
+                "en": "Grey"
+              },
+              "swatch": "#8d9094"
+            },
+            {
+              "id": "mustard",
+              "label": {
+                "es": "Mostaza",
+                "en": "Mustard"
+              },
+              "swatch": "#c99a3b"
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "id": "manta-tejida-grey",
+          "options": {
+            "color": "grey"
+          },
+          "stock": 5
+        },
+        {
+          "id": "manta-tejida-mustard",
+          "options": {
+            "color": "mustard"
+          },
+          "stock": 3
+        }
+      ],
+      "images": [
+        {
+          "src": "/products/manta-tejida-grey.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Manta tejida en color gris",
+            "en": "Knitted throw in grey"
+          },
+          "option": {
+            "color": "grey"
+          },
+          "placeholder": {
+            "shape": "blanket",
+            "color": "#8d9094",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/manta-tejida-mustard.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Manta tejida en color mostaza",
+            "en": "Knitted throw in mustard"
+          },
+          "option": {
+            "color": "mustard"
+          },
+          "placeholder": {
+            "shape": "blanket",
+            "color": "#c99a3b",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/manta-tejida-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de manta tejida",
+            "en": "Close-up of knitted throw"
+          },
+          "placeholder": {
+            "shape": "blanket",
+            "color": "#8d9094",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/manta-tejida-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Manta tejida, vista de ambiente",
+            "en": "Knitted throw, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "blanket",
+            "color": "#c99a3b",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "mochila-urbana",
+      "slug": "mochila-urbana",
+      "name": {
+        "es": "Mochila urbana",
+        "en": "Urban backpack"
+      },
+      "description": {
+        "es": "Mochila de 20 litros con compartimento acolchado, bolsillo frontal y tela repelente al agua. Texto de EJEMPLO.",
+        "en": "20-litre backpack with a padded compartment, front pocket and water-repellent fabric. EXAMPLE text."
+      },
+      "category": "indumentaria",
+      "type": "physical",
+      "price": 58900,
+      "compareAtPrice": 67000,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-02-28T00:00:00.000Z",
+      "options": [
+        {
+          "id": "color",
+          "name": {
+            "es": "Color",
+            "en": "Colour"
+          },
+          "values": [
+            {
+              "id": "olive",
+              "label": {
+                "es": "Oliva",
+                "en": "Olive"
+              },
+              "swatch": "#6b7353"
+            },
+            {
+              "id": "black",
+              "label": {
+                "es": "Negro",
+                "en": "Black"
+              },
+              "swatch": "#23262b"
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "id": "mochila-urbana-olive",
+          "options": {
+            "color": "olive"
+          },
+          "stock": 4
+        },
+        {
+          "id": "mochila-urbana-black",
+          "options": {
+            "color": "black"
+          },
+          "stock": 2
+        }
+      ],
+      "images": [
+        {
+          "src": "/products/mochila-urbana-olive.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Mochila urbana en color oliva",
+            "en": "Urban backpack in olive"
+          },
+          "option": {
+            "color": "olive"
+          },
+          "placeholder": {
+            "shape": "backpack",
+            "color": "#6b7353",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/mochila-urbana-black.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Mochila urbana en color negro",
+            "en": "Urban backpack in black"
+          },
+          "option": {
+            "color": "black"
+          },
+          "placeholder": {
+            "shape": "backpack",
+            "color": "#23262b",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/mochila-urbana-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de mochila urbana",
+            "en": "Close-up of urban backpack"
+          },
+          "placeholder": {
+            "shape": "backpack",
+            "color": "#6b7353",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/mochila-urbana-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Mochila urbana, vista de ambiente",
+            "en": "Urban backpack, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "backpack",
+            "color": "#23262b",
+            "view": "scene"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,766 @@
+{
+  "_note": "EXAMPLE PRESET. Every product, price and text here is an EXAMPLE: replace them with the real ones. Apply it with `npm run preset hogar` (it becomes content/products.json and content/site.json, and its palette goes to config/brand.ts). Texts can be a plain string or { \"es\": \"…\", \"en\": \"…\" }. See docs/product-types.md for `type`, `unit`, `step`, `service` and `digital`.",
+  "id": "hogar",
+  "name": {
+    "es": "Hogar y deco",
+    "en": "Home and decor"
+  },
+  "description": {
+    "es": "Objetos con variantes de color, productos a pedido y con stock.",
+    "en": "Objects with colour variants, made-to-order and in-stock products."
+  },
+  "palette": {
+    "background": "#f6f3ee",
+    "surface": "#fffdfa",
+    "ink": "#2a2622",
+    "muted": "#6d655d",
+    "line": "#e7e0d5",
+    "action": "#5b6b4f",
+    "onAction": "#ffffff",
+    "highlight": "#b0613a"
+  },
+  "home": {
+    "heroEyebrow": {
+      "es": "Tienda de ejemplo",
+      "en": "Example store"
+    },
+    "heroTitle": {
+      "es": "Objetos simples para tu casa",
+      "en": "Simple objects for your home"
+    },
+    "heroText": {
+      "es": "Piezas para usar todos los días. Texto de ejemplo: contá acá cómo y dónde se hacen.",
+      "en": "Pieces to use every day. Example text: say here how and where they are made."
+    },
+    "heroCta": {
+      "es": "Ver la tienda",
+      "en": "Browse the shop"
+    },
+    "benefits": [
+      {
+        "icon": "truck",
+        "title": {
+          "es": "Envíos cuidados",
+          "en": "Careful shipping"
+        },
+        "text": {
+          "es": "EJEMPLO: contá cómo embalás lo frágil.",
+          "en": "EXAMPLE: say how you pack fragile items."
+        }
+      },
+      {
+        "icon": "shield",
+        "title": {
+          "es": "Hecho a pedido",
+          "en": "Made to order"
+        },
+        "text": {
+          "es": "Algunas piezas se hacen cuando las pedís. EJEMPLO.",
+          "en": "Some pieces are made when you order them. EXAMPLE."
+        }
+      },
+      {
+        "icon": "message",
+        "title": {
+          "es": "Atención directa",
+          "en": "Direct support"
+        },
+        "text": {
+          "es": "EJEMPLO.",
+          "en": "EXAMPLE."
+        }
+      }
+    ],
+    "faq": [
+      {
+        "q": {
+          "es": "¿Cuánto tarda un producto a pedido?",
+          "en": "How long does a made-to-order product take?"
+        },
+        "a": {
+          "es": "Entre {min} y {max} días hábiles. EJEMPLO: completá el plazo real.",
+          "en": "Between {min} and {max} business days. EXAMPLE: fill in the real lead time."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Qué medios de pago aceptan?",
+          "en": "Which payment methods do you accept?"
+        },
+        "a": {
+          "es": "EJEMPLO: transferencia bancaria o coordinando por WhatsApp. COMPLETAR con los medios reales del negocio.",
+          "en": "EXAMPLE: bank transfer or arranging it by WhatsApp. FILL IN with the real methods of the business."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Qué pasa si llega roto?",
+          "en": "What if it arrives broken?"
+        },
+        "a": {
+          "es": "COMPLETAR con la política real de roturas y devoluciones.",
+          "en": "FILL IN with the real policy for breakages and returns."
+        }
+      }
+    ]
+  },
+  "categories": [
+    {
+      "slug": "hogar",
+      "name": {
+        "es": "Hogar y deco",
+        "en": "Home and decor"
+      },
+      "description": {
+        "es": "Objetos para la casa, simples y bien hechos. Texto de EJEMPLO.",
+        "en": "Simple, well-made objects for the home. EXAMPLE text."
+      }
+    }
+  ],
+  "products": [
+    {
+      "id": "taza-de-ceramica",
+      "slug": "taza-de-ceramica",
+      "name": {
+        "es": "Taza de cerámica",
+        "en": "Ceramic mug"
+      },
+      "description": {
+        "es": "Taza de cerámica esmaltada de 350 ml, apta para microondas y lavavajillas. Texto de EJEMPLO.",
+        "en": "350 ml glazed ceramic mug, microwave and dishwasher safe. EXAMPLE text."
+      },
+      "category": "hogar",
+      "type": "physical",
+      "price": 11900,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-03-27T00:00:00.000Z",
+      "options": [
+        {
+          "id": "color",
+          "name": {
+            "es": "Color",
+            "en": "Colour"
+          },
+          "values": [
+            {
+              "id": "white",
+              "label": {
+                "es": "Blanco",
+                "en": "White"
+              },
+              "swatch": "#f1efe9"
+            },
+            {
+              "id": "sage",
+              "label": {
+                "es": "Salvia",
+                "en": "Sage"
+              },
+              "swatch": "#9aa58c"
+            },
+            {
+              "id": "mustard",
+              "label": {
+                "es": "Mostaza",
+                "en": "Mustard"
+              },
+              "swatch": "#c99a3b"
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "id": "taza-de-ceramica-white",
+          "options": {
+            "color": "white"
+          },
+          "stock": 14
+        },
+        {
+          "id": "taza-de-ceramica-sage",
+          "options": {
+            "color": "sage"
+          },
+          "stock": 14
+        },
+        {
+          "id": "taza-de-ceramica-mustard",
+          "options": {
+            "color": "mustard"
+          },
+          "stock": 14
+        }
+      ],
+      "images": [
+        {
+          "src": "/products/taza-de-ceramica-white.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Taza de cerámica en color blanco",
+            "en": "Ceramic mug in white"
+          },
+          "option": {
+            "color": "white"
+          },
+          "placeholder": {
+            "shape": "mug",
+            "color": "#f1efe9",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/taza-de-ceramica-sage.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Taza de cerámica en color salvia",
+            "en": "Ceramic mug in sage"
+          },
+          "option": {
+            "color": "sage"
+          },
+          "placeholder": {
+            "shape": "mug",
+            "color": "#9aa58c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/taza-de-ceramica-mustard.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Taza de cerámica en color mostaza",
+            "en": "Ceramic mug in mustard"
+          },
+          "option": {
+            "color": "mustard"
+          },
+          "placeholder": {
+            "shape": "mug",
+            "color": "#c99a3b",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/taza-de-ceramica-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de taza de cerámica",
+            "en": "Close-up of ceramic mug"
+          },
+          "placeholder": {
+            "shape": "mug",
+            "color": "#f1efe9",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/taza-de-ceramica-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Taza de cerámica, vista de ambiente",
+            "en": "Ceramic mug, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "mug",
+            "color": "#c99a3b",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "almohadon-de-lino",
+      "slug": "almohadon-de-lino",
+      "name": {
+        "es": "Almohadón de lino",
+        "en": "Linen cushion"
+      },
+      "description": {
+        "es": "Funda de lino lavado con cierre invisible y relleno incluido. Se confecciona a pedido en la medida y el color que elijas. Texto de EJEMPLO.",
+        "en": "Washed linen cover with an invisible zip, insert included. Made to order in the size and colour you choose. EXAMPLE text."
+      },
+      "category": "hogar",
+      "type": "physical",
+      "price": 21500,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-04-05T00:00:00.000Z",
+      "options": [
+        {
+          "id": "size",
+          "name": {
+            "es": "Talle",
+            "en": "Size"
+          },
+          "values": [
+            {
+              "id": "40x40",
+              "label": "40x40"
+            },
+            {
+              "id": "50x50",
+              "label": "50x50"
+            }
+          ]
+        },
+        {
+          "id": "color",
+          "name": {
+            "es": "Color",
+            "en": "Colour"
+          },
+          "values": [
+            {
+              "id": "natural",
+              "label": {
+                "es": "Natural",
+                "en": "Natural"
+              },
+              "swatch": "#ddd2bd"
+            },
+            {
+              "id": "sage",
+              "label": {
+                "es": "Salvia",
+                "en": "Sage"
+              },
+              "swatch": "#9aa58c"
+            },
+            {
+              "id": "terracotta",
+              "label": {
+                "es": "Terracota",
+                "en": "Terracotta"
+              },
+              "swatch": "#b4603c"
+            }
+          ]
+        }
+      ],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/almohadon-de-lino-natural.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Almohadón de lino en color natural",
+            "en": "Linen cushion in natural"
+          },
+          "option": {
+            "color": "natural"
+          },
+          "placeholder": {
+            "shape": "cushion",
+            "color": "#ddd2bd",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/almohadon-de-lino-sage.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Almohadón de lino en color salvia",
+            "en": "Linen cushion in sage"
+          },
+          "option": {
+            "color": "sage"
+          },
+          "placeholder": {
+            "shape": "cushion",
+            "color": "#9aa58c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/almohadon-de-lino-terracotta.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Almohadón de lino en color terracota",
+            "en": "Linen cushion in terracotta"
+          },
+          "option": {
+            "color": "terracotta"
+          },
+          "placeholder": {
+            "shape": "cushion",
+            "color": "#b4603c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/almohadon-de-lino-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de almohadón de lino",
+            "en": "Close-up of linen cushion"
+          },
+          "placeholder": {
+            "shape": "cushion",
+            "color": "#ddd2bd",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/almohadon-de-lino-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Almohadón de lino, vista de ambiente",
+            "en": "Linen cushion, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "cushion",
+            "color": "#b4603c",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "vela-aromatica-de-soja",
+      "slug": "vela-aromatica-de-soja",
+      "name": {
+        "es": "Vela aromática de soja",
+        "en": "Soy scented candle"
+      },
+      "description": {
+        "es": "Vela de cera de soja en frasco de vidrio, con unas 40 horas de duración. Texto de EJEMPLO.",
+        "en": "Soy wax candle in a glass jar, about 40 hours of burn time. EXAMPLE text."
+      },
+      "category": "hogar",
+      "type": "physical",
+      "price": 13200,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": 18,
+      "attributes": {},
+      "createdAt": "2026-04-14T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/vela-aromatica-de-soja-sand.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Vela aromática de soja en color arena",
+            "en": "Soy scented candle in sand"
+          },
+          "placeholder": {
+            "shape": "candle",
+            "color": "#cdb99a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/vela-aromatica-de-soja-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de vela aromática de soja",
+            "en": "Close-up of soy scented candle"
+          },
+          "placeholder": {
+            "shape": "candle",
+            "color": "#cdb99a",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/vela-aromatica-de-soja-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Vela aromática de soja, vista de ambiente",
+            "en": "Soy scented candle, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "candle",
+            "color": "#cdb99a",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "lamina-decorativa-30x40",
+      "slug": "lamina-decorativa-30x40",
+      "name": {
+        "es": "Lámina decorativa 30 × 40",
+        "en": "Art print 30 × 40"
+      },
+      "description": {
+        "es": "Lámina impresa en papel de 250 g con tintas de larga duración. No incluye marco. Texto de EJEMPLO.",
+        "en": "Printed on 250 gsm paper with long-lasting inks. Frame not included. EXAMPLE text."
+      },
+      "category": "hogar",
+      "type": "physical",
+      "price": 15800,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": 0,
+      "attributes": {},
+      "createdAt": "2026-04-23T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/lamina-decorativa-30x40-navy.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Lámina decorativa 30 × 40 en color azul marino",
+            "en": "Art print 30 × 40 in navy"
+          },
+          "placeholder": {
+            "shape": "print",
+            "color": "#27374f",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/lamina-decorativa-30x40-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de lámina decorativa 30 × 40",
+            "en": "Close-up of art print 30 × 40"
+          },
+          "placeholder": {
+            "shape": "print",
+            "color": "#27374f",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/lamina-decorativa-30x40-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Lámina decorativa 30 × 40, vista de ambiente",
+            "en": "Art print 30 × 40, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "print",
+            "color": "#27374f",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "manta-tejida",
+      "slug": "manta-tejida",
+      "name": {
+        "es": "Manta tejida",
+        "en": "Knitted throw"
+      },
+      "description": {
+        "es": "Manta de punto grueso de 130 × 170 cm, suave y abrigada, para el sillón o los pies de la cama. Texto de EJEMPLO.",
+        "en": "Chunky knit throw, 130 × 170 cm, soft and warm, for the sofa or the foot of the bed. EXAMPLE text."
+      },
+      "category": "hogar",
+      "type": "physical",
+      "price": 38900,
+      "compareAtPrice": 45000,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-05-02T00:00:00.000Z",
+      "options": [
+        {
+          "id": "color",
+          "name": {
+            "es": "Color",
+            "en": "Colour"
+          },
+          "values": [
+            {
+              "id": "grey",
+              "label": {
+                "es": "Gris",
+                "en": "Grey"
+              },
+              "swatch": "#8d9094"
+            },
+            {
+              "id": "mustard",
+              "label": {
+                "es": "Mostaza",
+                "en": "Mustard"
+              },
+              "swatch": "#c99a3b"
+            }
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "id": "manta-tejida-grey",
+          "options": {
+            "color": "grey"
+          },
+          "stock": 5
+        },
+        {
+          "id": "manta-tejida-mustard",
+          "options": {
+            "color": "mustard"
+          },
+          "stock": 3
+        }
+      ],
+      "images": [
+        {
+          "src": "/products/manta-tejida-grey.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Manta tejida en color gris",
+            "en": "Knitted throw in grey"
+          },
+          "option": {
+            "color": "grey"
+          },
+          "placeholder": {
+            "shape": "blanket",
+            "color": "#8d9094",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/manta-tejida-mustard.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Manta tejida en color mostaza",
+            "en": "Knitted throw in mustard"
+          },
+          "option": {
+            "color": "mustard"
+          },
+          "placeholder": {
+            "shape": "blanket",
+            "color": "#c99a3b",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/manta-tejida-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de manta tejida",
+            "en": "Close-up of knitted throw"
+          },
+          "placeholder": {
+            "shape": "blanket",
+            "color": "#8d9094",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/manta-tejida-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Manta tejida, vista de ambiente",
+            "en": "Knitted throw, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "blanket",
+            "color": "#c99a3b",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "cuaderno-a5-tapa-dura",
+      "slug": "cuaderno-a5-tapa-dura",
+      "name": {
+        "es": "Cuaderno A5 de tapa dura",
+        "en": "A5 hardcover notebook"
+      },
+      "description": {
+        "es": "Cuaderno de 96 hojas lisas, tapa dura forrada en tela y elástico de cierre. Texto de EJEMPLO.",
+        "en": "96 plain sheets, cloth-bound hard cover and elastic closure. EXAMPLE text."
+      },
+      "category": "hogar",
+      "type": "physical",
+      "price": 8900,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": 25,
+      "attributes": {},
+      "createdAt": "2026-03-18T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/cuaderno-a5-tapa-dura-terracotta.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Cuaderno A5 de tapa dura en color terracota",
+            "en": "A5 hardcover notebook in terracotta"
+          },
+          "placeholder": {
+            "shape": "notebook",
+            "color": "#b4603c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/cuaderno-a5-tapa-dura-detail.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Detalle de cuaderno a5 de tapa dura",
+            "en": "Close-up of a5 hardcover notebook"
+          },
+          "placeholder": {
+            "shape": "notebook",
+            "color": "#b4603c",
+            "view": "detail"
+          }
+        },
+        {
+          "src": "/products/cuaderno-a5-tapa-dura-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Cuaderno A5 de tapa dura, vista de ambiente",
+            "en": "A5 hardcover notebook, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "notebook",
+            "color": "#b4603c",
+            "view": "scene"
+          }
+        }
+      ]
+    }
+  ]
+}

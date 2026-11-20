@@ -1,0 +1,483 @@
+{
+  "_note": "EXAMPLE PRESET. Every product, price and text here is an EXAMPLE: replace them with the real ones. Apply it with `npm run preset almacen` (it becomes content/products.json and content/site.json, and its palette goes to config/brand.ts). Texts can be a plain string or { \"es\": \"…\", \"en\": \"…\" }. See docs/product-types.md for `type`, `unit`, `step`, `service` and `digital`.",
+  "id": "almacen",
+  "name": {
+    "es": "Almacén y dietética (por peso)",
+    "en": "Pantry and health food (by weight)"
+  },
+  "description": {
+    "es": "Venta por kilo y por gramo, con mínimo y paso, junto a productos envasados.",
+    "en": "Sale by the kilo and by the gram, with a minimum and a step, next to packaged goods."
+  },
+  "palette": {
+    "background": "#f7f4ec",
+    "surface": "#fffdf8",
+    "ink": "#27231c",
+    "muted": "#6b6456",
+    "line": "#e8e0cf",
+    "action": "#3f6b3a",
+    "onAction": "#ffffff",
+    "highlight": "#b8651f"
+  },
+  "home": {
+    "heroEyebrow": {
+      "es": "Almacén de ejemplo",
+      "en": "Example pantry"
+    },
+    "heroTitle": {
+      "es": "Comprá por peso, justo lo que necesitás",
+      "en": "Buy by weight, just what you need"
+    },
+    "heroText": {
+      "es": "Granos, frutos secos y envasados. Texto de ejemplo: contá acá de dónde vienen tus productos.",
+      "en": "Grains, nuts and packaged goods. Example text: say here where your products come from."
+    },
+    "heroCta": {
+      "es": "Ver productos",
+      "en": "See products"
+    },
+    "benefits": [
+      {
+        "icon": "shield",
+        "title": {
+          "es": "Peso real",
+          "en": "Real weight"
+        },
+        "text": {
+          "es": "El peso puede variar levemente. EJEMPLO: escribí tu política.",
+          "en": "The weight may vary slightly. EXAMPLE: write your policy."
+        }
+      },
+      {
+        "icon": "truck",
+        "title": {
+          "es": "Envíos y retiro",
+          "en": "Shipping and pickup"
+        },
+        "text": {
+          "es": "EJEMPLO.",
+          "en": "EXAMPLE."
+        }
+      },
+      {
+        "icon": "message",
+        "title": {
+          "es": "Consultanos",
+          "en": "Ask us"
+        },
+        "text": {
+          "es": "EJEMPLO.",
+          "en": "EXAMPLE."
+        }
+      }
+    ],
+    "faq": [
+      {
+        "q": {
+          "es": "¿Cómo se vende por peso?",
+          "en": "How does sale by weight work?"
+        },
+        "a": {
+          "es": "Cada producto indica su precio por kilo o por gramo, el mínimo y de a cuánto se puede sumar.",
+          "en": "Each product shows its price per kilo or per gram, the minimum and the step you can add."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Y si el peso real es distinto?",
+          "en": "What if the real weight differs?"
+        },
+        "a": {
+          "es": "COMPLETAR con la política real: si se cobra la diferencia, se devuelve o se ajusta.",
+          "en": "FILL IN with the real policy: whether the difference is charged, refunded or adjusted."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Qué medios de pago aceptan?",
+          "en": "Which payment methods do you accept?"
+        },
+        "a": {
+          "es": "EJEMPLO: transferencia bancaria o coordinando por WhatsApp. COMPLETAR con los medios reales del negocio.",
+          "en": "EXAMPLE: bank transfer or arranging it by WhatsApp. FILL IN with the real methods of the business."
+        }
+      }
+    ]
+  },
+  "categories": [
+    {
+      "slug": "almacen",
+      "name": {
+        "es": "Almacén",
+        "en": "Pantry"
+      },
+      "description": {
+        "es": "Productos por peso y envasados. Texto de EJEMPLO.",
+        "en": "Products by weight and packaged goods. EXAMPLE text."
+      }
+    }
+  ],
+  "products": [
+    {
+      "id": "cafe-en-grano",
+      "slug": "cafe-en-grano",
+      "name": {
+        "es": "Café de especialidad",
+        "en": "Specialty coffee"
+      },
+      "description": {
+        "es": "Café tostado de la semana. Se vende por kilo, desde un cuarto. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "This week's roast. Sold by the kilo, from a quarter. EXAMPLE text: describe your own here."
+      },
+      "category": "almacen",
+      "type": "physical",
+      "price": 28000,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 0.25,
+      "unit": "kg",
+      "step": 0.25,
+      "maxQuantity": 5,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-03-06T00:00:00.000Z",
+      "options": [
+        {
+          "id": "molienda",
+          "name": {
+            "es": "Molienda",
+            "en": "Grind"
+          },
+          "values": [
+            {
+              "id": "grano",
+              "label": {
+                "es": "En grano",
+                "en": "Whole bean"
+              }
+            },
+            {
+              "id": "filtro",
+              "label": {
+                "es": "Molido para filtro",
+                "en": "Ground for filter"
+              }
+            },
+            {
+              "id": "espresso",
+              "label": {
+                "es": "Molido para espresso",
+                "en": "Ground for espresso"
+              }
+            }
+          ]
+        }
+      ],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/cafe-en-grano-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Café de especialidad",
+            "en": "Specialty coffee"
+          },
+          "placeholder": {
+            "shape": "coffee",
+            "color": "#6b4a35",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/cafe-en-grano-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Café de especialidad, vista de ambiente",
+            "en": "Specialty coffee, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "coffee",
+            "color": "#6b4a35",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "mix-de-frutos-secos",
+      "slug": "mix-de-frutos-secos",
+      "name": {
+        "es": "Mix de frutos secos",
+        "en": "Mixed nuts"
+      },
+      "description": {
+        "es": "Almendras, nueces y castañas, sin sal. Se vende por kilo, desde 100 gramos. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Almonds, walnuts and cashews, unsalted. Sold by the kilo, from 100 grams. EXAMPLE text: describe your own here."
+      },
+      "category": "almacen",
+      "type": "physical",
+      "price": 19500,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 0.1,
+      "unit": "kg",
+      "step": 0.1,
+      "maxQuantity": 3,
+      "stock": 25,
+      "attributes": {},
+      "createdAt": "2026-02-18T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/mix-de-frutos-secos-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Mix de frutos secos",
+            "en": "Mixed nuts"
+          },
+          "placeholder": {
+            "shape": "jar",
+            "color": "#b98a4e",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/mix-de-frutos-secos-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Mix de frutos secos, vista de ambiente",
+            "en": "Mixed nuts, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "jar",
+            "color": "#b98a4e",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "te-en-hebras",
+      "slug": "te-en-hebras",
+      "name": {
+        "es": "Té en hebras",
+        "en": "Loose-leaf tea"
+      },
+      "description": {
+        "es": "Té en hebras para infusionar. El precio es por gramo; se vende de a 50. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Loose-leaf tea. The price is per gram; sold in steps of 50. EXAMPLE text: describe your own here."
+      },
+      "category": "almacen",
+      "type": "physical",
+      "price": 85,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 50,
+      "unit": "g",
+      "step": 50,
+      "maxQuantity": 1000,
+      "stock": 3000,
+      "attributes": {},
+      "createdAt": "2026-02-08T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/te-en-hebras-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Té en hebras",
+            "en": "Loose-leaf tea"
+          },
+          "placeholder": {
+            "shape": "tea",
+            "color": "#6f8a5c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/te-en-hebras-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Té en hebras, vista de ambiente",
+            "en": "Loose-leaf tea, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "tea",
+            "color": "#6f8a5c",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "harina-integral",
+      "slug": "harina-integral",
+      "name": {
+        "es": "Harina integral",
+        "en": "Wholemeal flour"
+      },
+      "description": {
+        "es": "Harina de molienda fina. Se vende por kilo, de a medio. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Finely milled flour. Sold by the kilo, in half-kilo steps. EXAMPLE text: describe your own here."
+      },
+      "category": "almacen",
+      "type": "physical",
+      "price": 2400,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 0.5,
+      "unit": "kg",
+      "step": 0.5,
+      "maxQuantity": 10,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-01-30T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/harina-integral-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Harina integral",
+            "en": "Wholemeal flour"
+          },
+          "placeholder": {
+            "shape": "sack",
+            "color": "#d8c7a3",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/harina-integral-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Harina integral, vista de ambiente",
+            "en": "Wholemeal flour, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "sack",
+            "color": "#d8c7a3",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "aceite-de-oliva-500-ml",
+      "slug": "aceite-de-oliva-500-ml",
+      "name": {
+        "es": "Aceite de oliva 500 ml",
+        "en": "Olive oil 500 ml"
+      },
+      "description": {
+        "es": "Aceite de oliva extra virgen en botella de vidrio. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Extra virgin olive oil in a glass bottle. EXAMPLE text: describe your own here."
+      },
+      "category": "almacen",
+      "type": "physical",
+      "price": 14500,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": 18,
+      "attributes": {},
+      "createdAt": "2026-02-25T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/aceite-de-oliva-500-ml-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Aceite de oliva 500 ml",
+            "en": "Olive oil 500 ml"
+          },
+          "placeholder": {
+            "shape": "bottle",
+            "color": "#7a8a3a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/aceite-de-oliva-500-ml-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Aceite de oliva 500 ml, vista de ambiente",
+            "en": "Olive oil 500 ml, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "bottle",
+            "color": "#7a8a3a",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "miel-pura-500-g",
+      "slug": "miel-pura-500-g",
+      "name": {
+        "es": "Miel pura 500 g",
+        "en": "Pure honey 500 g"
+      },
+      "description": {
+        "es": "Miel de un solo origen, en frasco de vidrio. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Single-origin honey in a glass jar. EXAMPLE text: describe your own here."
+      },
+      "category": "almacen",
+      "type": "physical",
+      "price": 9800,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": 22,
+      "attributes": {},
+      "createdAt": "2026-02-02T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/miel-pura-500-g-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Miel pura 500 g",
+            "en": "Pure honey 500 g"
+          },
+          "placeholder": {
+            "shape": "jar",
+            "color": "#d39a2c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/miel-pura-500-g-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Miel pura 500 g, vista de ambiente",
+            "en": "Pure honey 500 g, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "jar",
+            "color": "#d39a2c",
+            "view": "scene"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Lemonade 1 l">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f2eb"/><stop offset="1" stop-color="#ebe7da"/></linearGradient></defs>
+<rect width="800" height="1000" fill="url(#bg)"/><ellipse cx="400" cy="850" rx="250" ry="24" fill="#000000" opacity=".09"/><rect x="352" y="190" width="96" height="72" rx="16" fill="#948131"/><rect x="366" y="255" width="68" height="46" fill="#c1a840"/><rect x="308" y="292" width="184" height="530" rx="54" fill="#e3c64b"/><rect x="334" y="340" width="22" height="430" rx="11" fill="#ffffff" opacity=".28"/>
+</svg>

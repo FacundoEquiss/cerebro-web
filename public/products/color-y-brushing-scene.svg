@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Colour and blow-dry, lifestyle view">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f1eeed"/><stop offset="1" stop-color="#e6e0de"/></linearGradient></defs>
+<rect width="800" height="1000" fill="#dccecb"/><rect y="760" width="800" height="240" fill="#ccbab5"/><circle cx="610" cy="250" r="120" fill="#ffffff" opacity=".35"/><ellipse cx="400" cy="800" rx="230" ry="26" fill="#000000" opacity=".12"/><g transform="translate(400 520) scale(.82) translate(-400 -500)"><rect x="200" y="330" width="330" height="170" rx="80" fill="#9a5a7a"/><rect x="520" y="352" width="90" height="126" rx="20" fill="#74445c"/><path d="M300 490 250 790H350L390 490Z" fill="#884f6b"/><circle cx="290" cy="415" r="50" fill="#6c3f55"/><path d="M640 380H700M640 415H720M640 450H700" stroke="#b88ca2" stroke-width="12" stroke-linecap="round"/></g>
+</svg>

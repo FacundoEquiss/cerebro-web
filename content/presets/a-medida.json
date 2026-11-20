@@ -1,0 +1,446 @@
+{
+  "_note": "EXAMPLE PRESET. Every product, price and text here is an EXAMPLE: replace them with the real ones. Apply it with `npm run preset a-medida` (it becomes content/products.json and content/site.json, and its palette goes to config/brand.ts). Texts can be a plain string or { \"es\": \"…\", \"en\": \"…\" }. See docs/product-types.md for `type`, `unit`, `step`, `service` and `digital`.",
+  "id": "a-medida",
+  "name": {
+    "es": "Trabajos a medida, eventos y B2B",
+    "en": "Made-to-measure work, events and B2B"
+  },
+  "description": {
+    "es": "Productos sin precio público: el cliente pide presupuesto, vos cotizás y él acepta y paga.",
+    "en": "Products without a public price: the customer asks for a quote, you price it and they accept and pay."
+  },
+  "palette": {
+    "background": "#f5f4f1",
+    "surface": "#ffffff",
+    "ink": "#1d2226",
+    "muted": "#5c666e",
+    "line": "#e2e1dc",
+    "action": "#24506b",
+    "onAction": "#ffffff",
+    "highlight": "#b4691f"
+  },
+  "home": {
+    "heroEyebrow": {
+      "es": "Taller de ejemplo",
+      "en": "Example workshop"
+    },
+    "heroTitle": {
+      "es": "Lo hacemos a tu medida",
+      "en": "We make it to your measure"
+    },
+    "heroText": {
+      "es": "Contanos qué necesitás y te enviamos un presupuesto. Texto de ejemplo: contá acá qué fabricás y para quién.",
+      "en": "Tell us what you need and we send you a quote. Example text: say here what you make and for whom."
+    },
+    "heroCta": {
+      "es": "Pedir presupuesto",
+      "en": "Ask for a quote"
+    },
+    "benefits": [
+      {
+        "icon": "message",
+        "title": {
+          "es": "Presupuesto sin cargo",
+          "en": "Free quote"
+        },
+        "text": {
+          "es": "Te respondemos con el precio y el plazo. EJEMPLO.",
+          "en": "We reply with the price and the lead time. EXAMPLE."
+        }
+      },
+      {
+        "icon": "shield",
+        "title": {
+          "es": "Precio cerrado",
+          "en": "Fixed price"
+        },
+        "text": {
+          "es": "Pagás lo que aceptaste. EJEMPLO.",
+          "en": "You pay what you accepted. EXAMPLE."
+        }
+      },
+      {
+        "icon": "truck",
+        "title": {
+          "es": "Entrega coordinada",
+          "en": "Arranged delivery"
+        },
+        "text": {
+          "es": "COMPLETAR con las condiciones reales.",
+          "en": "FILL IN with the real conditions."
+        }
+      }
+    ],
+    "faq": [
+      {
+        "q": {
+          "es": "¿Cómo pido un presupuesto?",
+          "en": "How do I ask for a quote?"
+        },
+        "a": {
+          "es": "En cada producto completás la cantidad y contás qué necesitás. Te enviamos el presupuesto por e-mail, con un enlace para aceptarlo y pagarlo.",
+          "en": "On each product you enter the quantity and tell us what you need. We e-mail you the quote, with a link to accept it and pay."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Cuánto demora?",
+          "en": "How long does it take?"
+        },
+        "a": {
+          "es": "COMPLETAR con los plazos reales de cotización y de producción.",
+          "en": "FILL IN with the real quoting and production times."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Piden seña?",
+          "en": "Do you ask for a deposit?"
+        },
+        "a": {
+          "es": "COMPLETAR con las condiciones reales de pago.",
+          "en": "FILL IN with the real payment terms."
+        }
+      }
+    ]
+  },
+  "categories": [
+    {
+      "slug": "a-medida",
+      "name": {
+        "es": "A medida",
+        "en": "Made to measure"
+      },
+      "description": {
+        "es": "Trabajos que se cotizan: pedí tu presupuesto. Texto de EJEMPLO.",
+        "en": "Work that is quoted: ask for your price. EXAMPLE text."
+      }
+    }
+  ],
+  "products": [
+    {
+      "id": "camisetas-estampadas-para-eventos",
+      "slug": "camisetas-estampadas-para-eventos",
+      "name": {
+        "es": "Camisetas estampadas para eventos",
+        "en": "Printed tees for events"
+      },
+      "description": {
+        "es": "Camisetas con tu diseño para equipos y eventos. Pedido mínimo: 10 unidades. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Tees with your design for teams and events. Minimum order: 10 units. EXAMPLE text: describe your own here."
+      },
+      "category": "a-medida",
+      "type": "quote",
+      "price": 0,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 10,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-03-04T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/camisetas-estampadas-para-eventos-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Camisetas estampadas para eventos",
+            "en": "Printed tees for events"
+          },
+          "placeholder": {
+            "shape": "tee",
+            "color": "#c9863a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/camisetas-estampadas-para-eventos-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Camisetas estampadas para eventos, vista de ambiente",
+            "en": "Printed tees for events, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "tee",
+            "color": "#c9863a",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "mueble-a-medida",
+      "slug": "mueble-a-medida",
+      "name": {
+        "es": "Mueble a medida",
+        "en": "Made-to-measure furniture"
+      },
+      "description": {
+        "es": "Mesas y estantes a la medida de tu espacio. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Tables and shelves made to fit your space. EXAMPLE text: describe your own here."
+      },
+      "category": "a-medida",
+      "type": "quote",
+      "price": 0,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-02-21T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/mueble-a-medida-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Mueble a medida",
+            "en": "Made-to-measure furniture"
+          },
+          "placeholder": {
+            "shape": "table",
+            "color": "#a4764a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/mueble-a-medida-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Mueble a medida, vista de ambiente",
+            "en": "Made-to-measure furniture, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "table",
+            "color": "#a4764a",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "carteleria-y-vinilos",
+      "slug": "carteleria-y-vinilos",
+      "name": {
+        "es": "Cartelería y vinilos",
+        "en": "Signs and vinyl"
+      },
+      "description": {
+        "es": "Se cotiza por metro cuadrado, según el material y la colocación. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Quoted by the square metre, depending on material and fitting. EXAMPLE text: describe your own here."
+      },
+      "category": "a-medida",
+      "type": "quote",
+      "price": 0,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "unit": "m²",
+      "step": 0.5,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-02-15T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/carteleria-y-vinilos-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Cartelería y vinilos",
+            "en": "Signs and vinyl"
+          },
+          "placeholder": {
+            "shape": "print",
+            "color": "#2b63b5",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/carteleria-y-vinilos-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Cartelería y vinilos, vista de ambiente",
+            "en": "Signs and vinyl, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "print",
+            "color": "#2b63b5",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "tazas-personalizadas-por-cantidad",
+      "slug": "tazas-personalizadas-por-cantidad",
+      "name": {
+        "es": "Tazas personalizadas por cantidad",
+        "en": "Custom mugs in bulk"
+      },
+      "description": {
+        "es": "Tazas con tu logo. Pedido mínimo: 12 unidades. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Mugs with your logo. Minimum order: 12 units. EXAMPLE text: describe your own here."
+      },
+      "category": "a-medida",
+      "type": "quote",
+      "price": 0,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 12,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-02-07T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/tazas-personalizadas-por-cantidad-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Tazas personalizadas por cantidad",
+            "en": "Custom mugs in bulk"
+          },
+          "placeholder": {
+            "shape": "mug",
+            "color": "#9aa583",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/tazas-personalizadas-por-cantidad-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Tazas personalizadas por cantidad, vista de ambiente",
+            "en": "Custom mugs in bulk, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "mug",
+            "color": "#9aa583",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "visita-de-relevamiento",
+      "slug": "visita-de-relevamiento",
+      "name": {
+        "es": "Visita de relevamiento",
+        "en": "Site survey visit"
+      },
+      "description": {
+        "es": "Vamos a tomar medidas y a ver el lugar. Dura una hora. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "We come to measure and see the place. It takes an hour. EXAMPLE text: describe your own here."
+      },
+      "category": "a-medida",
+      "type": "service",
+      "price": 15000,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": null,
+      "service": {
+        "durationMinutes": 60,
+        "capacity": 1
+      },
+      "attributes": {},
+      "createdAt": "2026-02-17T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/visita-de-relevamiento-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Visita de relevamiento",
+            "en": "Site survey visit"
+          },
+          "placeholder": {
+            "shape": "calendar",
+            "color": "#2b63b5",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/visita-de-relevamiento-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Visita de relevamiento, vista de ambiente",
+            "en": "Site survey visit, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "calendar",
+            "color": "#2b63b5",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "muestrario-de-materiales",
+      "slug": "muestrario-de-materiales",
+      "name": {
+        "es": "Muestrario de materiales",
+        "en": "Material sample kit"
+      },
+      "description": {
+        "es": "Un kit con muestras de telas, maderas y terminaciones. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "A kit with samples of fabrics, woods and finishes. EXAMPLE text: describe your own here."
+      },
+      "category": "a-medida",
+      "type": "physical",
+      "price": 4500,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": 40,
+      "attributes": {},
+      "createdAt": "2026-01-29T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/muestrario-de-materiales-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Muestrario de materiales",
+            "en": "Material sample kit"
+          },
+          "placeholder": {
+            "shape": "box",
+            "color": "#b9a98a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/muestrario-de-materiales-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Muestrario de materiales, vista de ambiente",
+            "en": "Material sample kit, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "box",
+            "color": "#b9a98a",
+            "view": "scene"
+          }
+        }
+      ]
+    }
+  ]
+}

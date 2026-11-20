@@ -1,0 +1,460 @@
+{
+  "_note": "EXAMPLE PRESET. Every product, price and text here is an EXAMPLE: replace them with the real ones. Apply it with `npm run preset digital` (it becomes content/products.json and content/site.json, and its palette goes to config/brand.ts). Texts can be a plain string or { \"es\": \"…\", \"en\": \"…\" }. See docs/product-types.md for `type`, `unit`, `step`, `service` and `digital`.",
+  "id": "digital",
+  "name": {
+    "es": "Productos digitales",
+    "en": "Digital products"
+  },
+  "description": {
+    "es": "Archivos que se descargan después del pago, una mentoría con turno y una capacitación a presupuesto.",
+    "en": "Files downloaded after payment, mentoring by appointment and training on a quote."
+  },
+  "palette": {
+    "background": "#f3f6f6",
+    "surface": "#ffffff",
+    "ink": "#12201f",
+    "muted": "#55696a",
+    "line": "#dde7e6",
+    "action": "#0f6b66",
+    "onAction": "#ffffff",
+    "highlight": "#b4532a"
+  },
+  "home": {
+    "heroEyebrow": {
+      "es": "Tienda de ejemplo",
+      "en": "Example store"
+    },
+    "heroTitle": {
+      "es": "Aprendé y descargá al instante",
+      "en": "Learn and download instantly"
+    },
+    "heroText": {
+      "es": "Guías, plantillas y cursos. Texto de ejemplo: contá acá para quién son y qué resuelven.",
+      "en": "Guides, templates and courses. Example text: say here who they are for and what they solve."
+    },
+    "heroCta": {
+      "es": "Ver todo",
+      "en": "See everything"
+    },
+    "benefits": [
+      {
+        "icon": "shield",
+        "title": {
+          "es": "Descarga después del pago",
+          "en": "Download after payment"
+        },
+        "text": {
+          "es": "El enlace llega por e-mail y queda en tu pedido. EJEMPLO.",
+          "en": "The link is e-mailed and stays on your order. EXAMPLE."
+        }
+      },
+      {
+        "icon": "refresh",
+        "title": {
+          "es": "Devoluciones",
+          "en": "Refunds"
+        },
+        "text": {
+          "es": "COMPLETAR con la política real para productos digitales.",
+          "en": "FILL IN with the real policy for digital products."
+        }
+      },
+      {
+        "icon": "message",
+        "title": {
+          "es": "Soporte",
+          "en": "Support"
+        },
+        "text": {
+          "es": "EJEMPLO.",
+          "en": "EXAMPLE."
+        }
+      }
+    ],
+    "faq": [
+      {
+        "q": {
+          "es": "¿Cómo recibo mi compra?",
+          "en": "How do I get my purchase?"
+        },
+        "a": {
+          "es": "Cuando se confirma el pago, el enlace de descarga aparece en la página de tu pedido y te llega por e-mail. Cada enlace vence; desde tu pedido siempre tenés uno nuevo.",
+          "en": "When the payment is confirmed, the download link appears on your order page and is e-mailed to you. Each link expires; your order always gives you a fresh one."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Puedo pedir un reembolso?",
+          "en": "Can I ask for a refund?"
+        },
+        "a": {
+          "es": "COMPLETAR con la política real de reembolsos de productos digitales.",
+          "en": "FILL IN with the real refund policy for digital products."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Qué medios de pago aceptan?",
+          "en": "Which payment methods do you accept?"
+        },
+        "a": {
+          "es": "EJEMPLO: transferencia bancaria o coordinando por WhatsApp. COMPLETAR con los medios reales del negocio.",
+          "en": "EXAMPLE: bank transfer or arranging it by WhatsApp. FILL IN with the real methods of the business."
+        }
+      }
+    ]
+  },
+  "categories": [
+    {
+      "slug": "digital",
+      "name": {
+        "es": "Digitales",
+        "en": "Digital"
+      },
+      "description": {
+        "es": "Archivos y cursos que descargás después del pago. Texto de EJEMPLO.",
+        "en": "Files and courses you download after paying. EXAMPLE text."
+      }
+    }
+  ],
+  "products": [
+    {
+      "id": "curso-grabado",
+      "slug": "curso-grabado",
+      "name": {
+        "es": "Curso grabado",
+        "en": "Recorded course"
+      },
+      "description": {
+        "es": "Curso en video con material de apoyo. Acceso apenas se confirma el pago. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Video course with supporting material. Access as soon as the payment is confirmed. EXAMPLE text: describe your own here."
+      },
+      "category": "digital",
+      "type": "digital",
+      "price": 45000,
+      "compareAtPrice": 56000,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "digital": {
+        "name": "curso-de-ejemplo.pdf",
+        "file": "sample-course.pdf"
+      },
+      "attributes": {},
+      "createdAt": "2026-03-05T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/curso-grabado-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Curso grabado",
+            "en": "Recorded course"
+          },
+          "placeholder": {
+            "shape": "screen",
+            "color": "#4a4f8a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/curso-grabado-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Curso grabado, vista de ambiente",
+            "en": "Recorded course, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "screen",
+            "color": "#4a4f8a",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "guia-en-pdf",
+      "slug": "guia-en-pdf",
+      "name": {
+        "es": "Guía práctica en PDF",
+        "en": "Practical guide (PDF)"
+      },
+      "description": {
+        "es": "Una guía de 40 páginas para empezar. La descargás después del pago. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "A 40-page guide to get started. You download it after paying. EXAMPLE text: describe your own here."
+      },
+      "category": "digital",
+      "type": "digital",
+      "price": 7900,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "digital": {
+        "name": "guia-de-ejemplo.pdf",
+        "file": "sample-guide.pdf"
+      },
+      "attributes": {},
+      "createdAt": "2026-03-01T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/guia-en-pdf-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Guía práctica en PDF",
+            "en": "Practical guide (PDF)"
+          },
+          "placeholder": {
+            "shape": "ebook",
+            "color": "#2f6f7a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/guia-en-pdf-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Guía práctica en PDF, vista de ambiente",
+            "en": "Practical guide (PDF), lifestyle view"
+          },
+          "placeholder": {
+            "shape": "ebook",
+            "color": "#2f6f7a",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pack-de-plantillas",
+      "slug": "pack-de-plantillas",
+      "name": {
+        "es": "Pack de plantillas editables",
+        "en": "Editable template pack"
+      },
+      "description": {
+        "es": "Plantillas listas para completar y adaptar. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Templates ready to fill in and adapt. EXAMPLE text: describe your own here."
+      },
+      "category": "digital",
+      "type": "digital",
+      "price": 12900,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "digital": {
+        "name": "plantillas-de-ejemplo.pdf",
+        "file": "sample-templates.pdf"
+      },
+      "attributes": {},
+      "createdAt": "2026-02-19T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/pack-de-plantillas-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Pack de plantillas editables",
+            "en": "Editable template pack"
+          },
+          "placeholder": {
+            "shape": "file",
+            "color": "#b4603c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/pack-de-plantillas-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Pack de plantillas editables, vista de ambiente",
+            "en": "Editable template pack, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "file",
+            "color": "#b4603c",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "recetario-digital",
+      "slug": "recetario-digital",
+      "name": {
+        "es": "Recetario digital",
+        "en": "Digital recipe book"
+      },
+      "description": {
+        "es": "Treinta recetas paso a paso, en PDF. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Thirty step-by-step recipes, as a PDF. EXAMPLE text: describe your own here."
+      },
+      "category": "digital",
+      "type": "digital",
+      "price": 9900,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": null,
+      "digital": {
+        "name": "recetario-de-ejemplo.pdf",
+        "file": "sample-guide.pdf"
+      },
+      "attributes": {},
+      "createdAt": "2026-02-09T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/recetario-digital-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Recetario digital",
+            "en": "Digital recipe book"
+          },
+          "placeholder": {
+            "shape": "ebook",
+            "color": "#8a5a3a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/recetario-digital-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Recetario digital, vista de ambiente",
+            "en": "Digital recipe book, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "ebook",
+            "color": "#8a5a3a",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "mentoria-uno-a-uno",
+      "slug": "mentoria-uno-a-uno",
+      "name": {
+        "es": "Mentoría uno a uno",
+        "en": "One-to-one mentoring"
+      },
+      "description": {
+        "es": "Una hora por videollamada para revisar tu caso. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "One hour on a video call to go over your case. EXAMPLE text: describe your own here."
+      },
+      "category": "digital",
+      "type": "service",
+      "price": 30000,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "service": {
+        "durationMinutes": 60,
+        "capacity": 1
+      },
+      "attributes": {},
+      "createdAt": "2026-02-13T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/mentoria-uno-a-uno-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Mentoría uno a uno",
+            "en": "One-to-one mentoring"
+          },
+          "placeholder": {
+            "shape": "calendar",
+            "color": "#2b63b5",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/mentoria-uno-a-uno-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Mentoría uno a uno, vista de ambiente",
+            "en": "One-to-one mentoring, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "calendar",
+            "color": "#2b63b5",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "capacitacion-para-equipos",
+      "slug": "capacitacion-para-equipos",
+      "name": {
+        "es": "Capacitación para equipos",
+        "en": "Team training"
+      },
+      "description": {
+        "es": "Armamos el programa según el tamaño y las necesidades del equipo. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "We design the programme for the size and needs of the team. EXAMPLE text: describe your own here."
+      },
+      "category": "digital",
+      "type": "quote",
+      "price": 0,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-02-03T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/capacitacion-para-equipos-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Capacitación para equipos",
+            "en": "Team training"
+          },
+          "placeholder": {
+            "shape": "screen",
+            "color": "#6b7353",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/capacitacion-para-equipos-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Capacitación para equipos, vista de ambiente",
+            "en": "Team training, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "screen",
+            "color": "#6b7353",
+            "view": "scene"
+          }
+        }
+      ]
+    }
+  ]
+}

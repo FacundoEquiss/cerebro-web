@@ -1,0 +1,464 @@
+{
+  "_note": "EXAMPLE PRESET. Every product, price and text here is an EXAMPLE: replace them with the real ones. Apply it with `npm run preset tecnologia` (it becomes content/products.json and content/site.json, and its palette goes to config/brand.ts). Texts can be a plain string or { \"es\": \"…\", \"en\": \"…\" }. See docs/product-types.md for `type`, `unit`, `step`, `service` and `digital`.",
+  "id": "tecnologia",
+  "name": {
+    "es": "Tecnología y electrónica",
+    "en": "Technology and electronics"
+  },
+  "description": {
+    "es": "Productos con stock real, precio de lista y un servicio de instalación con turno.",
+    "en": "Products with real stock, list price and a set-up service by appointment."
+  },
+  "palette": {
+    "background": "#f3f5f8",
+    "surface": "#ffffff",
+    "ink": "#11161d",
+    "muted": "#566170",
+    "line": "#dfe4ea",
+    "action": "#1d4ed8",
+    "onAction": "#ffffff",
+    "highlight": "#c2410c"
+  },
+  "home": {
+    "heroEyebrow": {
+      "es": "Tienda de ejemplo",
+      "en": "Example store"
+    },
+    "heroTitle": {
+      "es": "Tecnología que funciona desde el primer día",
+      "en": "Tech that works from day one"
+    },
+    "heroText": {
+      "es": "Audio, carga y accesorios. Texto de ejemplo: contá acá qué marcas trabajás y qué garantía das.",
+      "en": "Audio, charging and accessories. Example text: say here which brands you carry and what warranty you give."
+    },
+    "heroCta": {
+      "es": "Ver productos",
+      "en": "See products"
+    },
+    "benefits": [
+      {
+        "icon": "shield",
+        "title": {
+          "es": "Garantía",
+          "en": "Warranty"
+        },
+        "text": {
+          "es": "COMPLETAR con la garantía real de cada producto.",
+          "en": "FILL IN with the real warranty of each product."
+        }
+      },
+      {
+        "icon": "truck",
+        "title": {
+          "es": "Envíos y retiro",
+          "en": "Shipping and pickup"
+        },
+        "text": {
+          "es": "EJEMPLO.",
+          "en": "EXAMPLE."
+        }
+      },
+      {
+        "icon": "message",
+        "title": {
+          "es": "Soporte",
+          "en": "Support"
+        },
+        "text": {
+          "es": "Te ayudamos a instalarlo. EJEMPLO.",
+          "en": "We help you set it up. EXAMPLE."
+        }
+      }
+    ],
+    "faq": [
+      {
+        "q": {
+          "es": "¿Los productos tienen garantía?",
+          "en": "Do products have a warranty?"
+        },
+        "a": {
+          "es": "COMPLETAR con la garantía real y cómo se gestiona.",
+          "en": "FILL IN with the real warranty and how to claim it."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Qué medios de pago aceptan?",
+          "en": "Which payment methods do you accept?"
+        },
+        "a": {
+          "es": "EJEMPLO: transferencia bancaria o coordinando por WhatsApp. COMPLETAR con los medios reales del negocio.",
+          "en": "EXAMPLE: bank transfer or arranging it by WhatsApp. FILL IN with the real methods of the business."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Hacen factura?",
+          "en": "Do you issue invoices?"
+        },
+        "a": {
+          "es": "COMPLETAR según cómo factura el negocio.",
+          "en": "FILL IN according to how the business invoices."
+        }
+      }
+    ]
+  },
+  "categories": [
+    {
+      "slug": "tecnologia",
+      "name": {
+        "es": "Tecnología",
+        "en": "Technology"
+      },
+      "description": {
+        "es": "Audio, carga y accesorios para tus equipos. Texto de EJEMPLO.",
+        "en": "Audio, charging and accessories for your devices. EXAMPLE text."
+      }
+    }
+  ],
+  "products": [
+    {
+      "id": "auriculares-inalambricos",
+      "slug": "auriculares-inalambricos",
+      "name": {
+        "es": "Auriculares inalámbricos",
+        "en": "Wireless headphones"
+      },
+      "description": {
+        "es": "Auriculares con cancelación de ruido y estuche de carga. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Headphones with noise cancelling and a charging case. EXAMPLE text: describe your own here."
+      },
+      "category": "tecnologia",
+      "type": "physical",
+      "price": 89900,
+      "compareAtPrice": 104900,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": 12,
+      "attributes": {
+        "googleCategory": "Electronics > Audio > Audio Components > Headphones & Headsets"
+      },
+      "createdAt": "2026-03-02T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/auriculares-inalambricos-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Auriculares inalámbricos",
+            "en": "Wireless headphones"
+          },
+          "placeholder": {
+            "shape": "headphones",
+            "color": "#2b2f36",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/auriculares-inalambricos-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Auriculares inalámbricos, vista de ambiente",
+            "en": "Wireless headphones, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "headphones",
+            "color": "#2b2f36",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "teclado-mecanico",
+      "slug": "teclado-mecanico",
+      "name": {
+        "es": "Teclado mecánico",
+        "en": "Mechanical keyboard"
+      },
+      "description": {
+        "es": "Teclado compacto con teclas intercambiables. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Compact keyboard with swappable keys. EXAMPLE text: describe your own here."
+      },
+      "category": "tecnologia",
+      "type": "physical",
+      "price": 112000,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": 5,
+      "attributes": {},
+      "createdAt": "2026-03-05T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/teclado-mecanico-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Teclado mecánico",
+            "en": "Mechanical keyboard"
+          },
+          "placeholder": {
+            "shape": "keyboard",
+            "color": "#3a3d44",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/teclado-mecanico-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Teclado mecánico, vista de ambiente",
+            "en": "Mechanical keyboard, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "keyboard",
+            "color": "#3a3d44",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "parlante-portatil",
+      "slug": "parlante-portatil",
+      "name": {
+        "es": "Parlante portátil",
+        "en": "Portable speaker"
+      },
+      "description": {
+        "es": "Parlante resistente a salpicaduras con batería de larga duración. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Splash-resistant speaker with a long-lasting battery. EXAMPLE text: describe your own here."
+      },
+      "category": "tecnologia",
+      "type": "physical",
+      "price": 64900,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": 7,
+      "attributes": {},
+      "createdAt": "2026-02-20T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/parlante-portatil-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Parlante portátil",
+            "en": "Portable speaker"
+          },
+          "placeholder": {
+            "shape": "speaker",
+            "color": "#4a5a78",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/parlante-portatil-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Parlante portátil, vista de ambiente",
+            "en": "Portable speaker, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "speaker",
+            "color": "#4a5a78",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "cargador-usb-c-30-w",
+      "slug": "cargador-usb-c-30-w",
+      "name": {
+        "es": "Cargador USB-C de 30 W",
+        "en": "30 W USB-C charger"
+      },
+      "description": {
+        "es": "Cargador compacto de carga rápida con cable incluido. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Compact fast charger with a cable included. EXAMPLE text: describe your own here."
+      },
+      "category": "tecnologia",
+      "type": "physical",
+      "price": 21900,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": 30,
+      "attributes": {},
+      "createdAt": "2026-02-11T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/cargador-usb-c-30-w-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Cargador USB-C de 30 W",
+            "en": "30 W USB-C charger"
+          },
+          "placeholder": {
+            "shape": "charger",
+            "color": "#e9e6df",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/cargador-usb-c-30-w-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Cargador USB-C de 30 W, vista de ambiente",
+            "en": "30 W USB-C charger, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "charger",
+            "color": "#e9e6df",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "funda-para-notebook",
+      "slug": "funda-para-notebook",
+      "name": {
+        "es": "Funda para notebook",
+        "en": "Laptop sleeve"
+      },
+      "description": {
+        "es": "Funda acolchada con cierre. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Padded sleeve with a zip. EXAMPLE text: describe your own here."
+      },
+      "category": "tecnologia",
+      "type": "physical",
+      "price": 32900,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-01-25T00:00:00.000Z",
+      "options": [
+        {
+          "id": "medida",
+          "name": {
+            "es": "Medida",
+            "en": "Size"
+          },
+          "values": [
+            {
+              "id": "13",
+              "label": "13\""
+            },
+            {
+              "id": "15",
+              "label": "15\""
+            }
+          ]
+        }
+      ],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/funda-para-notebook-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Funda para notebook",
+            "en": "Laptop sleeve"
+          },
+          "placeholder": {
+            "shape": "laptop",
+            "color": "#6b7353",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/funda-para-notebook-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Funda para notebook, vista de ambiente",
+            "en": "Laptop sleeve, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "laptop",
+            "color": "#6b7353",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "instalacion-y-configuracion",
+      "slug": "instalacion-y-configuracion",
+      "name": {
+        "es": "Instalación y configuración",
+        "en": "Set-up and installation"
+      },
+      "description": {
+        "es": "Te ayudamos a dejar tu equipo listo para usar, en una videollamada. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "We help you get your device ready to use, on a video call. EXAMPLE text: describe your own here."
+      },
+      "category": "tecnologia",
+      "type": "service",
+      "price": 18000,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": null,
+      "service": {
+        "durationMinutes": 45,
+        "capacity": 1
+      },
+      "attributes": {},
+      "createdAt": "2026-02-14T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/instalacion-y-configuracion-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Instalación y configuración",
+            "en": "Set-up and installation"
+          },
+          "placeholder": {
+            "shape": "calendar",
+            "color": "#2b63b5",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/instalacion-y-configuracion-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Instalación y configuración, vista de ambiente",
+            "en": "Set-up and installation, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "calendar",
+            "color": "#2b63b5",
+            "view": "scene"
+          }
+        }
+      ]
+    }
+  ]
+}

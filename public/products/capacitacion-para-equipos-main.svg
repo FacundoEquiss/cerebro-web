@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Team training">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0efeb"/><stop offset="1" stop-color="#e3e2db"/></linearGradient></defs>
+<rect width="800" height="1000" fill="url(#bg)"/><ellipse cx="400" cy="850" rx="250" ry="24" fill="#000000" opacity=".09"/><rect x="150" y="290" width="500" height="340" rx="26" fill="#4b513a"/><rect x="176" y="316" width="448" height="288" rx="8" fill="#a6ab98"/><path d="M350 630H450L470 720H330Z" fill="#5b6247"/><rect x="270" y="720" width="260" height="26" rx="13" fill="#4b513a"/><circle cx="400" cy="460" r="62" fill="#6b7353"/><path d="M382 426V494L436 460Z" fill="#ffffff"/>
+</svg>

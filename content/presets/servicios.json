@@ -1,0 +1,482 @@
+{
+  "_note": "EXAMPLE PRESET. Every product, price and text here is an EXAMPLE: replace them with the real ones. Apply it with `npm run preset servicios` (it becomes content/products.json and content/site.json, and its palette goes to config/brand.ts). Texts can be a plain string or { \"es\": \"…\", \"en\": \"…\" }. See docs/product-types.md for `type`, `unit`, `step`, `service` and `digital`.",
+  "id": "servicios",
+  "name": {
+    "es": "Servicios con turno",
+    "en": "Services by appointment"
+  },
+  "description": {
+    "es": "Turnos con duración y cupo, clases grupales, un producto físico y un trabajo a presupuesto.",
+    "en": "Appointments with a length and capacity, group classes, a physical product and a job on a quote."
+  },
+  "palette": {
+    "background": "#f5f3f7",
+    "surface": "#ffffff",
+    "ink": "#1f1b26",
+    "muted": "#655f70",
+    "line": "#e4dfea",
+    "action": "#5b3f8f",
+    "onAction": "#ffffff",
+    "highlight": "#b0486a"
+  },
+  "home": {
+    "heroEyebrow": {
+      "es": "Estudio de ejemplo",
+      "en": "Example studio"
+    },
+    "heroTitle": {
+      "es": "Reservá tu turno en un minuto",
+      "en": "Book your appointment in a minute"
+    },
+    "heroText": {
+      "es": "Elegí el servicio, el día y el horario. Texto de ejemplo: contá acá quiénes atienden y dónde.",
+      "en": "Choose the service, the day and the time. Example text: say here who you are and where you work."
+    },
+    "heroCta": {
+      "es": "Ver servicios",
+      "en": "See services"
+    },
+    "benefits": [
+      {
+        "icon": "refresh",
+        "title": {
+          "es": "Cambios de turno",
+          "en": "Rescheduling"
+        },
+        "text": {
+          "es": "COMPLETAR con la política real de cambios y cancelaciones.",
+          "en": "FILL IN with the real rescheduling and cancellation policy."
+        }
+      },
+      {
+        "icon": "shield",
+        "title": {
+          "es": "Turno confirmado",
+          "en": "Confirmed slot"
+        },
+        "text": {
+          "es": "Tu lugar queda reservado al confirmar el pedido. EJEMPLO.",
+          "en": "Your place is reserved when you confirm the order. EXAMPLE."
+        }
+      },
+      {
+        "icon": "message",
+        "title": {
+          "es": "Te recordamos el turno",
+          "en": "We remind you"
+        },
+        "text": {
+          "es": "EJEMPLO.",
+          "en": "EXAMPLE."
+        }
+      }
+    ],
+    "faq": [
+      {
+        "q": {
+          "es": "¿Cómo reservo?",
+          "en": "How do I book?"
+        },
+        "a": {
+          "es": "En la página del servicio elegís el día y el horario y confirmás el pedido.",
+          "en": "On the service page you choose the day and the time and confirm the order."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Puedo cancelar o cambiar el turno?",
+          "en": "Can I cancel or change the appointment?"
+        },
+        "a": {
+          "es": "COMPLETAR con la política real: con cuánta anticipación y qué pasa con el pago.",
+          "en": "FILL IN with the real policy: how much notice and what happens with the payment."
+        }
+      },
+      {
+        "q": {
+          "es": "¿Qué medios de pago aceptan?",
+          "en": "Which payment methods do you accept?"
+        },
+        "a": {
+          "es": "EJEMPLO: transferencia bancaria o coordinando por WhatsApp. COMPLETAR con los medios reales del negocio.",
+          "en": "EXAMPLE: bank transfer or arranging it by WhatsApp. FILL IN with the real methods of the business."
+        }
+      }
+    ]
+  },
+  "categories": [
+    {
+      "slug": "servicios",
+      "name": {
+        "es": "Servicios",
+        "en": "Services"
+      },
+      "description": {
+        "es": "Reservá tu turno: elegís día y horario. Texto de EJEMPLO.",
+        "en": "Book your appointment: choose the day and the time. EXAMPLE text."
+      }
+    }
+  ],
+  "products": [
+    {
+      "id": "corte-de-pelo",
+      "slug": "corte-de-pelo",
+      "name": {
+        "es": "Corte de pelo",
+        "en": "Haircut"
+      },
+      "description": {
+        "es": "Corte con lavado. Elegís día y horario. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Haircut with a wash. You choose the day and the time. EXAMPLE text: describe your own here."
+      },
+      "category": "servicios",
+      "type": "service",
+      "price": 12000,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "service": {
+        "durationMinutes": 30,
+        "capacity": 1
+      },
+      "attributes": {},
+      "createdAt": "2026-03-04T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/corte-de-pelo-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Corte de pelo",
+            "en": "Haircut"
+          },
+          "placeholder": {
+            "shape": "scissors",
+            "color": "#3d4f5c",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/corte-de-pelo-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Corte de pelo, vista de ambiente",
+            "en": "Haircut, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "scissors",
+            "color": "#3d4f5c",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "color-y-brushing",
+      "slug": "color-y-brushing",
+      "name": {
+        "es": "Color y brushing",
+        "en": "Colour and blow-dry"
+      },
+      "description": {
+        "es": "Coloración completa con brushing. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Full colour with a blow-dry. EXAMPLE text: describe your own here."
+      },
+      "category": "servicios",
+      "type": "service",
+      "price": 38000,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "service": {
+        "durationMinutes": 90,
+        "capacity": 1
+      },
+      "attributes": {},
+      "createdAt": "2026-02-16T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/color-y-brushing-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Color y brushing",
+            "en": "Colour and blow-dry"
+          },
+          "placeholder": {
+            "shape": "dryer",
+            "color": "#9a5a7a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/color-y-brushing-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Color y brushing, vista de ambiente",
+            "en": "Colour and blow-dry, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "dryer",
+            "color": "#9a5a7a",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "consulta-inicial",
+      "slug": "consulta-inicial",
+      "name": {
+        "es": "Consulta inicial",
+        "en": "First consultation"
+      },
+      "description": {
+        "es": "Una primera consulta de 30 minutos, presencial o por videollamada. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "A first 30-minute consultation, in person or by video call. EXAMPLE text: describe your own here."
+      },
+      "category": "servicios",
+      "type": "service",
+      "price": 20000,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "service": {
+        "durationMinutes": 30,
+        "capacity": 1
+      },
+      "attributes": {},
+      "createdAt": "2026-02-12T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/consulta-inicial-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Consulta inicial",
+            "en": "First consultation"
+          },
+          "placeholder": {
+            "shape": "calendar",
+            "color": "#2b63b5",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/consulta-inicial-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Consulta inicial, vista de ambiente",
+            "en": "First consultation, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "calendar",
+            "color": "#2b63b5",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "clase-grupal-de-yoga",
+      "slug": "clase-grupal-de-yoga",
+      "name": {
+        "es": "Clase grupal de yoga",
+        "en": "Group yoga class"
+      },
+      "description": {
+        "es": "Clase de 60 minutos para todos los niveles. Cupo limitado. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "A 60-minute class for every level. Limited places. EXAMPLE text: describe your own here."
+      },
+      "category": "servicios",
+      "type": "service",
+      "price": 6500,
+      "compareAtPrice": null,
+      "featured": true,
+      "minQuantity": 1,
+      "stock": null,
+      "service": {
+        "durationMinutes": 60,
+        "capacity": 8,
+        "weekly": {
+          "mon": [
+            [
+              "18:00",
+              "20:00"
+            ]
+          ],
+          "wed": [
+            [
+              "18:00",
+              "20:00"
+            ]
+          ],
+          "fri": [
+            [
+              "18:00",
+              "20:00"
+            ]
+          ],
+          "sat": [
+            [
+              "10:00",
+              "12:00"
+            ]
+          ]
+        }
+      },
+      "attributes": {},
+      "createdAt": "2026-02-28T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/clase-grupal-de-yoga-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Clase grupal de yoga",
+            "en": "Group yoga class"
+          },
+          "placeholder": {
+            "shape": "mat",
+            "color": "#7a6ab0",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/clase-grupal-de-yoga-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Clase grupal de yoga, vista de ambiente",
+            "en": "Group yoga class, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "mat",
+            "color": "#7a6ab0",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "shampoo-profesional",
+      "slug": "shampoo-profesional",
+      "name": {
+        "es": "Shampoo profesional",
+        "en": "Salon shampoo"
+      },
+      "description": {
+        "es": "Shampoo de uso profesional, 300 ml. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "Salon-grade shampoo, 300 ml. EXAMPLE text: describe your own here."
+      },
+      "category": "servicios",
+      "type": "physical",
+      "price": 15900,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": 15,
+      "attributes": {},
+      "createdAt": "2026-01-28T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/shampoo-profesional-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Shampoo profesional",
+            "en": "Salon shampoo"
+          },
+          "placeholder": {
+            "shape": "bottle",
+            "color": "#5c7a8a",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/shampoo-profesional-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Shampoo profesional, vista de ambiente",
+            "en": "Salon shampoo, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "bottle",
+            "color": "#5c7a8a",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
+      "id": "sesion-de-fotos",
+      "slug": "sesion-de-fotos",
+      "name": {
+        "es": "Sesión de fotos",
+        "en": "Photo session"
+      },
+      "description": {
+        "es": "Cotizamos según la duración, el lugar y la cantidad de fotos. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "We quote by length, place and number of photos. EXAMPLE text: describe your own here."
+      },
+      "category": "servicios",
+      "type": "quote",
+      "price": 0,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": null,
+      "attributes": {},
+      "createdAt": "2026-02-06T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/sesion-de-fotos-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Sesión de fotos",
+            "en": "Photo session"
+          },
+          "placeholder": {
+            "shape": "camera",
+            "color": "#3a3d44",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/sesion-de-fotos-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Sesión de fotos, vista de ambiente",
+            "en": "Photo session, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "camera",
+            "color": "#3a3d44",
+            "view": "scene"
+          }
+        }
+      ]
+    }
+  ]
+}
