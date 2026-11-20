@@ -12,12 +12,13 @@
 // sentence, never a crash.
 // WARNINGS (it works, but it is not finished): texts still marked EXAMPLE / EJEMPLO / COMPLETAR /
 // FILL IN; DRAFTS (products without a price — they are not for sale until the owner gives one);
-// a price of 0; an event with no date left, with a date written twice, with a date at an hour
+// an event with no date left, with a date written twice, with a date at an hour
 // the clocks skip that day, or with dates that overlap; the file of a digital product that is
 // not here.
 //
 // "price": null means «not known yet» → a DRAFT. The one exception is `type: "quote"`: a quote
 // has no public price by nature, so null (or 0) there is normal and the product is on show.
+// Price 0 on anything else is an ERROR unless the product says `"free": true` (free on purpose).
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -61,6 +62,17 @@ function storeTimeZone(root) {
   }
 }
 
+/** The closed days of the whole store (`booking.blockedDates` in config/commerce.ts), read as text. */
+function storeClosedDays(root) {
+  try {
+    const source = readFileSync(join(root, "config/commerce.ts"), "utf8").replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, "");
+    const list = /\bblockedDates:\s*\[([^\]]*)\]/.exec(source)?.[1] ?? "";
+    return list.match(/\d{4}-\d{2}-\d{2}/g) ?? [];
+  } catch {
+    return [];
+  }
+}
+
 /** Validates the catalogue of a project. Pure: returns what it found, prints nothing, never throws. */
 export function checkCatalog(root = here, now = Date.now()) {
   const errors = [];
@@ -89,6 +101,7 @@ export function checkCatalog(root = here, now = Date.now()) {
   const categories = Array.isArray(data.categories) ? data.categories : [];
   const products = Array.isArray(data.products) ? data.products : [];
   const zone = storeTimeZone(root);
+  const storeClosed = storeClosedDays(root);
   const slugs = new Set();
   categories.forEach((c, i) => {
     if (!isObject(c)) return void errors.push(`category #${i + 1} must be an object with \`slug\` and \`name\``);
@@ -116,7 +129,9 @@ export function checkCatalog(root = here, now = Date.now()) {
     const draft = p.draft === true || (p.price == null && type !== "quote");
     if (p.price != null && !amount(p.price)) errors.push(`${at}: the price must be a number (0 or more), or null while it is not known`);
     if (draft) drafts.push(String(p.id ?? p.slug ?? `#${i + 1}`));
-    else if (p.price === 0 && type !== "quote") warnings.push(`${at} costs 0: if the price is not known yet, write "price": null (a draft) instead`);
+    else if (p.price === 0 && type !== "quote" && p.free !== true) errors.push(`${at} costs 0 without saying why: if it is free on purpose add "free": true; if the price is not known yet write "price": null (a draft). Until then the store keeps it off sale`);
+    if (p.free !== undefined && typeof p.free !== "boolean") errors.push(`${at}: \`free\` is true or false`);
+    else if (p.free === true && p.price != null && p.price !== 0) errors.push(`${at} is marked free and has a price (${p.price}): a free product costs 0 — remove "free" or set the price to 0`);
     if (p.compareAtPrice != null && !amount(p.compareAtPrice)) errors.push(`${at}: \`compareAtPrice\` must be a number (0 or more) or null`);
     if (p.stock != null && !amount(p.stock)) errors.push(`${at}: \`stock\` must be a number (0 or more), or null for "made to order"`);
     const step = p.step ?? 1;
@@ -129,7 +144,11 @@ export function checkCatalog(root = here, now = Date.now()) {
       if (!isObject(s) || !Number.isInteger(s.durationMinutes) || !Number.isInteger(s.capacity) || s.durationMinutes < 5 || s.capacity < 1) {
         errors.push(`${at}: a service needs \`service.durationMinutes\` (5 or more) and \`service.capacity\` (1 or more)`);
       } else {
-        checkEvent(s, at);
+        if (s.blockedDates !== undefined && (!Array.isArray(s.blockedDates) || s.blockedDates.some((d) => typeof d !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(d)))) {
+          errors.push(`${at}: \`service.blockedDates\` is a list of days written "YYYY-MM-DD"`);
+        } else {
+          checkEvent(s, at);
+        }
       }
     }
     if (type === "digital") {
@@ -169,6 +188,21 @@ export function checkCatalog(root = here, now = Date.now()) {
         errors.push(`${at}: \`service.repeat.count\` is a whole number from 1 to 24`);
       }
     }
+    const closed = new Set([...storeClosed, ...(s.blockedDates ?? [])]);
+    if (isObject(s.repeat) && WEEKDAYS.includes(s.repeat.weekday) && WEEKS.includes(s.repeat.week) && TIME.test(s.repeat.time ?? "")) {
+      // The dates the rule gives in the next two years: one at an hour the clocks skip is not offered.
+      const jsDay = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+      const gaps = [];
+      for (let i = 0, day = new Date(now); i < 740; i++, day = new Date(day.getTime() + 86_400_000)) {
+        const date = day.toISOString().slice(0, 10);
+        const [y, m, d] = date.split("-").map(Number);
+        if (jsDay[new Date(Date.UTC(y, m - 1, d)).getUTCDay()] !== s.repeat.weekday) continue;
+        const last = d + 7 > new Date(Date.UTC(y, m, 0)).getUTCDate();
+        if (!(s.repeat.week === "every" || (s.repeat.week === "last" ? last : Math.ceil(d / 7) === s.repeat.week))) continue;
+        if (!closed.has(date) && instantOf(`${date}T${s.repeat.time}`, zone) === null) gaps.push(date);
+      }
+      if (gaps.length > 0) warnings.push(`${at}: the rule falls on ${gaps.join(", ")} at ${s.repeat.time}, an hour that does not exist in ${zone} that day (the clocks skip it): that date will not be offered`);
+    }
     if (s.sessions === undefined) return;
     if (!Array.isArray(s.sessions) || s.sessions.some((x) => !isObject(x) || !SESSION.test(x.start ?? ""))) {
       return void errors.push(`${at}: every date of \`service.sessions\` is written { "start": "YYYY-MM-DDTHH:MM" }`);
@@ -179,8 +213,12 @@ export function checkCatalog(root = here, now = Date.now()) {
     const starts = s.sessions.map((x) => x.start);
     const twice = [...new Set(starts.filter((x, n) => starts.indexOf(x) !== n))];
     if (twice.length > 0) warnings.push(`${at}: the date ${twice.join(", ")} is written twice (it counts as one)`);
+    // A closed day wins over a date of the list: that date is not offered.
+    const onClosed = [...new Set(starts.filter((x) => closed.has(x.slice(0, 10))))];
+    if (onClosed.length > 0) warnings.push(`${at}: ${onClosed.join(", ")} is in \`sessions\` and its day is in \`blockedDates\` (of the product or of the store): the closed day wins, that date is NOT offered — take one of the two out`);
     const spans = [];
     for (const x of s.sessions) {
+      if (closed.has(x.start.slice(0, 10))) continue;
       const start = instantOf(x.start, zone);
       if (start === null) warnings.push(`${at}: ${x.start} does not exist in ${zone} (the clocks skip that hour that day): nobody can sign up for it`);
       else spans.push([x.start, start, start + (Number.isInteger(x.durationMinutes) ? x.durationMinutes : s.durationMinutes) * 60_000]);

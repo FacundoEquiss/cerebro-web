@@ -1,6 +1,6 @@
 {
   "name": "cerebro-web",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "description": "Open-source Next.js base for an online business of any kind — physical and digital products, appointments, sale by weight, quotes — with an admin panel and a guide for AI agents, in one repo you own.",
   "license": "MIT",

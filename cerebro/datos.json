@@ -1,6 +1,6 @@
 {
  "generado": "2026-11-20",
- "version": "1.2.1",
+ "version": "1.2.2",
  "idioma": "es",
  "enlaces": {
   "repositorio": "https://github.com/FacundoEquiss/cerebro-web",
@@ -319,7 +319,7 @@
        "Un borrador no aparece en la tienda, el buscador, el sitemap, los feeds ni los datos estructurados, y el servidor rechaza cualquier pedido que lo incluya.",
        "`npm run check:catalog` y `npm run doctor` listan los borradores: llevarle esa lista al dueño.",
        "Cuando el dueño da el precio, cargarlo y quitar la marca de borrador.",
-       "Precio 0 en algo que se vende no se acepta: es un campo vacío, no un producto gratis. Sin precio, queda en borrador.",
+       "Precio 0 en algo que se vende no se acepta sin decirlo: se toma por un campo vacío. Sin precio, queda en borrador; si es gratis a propósito (una descarga de regalo, una muestra), marcarlo «Gratis» (`\"free\": true`).",
        "No confundir con «a presupuesto» (`quote`): ese tipo es para lo que se cotiza caso por caso. Un `quote` con `\"price\": null` no es borrador: se muestra, sin precio público."
       ],
       "herramientas": [
@@ -481,6 +481,7 @@
        "Poner en `capacity` los lugares de cada fecha; la cantidad de la compra es la cantidad de lugares.",
        "La ficha muestra la lista de fechas con «Quedan N lugares» y el botón «Inscribirme»; cada fecha se reserva, se retiene y se libera como un turno.",
        "Ver las inscripciones en la Agenda del panel (tiene «Próximo evento» e «Ir a una fecha»). Las fechas pasadas dejan de ofrecerse solas; sin regla de repetición hay que cargar las próximas, y `npm run check:catalog` avisa cuando no queda ninguna.",
+       "Los días cerrados ganan: los de toda la tienda y los de «Saltear estas fechas» del producto no tienen evento, ni por la regla ni por una fecha suelta.",
        "Dos fechas del mismo evento que se pisan comparten el cupo: si son actividades distintas, van como productos distintos.",
        "Antes de mover o quitar una fecha, mirar si tiene inscripciones: el panel avisa al guardar, y a esas personas hay que avisarles.",
        "Definir con el dueño la política de cancelación y qué pasa si el evento se suspende.",

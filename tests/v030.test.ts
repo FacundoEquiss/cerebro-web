@@ -101,10 +101,13 @@ describe("check:catalog", () => {
       { home: { heroTitle: { es: "Tu título. EJEMPLO", en: "EXAMPLE" } } },
     );
     const result = checkCatalog(root);
-    expect(result.errors).toEqual([]);
+    // Price 0 without `"free": true` is an error that says how to mark it (0.3.1).
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toContain('product "free" costs 0 without saying why');
+    expect(result.errors[0]).toContain('"free": true');
     expect(result.drafts).toEqual(["tea", "later"]);
     expect(result.examples).toEqual(["category pantry", "product quote", "the home texts (content/site.json)"]);
-    expect(result.warnings.map((w: string) => w.replace(/^product "([^"]+)".*?(costs 0|no date left|no file yet).*$/, "$1: $2"))).toEqual(["free: costs 0", "past: no date left", "book: no file yet"]);
+    expect(result.warnings.map((w: string) => w.replace(/^product "([^"]+)".*?(costs 0|no date left|no file yet).*$/, "$1: $2"))).toEqual(["past: no date left", "book: no file yet"]);
     // The command says it and does not fail: a draft is a pending question, not a broken store.
     const cli = spawnSync(process.execPath, ["scripts/check-catalog.mjs"], { encoding: "utf8" });
     expect(cli.status).toBe(0);
@@ -148,7 +151,7 @@ describe("drafts: a product whose price is not known yet", () => {
 });
 
 describe("events: fixed dates and limited places", () => {
-  const rules: BookingRules = { timeZone: "UTC", weekly: { mon: [["09:00", "12:00"]] }, blockedDates: ["2026-04-11"], minNoticeHours: 48, maxDaysAhead: 7 };
+  const rules: BookingRules = { timeZone: "UTC", weekly: { mon: [["09:00", "12:00"]] }, blockedDates: ["2026-05-01"], minNoticeHours: 48, maxDaysAhead: 7 };
   const now = Date.parse("2026-03-02T08:00:00.000Z");
   const workshop = product({
     id: "workshop", slug: "workshop", name: "Cooking workshop", price: 32000, type: "service", stock: null,
@@ -162,7 +165,10 @@ describe("events: fixed dates and limited places", () => {
       { date: "2026-03-07", time: "10:00", slot: "2026-03-07T10:00", start: "2026-03-07T10:00:00.000Z", end: "2026-03-07T12:00:00.000Z" },
       { date: "2026-04-11", time: "10:00", slot: "2026-04-11T10:00", start: "2026-04-11T10:00:00.000Z", end: "2026-04-11T13:00:00.000Z" },
     ]);
-    // The weekly agenda, the closed days, the notice and the calendar window are for appointments, not for events.
+    // The weekly agenda, the notice and the calendar window are for appointments, not for events.
+    // A closed day is for everything: a date of the list on a closed day is not offered (0.3.1).
+    expect(upcomingSessions(workshop, now, { ...rules, blockedDates: ["2026-04-11"] }).map((s) => s.date)).toEqual(["2026-03-07"]);
+    expect(() => resolveSlot(workshop, "2026-04-11T10:00", now, { ...rules, blockedDates: ["2026-04-11"] })).toThrowError(/slot_invalid/);
     expect(openDates(workshop, now, rules)).toEqual(["2026-03-07", "2026-04-11"]);
     expect(slotsOn(workshop, "2026-03-09", now, rules)).toEqual([]); // a Monday of the weekly agenda: not an event date
     expect(slotsOn(workshop, "2026-04-11", now, rules)).toHaveLength(1);

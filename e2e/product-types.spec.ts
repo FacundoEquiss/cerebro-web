@@ -412,6 +412,22 @@ test("an event: the admin loads fixed dates and places, people sign up, and it s
   await page.goto(`/producto/${slug}`);
   await expect(picker.getByTestId("session")).toHaveCount(4);
   await expect(picker.locator("label strong").first()).toHaveText(/^Sábado, \d{1,2} de [a-záéíóúñ]+ · 10:00$/);
+
+  // «Saltear estas fechas»: the owner takes one date of the rule out, and the next one opens.
+  const offered = ((await (await page.request.get(`/api/slots?product=${slug}`)).json()) as { sessions: { slot: string }[] }).sessions.map((x) => x.slot);
+  await page.goto(`/admin/products/${slug}`);
+  await page.getByTestId("p-skip").fill(offered[0]!.slice(0, 10));
+  // A single date on a skipped day is named before saving: the skipped day wins.
+  await page.getByTestId("p-sessions").fill(`${offered[0]!.replace("T", " ")}`);
+  await expect(page.getByTestId("p-skipped-sessions")).toContainText(offered[0]!.replace("T", " "));
+  await page.getByTestId("p-save").click();
+  await expect(page.getByTestId("p-saved")).toBeVisible();
+  const after = ((await (await page.request.get(`/api/slots?product=${slug}`)).json()) as { sessions: { slot: string }[] }).sessions.map((x) => x.slot);
+  expect(after).toHaveLength(4);
+  expect(after).not.toContain(offered[0]);
+  expect(after.slice(0, 3)).toEqual(offered.slice(1));
+  await page.goto(`/admin/products/${slug}`);
+  await expect(page.getByTestId("p-skip")).toHaveValue(offered[0]!.slice(0, 10));
   expect(errors).toEqual([]);
 });
 
@@ -464,5 +480,63 @@ test("a draft: a product without a price is in the panel as «Falta el precio» 
   await expect(page.getByTestId("p-saved")).toBeVisible();
   await page.goto(`/producto/${slug}`);
   await expect(page.getByTestId("product-price")).toContainText("9.800");
+  expect(errors).toEqual([]);
+});
+
+test("a free product: «Gratis» in the store, nothing to pay at the checkout, and the download is handed over at once", async ({ page, isMobile }) => {
+  const errors = watchConsole(page);
+  const name = `Guía gratis ${who(isMobile)}`;
+  const slug = `guia-gratis-${who(isMobile).toLowerCase()}`;
+  await login(page);
+  await page.goto("/admin/products");
+  await page.getByTestId("new-product").click();
+  await page.getByTestId("p-name").fill(name);
+  await page.getByTestId("p-description").fill("Una guía de regalo para quien se suscribe. Creada por la prueba automática.");
+  await page.getByTestId("p-category").selectOption("digital");
+  await page.getByTestId("p-type").selectOption("digital");
+  await page.getByTestId("p-stock").fill(""); // a file does not run out
+  await page.getByTestId("p-file").setInputFiles({ name: "guia-gratis.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n% a free guide\n") });
+  await expect(page.getByTestId("p-file-name")).toHaveValue("guia-gratis.pdf");
+  // Price 0 without a word is still refused; «Gratis» is how the owner says it is on purpose.
+  await page.getByTestId("p-price").fill("0");
+  await page.getByTestId("p-save").click();
+  await expect(page.getByTestId("p-error")).toContainText("Falta el precio");
+  await page.getByTestId("p-free").check();
+  await expect(page.getByTestId("p-price")).toBeDisabled();
+  await page.getByTestId("p-save").click();
+  await expect(page).toHaveURL(new RegExp(`/admin/products/${slug}$`));
+  await expect(page.getByTestId("p-free")).toBeChecked();
+
+  // The store says «Gratis», never «$ 0».
+  await page.goto("/tienda/digital");
+  const card = page.getByTestId("product-card").filter({ hasText: name });
+  await expect(card.locator("[data-free]")).toHaveText("Gratis");
+  await page.goto(`/producto/${slug}`);
+  await expect(page.getByTestId("product-price")).toHaveText("Gratis");
+  expect(await (await page.request.get(`/producto/${slug}`)).text()).toContain('"price":"0.00"');
+  expect(await (await page.request.get("/feeds/google.xml")).text()).not.toContain(slug);
+
+  await page.getByTestId("add-to-cart").click();
+  await toCheckout(page);
+  await page.getByTestId("go-to-checkout").click();
+  await fillCheckout(page, name);
+  // No way of paying is asked: there is nothing to pay.
+  await expect(page.getByTestId("checkout-free")).toBeVisible();
+  await expect(page.getByTestId("payment-bank_transfer")).toHaveCount(0);
+  await expect(page.getByTestId("checkout-total")).toHaveText("Gratis");
+  await page.getByTestId("confirm-order").click();
+
+  // Confirmed at once, with the file — nobody has to mark a payment of nothing.
+  await expect(page.getByTestId("order-page")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Listo: es gratis");
+  await expect(page.getByTestId("downloads-pending")).toHaveCount(0);
+  const link = page.getByTestId("download-link");
+  await expect(link).toBeVisible();
+  const file = await page.request.get((await link.getAttribute("href"))!);
+  expect(file.status()).toBe(200);
+  expect((await file.body()).subarray(0, 5).toString()).toBe("%PDF-");
+  const orderId = (await page.getByTestId("order-id").innerText()).trim();
+  await openOrder(page, orderId);
+  await expect(page.getByTestId("detail-payment-status")).toHaveAttribute("data-paid", "yes");
   expect(errors).toEqual([]);
 });

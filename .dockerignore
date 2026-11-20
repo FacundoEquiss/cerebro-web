@@ -1,6 +1,7 @@
 node_modules
 .next
 .next-fixtures
+public/fixtures
 .git
 .data
 .env

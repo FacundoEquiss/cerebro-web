@@ -143,10 +143,27 @@ export function matchesRepeat(date: string, repeat: Pick<EventRepeat, "week" | "
   return Math.ceil(day / 7) === repeat.week;
 }
 
+const complained = new Set<string>();
+/**
+ * How many dates a rule keeps open. A value that is not a usable number (a catalogue edited by
+ * hand: "3", null, -1, NaN) falls back to the default instead of silently giving NO dates, and
+ * the log says so once.
+ */
+export function repeatCount(count: unknown): number {
+  if (count === undefined) return REPEAT_DEFAULT_COUNT;
+  if (typeof count === "number" && Number.isFinite(count) && count >= 1) return Math.min(REPEAT_MAX_COUNT, Math.trunc(count));
+  const key = String(count);
+  if (!complained.has(key)) {
+    complained.add(key);
+    console.warn(`[booking] \`service.repeat.count\` is ${JSON.stringify(count) ?? key}: it must be a whole number from 1 to ${REPEAT_MAX_COUNT}. Using ${REPEAT_DEFAULT_COUNT}.`);
+  }
+  return REPEAT_DEFAULT_COUNT;
+}
+
 /** The next dates of a repeat rule, from today (wall time of the store), as session starts. */
 export function repeatDates(repeat: EventRepeat | undefined, now: number, timeZone: string, blocked: readonly string[] = []): string[] {
   if (!repeat || !TIME.test(repeat.time ?? "") || !WEEKDAYS.includes(repeat.weekday)) return [];
-  const count = Math.min(REPEAT_MAX_COUNT, Math.max(1, Math.trunc(repeat.count ?? REPEAT_DEFAULT_COUNT)));
+  const count = repeatCount(repeat.count);
   const today = wallTime(now, timeZone).date;
   const out: string[] = [];
   // Two years of days is far more than any rule needs to give its dates.
@@ -161,20 +178,22 @@ export function repeatDates(repeat: EventRepeat | undefined, now: number, timeZo
 
 /**
  * The sessions of an event that have not started yet, in order: the dates of its list plus the
- * ones its repeat rule gives. A date written twice is one session.
+ * ones its repeat rule gives. A date written twice is one session. A CLOSED DAY WINS over both:
+ * a day in `blockedDates` — the store's (`commerce.booking`) or the product's — has no session,
+ * whether the rule gives it or the list names it.
  */
 export function upcomingSessions(product: Pick<Product, "service">, now: number, defaults?: BookingRules): SessionSlot[] {
   const rules = serviceRules(product, defaults);
   const out = new Map<string, SessionSlot>();
   const add = (slot: string, minutesLong: number) => {
     const m = SESSION.exec(slot);
-    if (!m || out.has(slot)) return;
+    if (!m || out.has(slot) || rules.blockedDates.includes(m[1]!)) return;
     const start = existingInstant(m[1]!, m[2]!, rules.timeZone);
     if (!start || start.getTime() <= now) return;
     out.set(slot, { date: m[1]!, time: m[2]!, slot, start: start.toISOString(), end: new Date(start.getTime() + minutesLong * MINUTE).toISOString() });
   };
   for (const session of product.service?.sessions ?? []) add(session.start ?? "", Math.max(5, Math.trunc(session.durationMinutes ?? rules.durationMinutes)));
-  for (const slot of repeatDates(product.service?.repeat, now, rules.timeZone, product.service?.blockedDates)) add(slot, rules.durationMinutes);
+  for (const slot of repeatDates(product.service?.repeat, now, rules.timeZone, rules.blockedDates)) add(slot, rules.durationMinutes);
   return [...out.values()].sort((a, b) => a.start.localeCompare(b.start));
 }
 

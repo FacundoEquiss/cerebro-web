@@ -168,7 +168,7 @@ Un taller, una clase suelta, una charla, una entrada: no pasa «todos los lunes 
     "repeat": { "week": 1, "weekday": "sat", "time": "10:00", "count": 3 },
     // …y/o fechas sueltas. Una fecha puede tener su propia duración:
     "sessions": [{ "start": "2027-03-20T18:00", "durationMinutes": 240 }],
-    "blockedDates": ["2027-01-02"]                    // una fecha de la regla que no se hace
+    "blockedDates": ["2027-01-02"]                    // un día sin evento (el día cerrado gana)
   }
 }
 ```
@@ -179,6 +179,10 @@ Un taller, una clase suelta, una charla, una entrada: no pasa «todos los lunes 
   calculan desde hoy: el evento **nunca se queda sin fechas** y nadie tiene que volver a cargarlas.
 - **`sessions`** — fechas explícitas, para lo que no sigue una regla. Se suman; una fecha escrita
   dos veces es una sola.
+- **El día cerrado gana.** Un día en `blockedDates` —del producto («Saltear estas fechas» en el
+  editor) o de la tienda (`commerce.booking.blockedDates`)— no tiene evento: la regla lo saltea y
+  sigue con la fecha siguiente, y una fecha de `sessions` en ese día no se ofrece.
+  `npm run check:catalog` y el editor avisan de esa contradicción.
 - En el panel: **Tipo → Servicio**, y en **Cómo se reserva → Evento o taller**. Ahí se elige la
   repetición y se escriben las fechas sueltas, una por línea (`2027-03-20 18:00`, más los minutos
   al final si esa fecha dura distinto: `2027-03-20 18:00 240`).
@@ -215,10 +219,33 @@ Cuando el dueño todavía no dio el precio, **no lo inventes**. Cargá el produc
   todos los borradores: esa es la lista de preguntas para el dueño.
 - Cuando llega el precio, cargalo y destildá la casilla. El campo del precio de un borrador
   arranca vacío, y **el precio 0 se rechaza en todo lo que está a la venta** (en el formulario y en
-  el servidor): 0 es un campo vacío, no un producto gratis.
+  el servidor): 0 es un campo vacío. Un producto gratis a propósito lo dice: ver **Productos
+  gratis** más abajo.
 - **Un presupuesto es la excepción.** `type: "quote"` no tiene precio público por naturaleza, así
   que ahí `"price": null` (o `0`) es lo normal: el producto se muestra, con su formulario de
   consulta. Para ocultar un presupuesto que no está listo, marcalo con `"draft": true`.
+
+## Productos gratis
+
+Una descarga gratuita, una muestra, una clase abierta: precio 0 **a propósito**. Decilo:
+`"free": true` en el archivo del catálogo, o la casilla **Gratis** en el editor de productos:
+
+```jsonc
+{ "id": "guia-inicial", "type": "digital", "price": 0, "free": true, "digital": { "name": "guia.pdf", "file": "guia.pdf" } }
+```
+
+- La tienda muestra **Gratis** en vez de un importe. Se pide como cualquier producto (al dueño le
+  quedan los datos de contacto de quien lo pidió). Cuando el pedido entero suma 0, el checkout no
+  pregunta cómo pagar y el pedido queda **confirmado al instante**: una descarga gratis está
+  disponible ahí mismo.
+- Mezclado con productos pagos es una línea más en 0; el pedido se paga como siempre.
+- **El precio 0 sin `free` se rechaza**: en el formulario, en el servidor, en la base de datos y
+  en `npm run check:catalog` (un error que nombra el producto). Un 0 sin marcar se toma por un
+  campo vacío, y la tienda deja ese producto fuera de la venta. Gratis es 0: `free` con precio es
+  un error.
+- Los feeds de shopping dejan afuera los productos gratis (necesitan un precio real). Los datos
+  estructurados declaran precio 0.
+- Una base de datos necesita `db/migrations/0004_free.sql`.
 
 ## Presupuestos
 

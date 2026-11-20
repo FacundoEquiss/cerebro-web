@@ -851,9 +851,13 @@ describe("a real 0.2.0 database (its whole schema) upgraded with migration 0003 
     return { db, adapter };
   };
 
-  it("without the migration, saving a product fails loudly instead of putting a draft on sale", async () => {
+  it("without the migration a save WORKS and says which migration is missing; a draft is stored paused, never on sale", async () => {
     const { db, adapter } = await open();
-    await expect(adapter.saveProduct(input({ price: 0, draft: true }))).rejects.toThrow(/0003_drafts/);
+    // An ordinary product: saved, with the warning for the panel (not an error).
+    expect(await adapter.saveProduct(input({ id: "mug", slug: "mug", price: 900 }))).toMatchObject({ id: "mug", price: 900, active: true, migrationNeeded: "0003_drafts" });
+    // A draft: this database cannot hide it, so it is kept off the store the only way it knows.
+    expect(await adapter.saveProduct(input({ price: 0, draft: true }))).toMatchObject({ id: "tea", active: false, migrationNeeded: "0003_drafts" });
+    expect((await db.query("select id from public_catalog order by id")).rows).toEqual([{ id: "mug" }]);
     await db.close();
   });
 
@@ -861,7 +865,10 @@ describe("a real 0.2.0 database (its whole schema) upgraded with migration 0003 
     const { db, adapter } = await open();
     await db.exec(readFileSync("db/migrations/0003_drafts.sql", "utf8"));
     const saved = await adapter.saveProduct(input({ price: 0, draft: true }));
-    expect(saved).toMatchObject({ id: "tea", draft: true, price: 0 });
+    // (0.3.1 added `free`: on a 0.3.0 database the save works and names the next migration)
+    expect(saved).toMatchObject({ id: "tea", draft: true, price: 0, migrationNeeded: "0004_free" });
+    // A free product cannot be stored there: the answer names the migration, it is not «check the data».
+    await expect(adapter.saveProduct(input({ id: "gift", slug: "gift", price: 0, free: true }))).rejects.toMatchObject({ code: "needs_migration", detail: "0004_free" });
     expect((await db.query("select id from public_catalog")).rows).toEqual([]);
     expect((await adapter.listAllProducts()).map((p) => [p.id, p.draft])).toEqual([["tea", true]]);
     await expect(adapter.createOrder(request({ idempotencyKey: "e".repeat(64), lines: [{ productId: "tea", quantity: 1 }] }), terms)).rejects.toMatchObject({ code: "unknown_product" });
@@ -878,10 +885,30 @@ describe("a real 0.2.0 database (its whole schema) upgraded with migration 0003 
     await db.close();
   });
 
-  it("the migration carries the same four functions as db/schema.sql, word for word", () => {
+  it("with 0003 and 0004: a free product is saved, shown, ordered for 0 and confirmed without a payment", async () => {
+    const { db, adapter } = await open();
+    await db.exec(readFileSync("db/migrations/0003_drafts.sql", "utf8"));
+    await db.exec(readFileSync("db/migrations/0004_free.sql", "utf8"));
+    await db.exec(readFileSync("db/migrations/0004_free.sql", "utf8")); // twice is safe
+    const gift = await adapter.saveProduct(input({ id: "gift", slug: "gift", type: "digital", price: 0, free: true, digital: { name: "gift.pdf", file: "gift.pdf" } }));
+    expect(gift).toMatchObject({ free: true, price: 0, draft: false });
+    expect(gift).not.toHaveProperty("migrationNeeded");
+    expect((await adapter.listProducts()).find((p) => p.id === "gift")).toMatchObject({ free: true, price: 0 });
+    // Free means 0, and 0 means free, a draft or a quote — nothing else.
+    await expect(adapter.saveProduct(input({ id: "gift", slug: "gift", price: 500, free: true }))).rejects.toMatchObject({ code: "invalid", detail: "price" });
+    await expect(adapter.saveProduct(input({ id: "oops", slug: "oops", price: 0 }))).rejects.toMatchObject({ code: "invalid", detail: "price" });
+    const order = await adapter.createOrder(request({ idempotencyKey: "c3".repeat(32), shippingMethodId: "none", lines: [{ productId: "gift", quantity: 1 }] }), { price: 0, freeFrom: null });
+    expect(order).toMatchObject({ total: 0, status: "new" });
+    const paid = await adapter.setOrderStatus(order.id, "new", "paid", "system", "free");
+    expect(paid.paidAt).not.toBeNull();
+    await db.close();
+  });
+
+  it("each migration carries its functions as db/schema.sql has them, word for word", () => {
     const schema = readFileSync("db/schema.sql", "utf8");
-    const migration = readFileSync("db/migrations/0003_drafts.sql", "utf8");
-    for (const name of ["create_order", "create_quote", "admin_catalog", "save_product"]) {
+    const carried: Record<string, string[]> = { "0003_drafts": ["create_order", "create_quote"], "0004_free": ["admin_catalog", "save_product"] };
+    for (const [file, names] of Object.entries(carried)) for (const name of names) {
+      const migration = readFileSync(`db/migrations/${file}.sql`, "utf8");
       const body = new RegExp(`create or replace function ${name}\\([\\s\\S]*?\\n\\$\\$;\\n`).exec(schema)?.[0];
       expect(body, name).toBeTruthy();
       expect(migration.includes(body!), name).toBe(true);

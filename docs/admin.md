@@ -142,7 +142,7 @@ Not built yet: creating an appointment by hand from the panel, moving one, remin
 
 A product marked **Draft** (the price is still missing) shows **Price missing** in the list and is
 not in the store until the price is typed and the box unticked (its price box starts empty; price 0
-is refused on anything for sale). A service whose **How it is booked** is **Event or workshop** is
+is refused on anything for sale, unless the box **Free** says it is on purpose). A service whose **How it is booked** is **Event or workshop** is
 sold by sign-up to its own dates — a rule that repeats ("the first Saturday of each month"),
 single dates, or both — and its sign-ups are in the Agenda, which has **Next event** and **Go to
 a date**. When a save takes away a date that already has sign-ups, the editor says which one.

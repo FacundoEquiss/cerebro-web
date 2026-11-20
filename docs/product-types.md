@@ -162,7 +162,7 @@ happens on **its own dates**. It is a service with a rule that repeats, a list o
     "repeat": { "week": 1, "weekday": "sat", "time": "10:00", "count": 3 },
     // …and/or single dates. A date may have its own length:
     "sessions": [{ "start": "2027-03-20T18:00", "durationMinutes": 240 }],
-    "blockedDates": ["2027-01-02"]                    // a date the rule gives that will not happen
+    "blockedDates": ["2027-01-02"]                    // a day with no event (a closed day wins)
   }
 }
 ```
@@ -173,6 +173,10 @@ happens on **its own dates**. It is a service with a rule that repeats, a list o
   event **never runs out of dates** and nobody has to load them again.
 - **`sessions`** — explicit dates, for what does not follow a rule. Both add up; a date written
   twice is one date.
+- **A closed day wins.** A day in `blockedDates` — the product's ("Skip these dates" in the
+  editor) or the store's (`commerce.booking.blockedDates`) — has no event: the rule skips it and
+  moves on to the next date, and a date of `sessions` on that day is not offered.
+  `npm run check:catalog` and the editor name that contradiction.
 - In the admin panel: **Type → Service**, then **How it is booked → Event or workshop**. There
   you choose the repetition and type single dates, one per line (`2027-03-20 18:00`, plus the
   minutes at the end when that date has another length: `2027-03-20 18:00 240`).
@@ -207,10 +211,30 @@ When the owner has not given a price yet, **do not invent one**. Load the produc
   list every draft: that is the list of questions for the owner.
 - When the price arrives, type it and untick the box. The price box of a draft starts empty, and
   **price 0 is refused on anything that is for sale** (by the form and by the server): 0 is an
-  empty field, not a free product.
+  empty field. A product that is free on purpose says so: see **Free products** below.
 - **A quote is the exception.** `type: "quote"` has no public price by nature, so `"price": null`
   (or `0`) there is normal: the product is on show, with its enquiry form. To hide a quote that is
   not ready, mark it `"draft": true`.
+
+## Free products
+
+A free download, a sample, an open class: price 0 **on purpose**. Say so — `"free": true` in the
+catalogue file, or the box **Free** in the product editor:
+
+```jsonc
+{ "id": "starter-guide", "type": "digital", "price": 0, "free": true, "digital": { "name": "guide.pdf", "file": "guide.pdf" } }
+```
+
+- The store shows **Free** instead of an amount. It is ordered like any product (the owner gets
+  the buyer's contact details). When the whole order adds up to 0 the checkout asks for no way of
+  paying and the order is **confirmed at once** — a free download is available right there.
+- Mixed with paid products it is one more line at 0; the order is paid as usual.
+- **Price 0 without `free` is refused**: by the form, the server, the database and
+  `npm run check:catalog` (an error that names the product). An unmarked 0 is taken for an empty
+  field, and the store keeps that product off sale. Free means 0: `free` with a price is an error.
+- Shopping feeds leave free products out (they need a real price). The structured data states
+  price 0.
+- A database needs `db/migrations/0004_free.sql`.
 
 ## Quotes
 

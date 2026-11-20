@@ -6,7 +6,7 @@ import type { OrderRequest, Product } from "@/lib/data/types";
 export const product = (over: Partial<Product> = {}): Product => ({
   id: "mug", slug: "mug", name: "Mug", description: "A mug.", category: "home", price: 1000, compareAtPrice: null,
   images: [{ src: "/products/mug.svg", alt: "Mug", width: 800, height: 1000 }], options: [], variants: [], stock: 5,
-  featured: false, active: true, draft: false, minQuantity: 1, attributes: {}, createdAt: "2026-01-01T00:00:00.000Z",
+  featured: false, active: true, draft: false, free: false, minQuantity: 1, attributes: {}, createdAt: "2026-01-01T00:00:00.000Z",
   type: "physical", unit: "u", step: 1, maxQuantity: null, service: null, digital: null, ...over,
 });
 

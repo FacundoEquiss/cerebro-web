@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ImagePlus, Plus, Trash2, FileUp } from "lucide-react";
 import { fill, paths, t } from "@/i18n";
 import { generateVariants, productInputSchema, slugify } from "@/lib/admin/products";
-import { isEvent } from "@/lib/booking/slots";
+import { commerce } from "@/config/commerce";
+import { existingInstant, isEvent } from "@/lib/booking/slots";
 import { selectionLabel } from "@/lib/data/availability";
 import { PRODUCT_TYPES, type Category, type Product, type ProductImage, type ProductOption, type ProductType, type Variant, type Weekday } from "@/lib/data/types";
 import { adminFetch } from "./api";
@@ -61,6 +62,7 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
   const [stock, setStock] = useState(product.stock === null ? "" : String(product.stock));
   const [active, setActive] = useState(product.active);
   const [isDraft, setDraft] = useState(product.draft);
+  const [isFree, setFree] = useState(product.free);
   const [featured, setFeatured] = useState(product.featured);
   const [images, setImages] = useState<ProductImage[]>(product.images);
   const [options, setOptions] = useState<OptionDraft[]>(product.options.map(toDraft));
@@ -123,6 +125,9 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
   const [repeatTime, setRepeatTime] = useState(repeat?.time ?? "10:00");
   const [repeatCount, setRepeatCount] = useState(String(repeat?.count ?? 3));
   const [moved, setMoved] = useState<{ slot: string; seats: number }[]>([]);
+  // Days with no appointment and no event (`service.blockedDates`), on top of the store's closed days.
+  const [skipText, setSkipText] = useState((product.service?.blockedDates ?? []).join(", "));
+  const [migration, setMigration] = useState("");
   const [digital, setDigital] = useState(product.digital ?? { name: "", file: "" });
   const [fileBusy, setFileBusy] = useState(false);
   const pt = t.admin.productType;
@@ -153,10 +158,19 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
     return [...seen.values()].sort((x, y) => x.start.localeCompare(y.start));
   }
 
+  const skipDates = () => [...new Set(skipText.split(/[\s,;]+/).map((d) => d.trim()).filter(Boolean))].sort();
+  // What the owner typed that will NOT be offered, said before saving: a single date on a closed
+  // day (the closed day wins), and a date at an hour the clocks skip that day.
+  const closedDays = new Set([...commerce.booking.blockedDates, ...skipDates()]);
+  const typed = eventKind ? typedSessions().filter((x) => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(x.start)) : [];
+  const skippedSessions = typed.filter((x) => closedDays.has(x.start.slice(0, 10)));
+  const gapSessions = typed.filter((x) => !closedDays.has(x.start.slice(0, 10)) && existingInstant(x.start.slice(0, 10), x.start.slice(11), commerce.booking.timeZone) === null);
+
   /** The service as typed. «Event» keeps its list of dates even when it is empty; the weekly agenda has none. */
   function serviceDraft() {
-    const { sessions: _old, repeat: _rule, ...rest } = product.service ?? { durationMinutes: 60, capacity: 1 };
-    const base = { ...rest, durationMinutes: Number(duration) || 60, capacity: Number(capacity) || 1 };
+    const { sessions: _old, repeat: _rule, blockedDates: _skip, ...rest } = product.service ?? { durationMinutes: 60, capacity: 1 };
+    const skip = skipDates();
+    const base = { ...rest, durationMinutes: Number(duration) || 60, capacity: Number(capacity) || 1, ...(skip.length > 0 ? { blockedDates: skip } : {}) };
     if (!eventKind) return base;
     const week = repeatWeek === "last" || repeatWeek === "every" ? repeatWeek : ([1, 2, 3, 4] as const).find((n) => String(n) === repeatWeek);
     return { ...base, sessions: typedSessions(), ...(week ? { repeat: { week, weekday: repeatWeekday, time: repeatTime, count: Number(repeatCount) || 3 } } : {}) };
@@ -179,12 +193,13 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
       description: description.trim(),
       category,
       // A draft may have no price yet: it is stored as 0 and never sold.
-      price: (isDraft || type === "quote") && price.trim() === "" ? 0 : Number(price),
+      price: (isDraft || isFree || type === "quote") && price.trim() === "" ? 0 : Number(price),
       compareAtPrice: numberOrNull(compareAt),
       stock: parsedOptions.length > 0 ? null : numberOrNull(stock),
       featured,
       active,
       draft: isDraft,
+      free: isFree && type !== "quote",
       minQuantity: Number(minQuantity) || 1,
       type,
       unit: unit.trim() || "u",
@@ -201,20 +216,21 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
     const parsed = productInputSchema.safeParse(draft);
     if (!parsed.success) {
       const issue = parsed.error.issues[0];
-      setError(issue?.message === "price_required" ? ERRORS.price_required! : fill(ERRORS.invalid!, { field: String(issue?.path[0] ?? "") }));
+      setError(issue?.message === "price_required" ? ERRORS.price_required! : issue?.message === "free_has_price" ? ERRORS.free_has_price! : fill(ERRORS.invalid!, { field: String(issue?.path[0] ?? "") }));
       return;
     }
     setSaving(true);
     setError("");
-    const result = await adminFetch<{ product?: Product; moved?: { slot: string; seats: number }[] }>("/api/admin/products", { json: parsed.data });
+    const result = await adminFetch<{ product?: Product; moved?: { slot: string; seats: number }[]; migration?: string }>("/api/admin/products", { json: parsed.data });
     setSaving(false);
     if (!result.ok || !result.data.product) {
       const code = result.data.error ?? "generic";
-      setError(code === "invalid" ? (result.data.field === "price" ? ERRORS.price_required! : fill(ERRORS.invalid!, { field: result.data.field ?? "" })) : (ERRORS[code] ?? ERRORS.generic!));
+      setError(code === "needs_migration" ? fill(ERRORS.needs_migration!, { migration: result.data.migration ?? "" }) : code === "invalid" ? (result.data.field === "price" ? ERRORS.price_required! : fill(ERRORS.invalid!, { field: result.data.field ?? "" })) : (ERRORS[code] ?? ERRORS.generic!));
       return;
     }
     setSaved(true);
     setMoved(result.data.moved ?? []);
+    setMigration(result.data.migration ?? "");
     if (isNew) router.replace(`/admin/products/${encodeURIComponent(result.data.product.id)}`);
     else router.refresh();
   }
@@ -253,7 +269,7 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
           </div>
           <div className="field">
             <label htmlFor="p-price">{e.price}</label>
-            <input id="p-price" className="input" type="number" min={0} step="any" inputMode="decimal" value={price} onChange={(ev) => setPrice(ev.target.value)} required={!isDraft} data-testid="p-price" />
+            <input id="p-price" className="input" type="number" min={0} step="any" inputMode="decimal" value={price} onChange={(ev) => setPrice(ev.target.value)} required={!isDraft && !isFree} disabled={isFree && type !== "quote"} placeholder={isFree && type !== "quote" ? t.common.free : undefined} data-testid="p-price" />
           </div>
           <div className="field">
             <label htmlFor="p-compare">{e.compareAt}</label>
@@ -265,7 +281,13 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
           <label><input type="checkbox" checked={active} onChange={(ev) => setActive(ev.target.checked)} data-testid="p-active" /> {e.active}</label>
           <label><input type="checkbox" checked={isDraft} onChange={(ev) => setDraft(ev.target.checked)} data-testid="p-draft" /> {e.draft}</label>
           <label><input type="checkbox" checked={featured} onChange={(ev) => setFeatured(ev.target.checked)} /> {e.featured}</label>
+          {type !== "quote" ? (
+            <label title={pt.freeHint}>
+              <input type="checkbox" checked={isFree} onChange={(ev) => { setFree(ev.target.checked); if (ev.target.checked) setPrice(""); }} data-testid="p-free" /> {pt.free}
+            </label>
+          ) : null}
         </div>
+        {isFree && type !== "quote" ? <p className="admin-note">{pt.freeHint}</p> : null}
       </section>
 
       <section className={`admin-card ${styles.block}`} aria-labelledby="editor-type" data-testid="editor-type">
@@ -354,6 +376,13 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
                 {!repeatWeek && sessionsText.trim() === "" ? <p className="admin-banner" data-testid="p-no-dates">{pt.noOpenDates}</p> : null}
               </>
             ) : <p className="admin-note">{pt.serviceHint}</p>}
+            <div className="field">
+              <label htmlFor="p-skip">{pt.skipDates}</label>
+              <input id="p-skip" className="input" value={skipText} onChange={(ev) => setSkipText(ev.target.value)} placeholder="2027-01-02, 2027-05-01" aria-describedby="p-skip-hint" data-testid="p-skip" />
+              <p id="p-skip-hint" className="admin-note">{pt.skipDatesHint}</p>
+            </div>
+            {skippedSessions.length > 0 ? <p className="admin-banner" data-testid="p-skipped-sessions">{pt.skippedSessions} {skippedSessions.map((x) => x.start.replace("T", " ")).join(" · ")}</p> : null}
+            {gapSessions.length > 0 ? <p className="admin-banner" data-testid="p-gap-sessions">{pt.gapSessions} {gapSessions.map((x) => x.start.replace("T", " ")).join(" · ")}</p> : null}
           </>
         ) : null}
         {type === "digital" ? (
@@ -485,6 +514,7 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
         <div aria-live="assertive">
           {error ? <p className="field-error" role="alert" data-testid="p-error">{error}</p> : null}
           {saved ? <p className={styles.saved} data-testid="p-saved">{e.saved}</p> : null}
+          {saved && migration ? <p className="admin-banner" role="status" data-testid="p-migration">{fill(pt.migrationWarning, { migration })}</p> : null}
           {moved.length > 0 ? (
             <p className="admin-banner" role="alert" data-testid="p-moved">
               {pt.sessionsMoved} {moved.map((m) => `${m.slot.replace("T", " ")} (${fill(t.admin.agenda.seats, { n: m.seats })})`).join(" · ")}

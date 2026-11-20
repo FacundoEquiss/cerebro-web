@@ -146,7 +146,8 @@ el panel, moverlo y los recordatorios.
 
 Un producto marcado como **Borrador** (todavía falta el precio) muestra **Falta el precio** en la
 lista y no está en la tienda hasta que se carga el precio y se destilda la casilla (su campo de
-precio arranca vacío; el precio 0 se rechaza en todo lo que está a la venta). Un servicio con
+precio arranca vacío; el precio 0 se rechaza en todo lo que está a la venta, salvo que la casilla
+**Gratis** diga que es a propósito). Un servicio con
 **Cómo se reserva → Evento o taller** se vende por inscripción a sus propias fechas —una regla que
 se repite («el primer sábado de cada mes»), fechas sueltas, o las dos— y sus inscripciones se ven
 en la Agenda, que tiene **Próximo evento** e **Ir a una fecha**. Cuando al guardar se quita una

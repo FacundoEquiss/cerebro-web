@@ -6,6 +6,49 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-20
+
+### Added
+
+- **Free products.** A product that costs 0 on purpose says so: `"free": true` in the catalogue
+  file, "Free" in the product editor, `products.free` in the database
+  (`db/migrations/0004_free.sql`). The store shows "Free" instead of an amount; the checkout
+  asks for no way of paying when the order adds up to 0, and the server confirms that order at
+  once — which is what hands over a free download. Shopping feeds leave free products out (they
+  need a real price); the structured data states price 0.
+- **"Skip these dates"** in the product editor (`service.blockedDates`), for appointments and for
+  events.
+
+### Changed
+
+- **Price 0 is refused unless it is meant**, everywhere: the form, the API, `save_product`, the
+  local `json` adapter and the catalogue file. `npm run check:catalog` treats an unmarked 0 as an
+  **error** that says how to mark it free or leave it as a draft; until then the store keeps that
+  product off sale.
+- **A closed day wins over the dates of an event.** The closed days of the whole store
+  (`commerce.booking.blockedDates`) and of the product now skip the dates a `repeat` rule gives,
+  and a date of `sessions` that falls on a closed day is not offered. `check:catalog` and the
+  editor name that contradiction.
+- **A date at an hour the clocks skip** (daylight saving) is named by `check:catalog` — for
+  single dates and for the dates a rule gives in the next two years — and by the editor.
+- **On a database that is behind the code, a save that worked says "saved"**, with a warning
+  that names the migration to run, instead of an error. A draft is stored paused there. A free
+  product on a database without migration 0004 is refused with a message that names it.
+- A `repeat.count` that is not a usable number falls back to 3 dates and is logged once, instead
+  of silently giving no dates.
+- `.dockerignore` leaves out `.next-fixtures` and `public/fixtures`.
+
+### Migrating from 0.3.0
+
+1. **Database**: run `db/migrations/0004_free.sql` (or `db/schema.sql`). It adds `products.free`,
+   shows it in the public view and replaces `admin_catalog` and `save_product`. Back up and ask
+   the owner first. Nothing is deleted; no existing product becomes free.
+2. **A product on sale with price 0 in `content/products.json`** now needs `"free": true`.
+   Without it `npm run check` fails with the product's name and the store keeps it off sale.
+3. **An event with a date on a closed day** stops offering that date: `npm run check:catalog`
+   lists them.
+4. **Your own data adapter**: `Product` has a new field, `free`.
+
 ## [0.3.0] - 2026-11-20
 
 **From a template that works to a store someone can start alone.**
