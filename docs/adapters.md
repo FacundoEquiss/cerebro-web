@@ -29,7 +29,7 @@ interface DataAdapter {
   listCategories(): Promise<Category[]>;
   createOrder(request, shipping): Promise<Order>; // prices calculated HERE, idempotent; reserves slots
   createQuote(request): Promise<Order>;           // an enquiry about a `quote` product (status "quote")
-  acceptQuote(id, expectedTotal, provider, method): Promise<Order>; // only a SENT quote, for that exact total
+  acceptQuote(id, expectedTotal, provider, method, delivery?): Promise<Order>; // only a SENT quote, for that exact total
   listBookings(from, to): Promise<Booking[]>;     // reserved slots between two instants (cancelled orders excluded)
   getDigitalFile(productId): Promise<{ name; file } | null>; // the private file of a digital product — server only
   getOrder(id): Promise<Order | null>;            // public shape: no personal data
@@ -83,6 +83,18 @@ interface DataAdapter {
     `expectedTotal` equals the stored total. `setQuote` clears the "sent" mark. Accepting twice
     is the same as accepting once.
 14. `expireOrders` never touches an enquiry, and counts an accepted quote from its acceptance.
+
+15. Capacity counts every booking that **overlaps** the slot, and an unpaid order stops holding
+    its slot when its hold lapses (`lib/booking/hold.ts`) — checked when READING (`createOrder`,
+    `listBookings`), not only when the clean-up runs. `expireOrders` cancels lapsed holds even
+    with `hours = 0`.
+16. At most `booking.maxSlotsPerOrder` appointments per order and `booking.maxUnpaidPerBuyer`
+    unpaid ones per buyer e-mail (`booking_limit`); a digital line has quantity 1; seats are whole.
+17. `acceptQuote` requires a delivery address when the quote charges shipping (`address_required`).
+
+An adapter with `storesOrders: false` cannot keep any of the promises about slots, quotes or
+downloads: the store then refuses those products or, in demo mode, says nothing is held
+(`lib/store-mode.ts`).
 
 A SQL-backed adapter gets all of this from `db/schema.sql` (`create_order`, `create_quote`,
 `set_quote`, `send_quote`, `accept_quote`, `bookings_between`, `digital_file`). An adapter written
@@ -162,8 +174,8 @@ Always make one real payment end to end before going live.
   `local` writes to `DATA_DIR/uploads` and serves it at `/media/<file>` (needs a persistent
   disk); `supabase` writes to a public Storage bucket. **Private** — the files of digital
   products — `putPrivate(name, bytes, contentType): Promise<key>` and
-  `getPrivate(key): Promise<bytes | null>`: `local` keeps them in `DATA_DIR/private`, `supabase`
-  in a private bucket (`SUPABASE_PRIVATE_BUCKET`). A private file has no URL: it leaves only
+  `openPrivate(key): Promise<{ stream, size } | null>` (a stream, never the whole file): `local` keeps them in `DATA_DIR/private`, `supabase`
+  in a private bucket (`SUPABASE_PRIVATE_BUCKET`), which the server checks to be private before using it. A private file has no URL: it leaves only
   through `/api/downloads/…`, for a paid order. S3-compatible storage is on the roadmap.
 - **Antibot** (`verify(token, ip): Promise<boolean>`): `none`, or `turnstile`. The token is
   single-use: after every submit the form waits for a fresh one.

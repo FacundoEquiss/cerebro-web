@@ -32,6 +32,11 @@ Node server, in Docker, or on Vercel.
 
 ## Which businesses it fits
 
+> **Services, quotes and digital products need a database** (`supabase` or `postgres`): a slot,
+> an enquiry and a download all hang from a stored order. The default `json` adapter stores
+> nothing in production — there, those products show a "message us" button instead, and the
+> demo says openly that nothing is really reserved. Physical products work without a database.
+
 The base sells four types of product — **physical**, **digital**, **services by appointment** and
 **quote on request** — by the piece or **by weight or measure**, and a cart can mix them. What that
 gives each line of business, without promising what is not built
@@ -44,9 +49,9 @@ gives each line of business, without promising what is not built
 | **Technology and electronics** | Preset `tecnologia`: real stock, list price and sale price, barcode (GTIN) in the feeds, a set-up service by appointment | Warranty and spec sheet (texts and product attributes) | Reviews; stock alerts |
 | **Pantry, health food, sale by weight** | Preset `almacen`: price per kg, g, l…, decimal quantities with a minimum and a step the server validates, decimal stock, totals rounded on the server | The policy for the real weight differing from the order (text); ingredients and allergens | Charging the difference of the real weight; shipping by weight |
 | **Food and delivery** | Preset `gastronomia`: dishes with sizes, made-to-order sale by the kilo, catering on a quote, live order reception with sound, pickup and flat-rate delivery | Area, hours and allergens (texts); closing the checkout outside opening hours (code, small) | Delivery zones by distance; extras and modifiers per dish; opening-hours switch |
-| **Services by appointment** (hairdresser, practice, classes) | Preset `servicios`: day and time picker, duration, seats per slot, weekly hours, closed days, time zone, no overselling, the slot freed when the order is cancelled or expires, an **Agenda** (day and week) in the panel | Hours per service (catalogue file); cancellation policy (text); charging a deposit instead of the full price (code) | Reminders; rescheduling by the customer; staff or room calendars; calendar sync |
-| **Digital products** (courses, e-books, templates) | Preset `digital`: private file, signed download link that expires, delivered on the order page and by e-mail once the order is paid; no shipping | Licence and refund policy (texts); several files per product (code, small) | Course player / streaming; licence keys; download limits |
-| **Made-to-measure work, events, B2B** | Preset `a-medida`: no public price, "Ask for a quote" form, enquiries in their own kanban column, price per line plus shipping, signed link to accept and pay | Extra questions in the form (code, small); validity and deposit (texts) | Quotes built from scratch in the panel; quote as PDF; expiry date |
+| **Services by appointment** (hairdresser, practice, classes) | Preset `servicios`: day and time picker, duration, seats per slot, weekly hours, closed days, time zone; **with a database**, the slot is reserved when the order is created (simultaneous orders cannot oversell it), an unpaid one is held for a limited time, and the panel has an **Agenda** (day and week) | Hours per service (catalogue file); cancellation policy (text); charging a deposit instead of the full price (code) | Reminders; rescheduling by the customer; one calendar per member of staff or room (today it is one per service); calendar sync |
+| **Digital products** (courses, e-books, templates) | Preset `digital`: private file, signed download link that expires, delivered on the order page and by e-mail once the order is paid (**needs a database**); no shipping | Licence and refund policy (texts); several files per product (code, small) | Course player / streaming; licence keys; download limits |
+| **Made-to-measure work, events, B2B** | Preset `a-medida`: no public price, "Ask for a quote" form, enquiries in their own kanban column, price per line plus shipping, signed link to accept and pay (**needs a database**) | Extra questions in the form (code, small); validity and deposit (texts) | Quotes built from scratch in the panel; quote as PDF; expiry date |
 | **Subscriptions** | — | Sell the first period as a product and renew by hand, saying so clearly | Recurring billing |
 | **Wholesale** | Minimum quantity per product, minimum order, quote on request for volumes | A wholesale-only deployment with its own catalogue | Tiered prices by quantity; price lists per customer; customer accounts |
 | **Marketplace (several sellers)** | — | One seller listing third-party products, settled outside the store | Multi-vendor (being explored: it changes the data model) |

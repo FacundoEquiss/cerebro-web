@@ -64,7 +64,7 @@ Para mover una tarjeta:
 
 Los movimientos permitidos son una sola tabla, `lib/orders/status.ts`: un pedido tiene que estar
 pagado antes de prepararse, un paso se puede deshacer antes de la entrega, un pedido pagado nunca
-vuelve a «Nuevo», un pedido sin nada para enviar (un servicio, una descarga) puede pasar de
+vuelve a «Nuevo», un pedido sin nada para enviar (un servicio, una descarga) —y sólo ese— puede pasar de
 «Pagado» directo a «Entregado» y «Cancelado» es final (pide un motivo y devuelve el stock). El servidor revisa
 cada movimiento y lo deja en el **historial** del pedido con quién lo hizo y cuándo. Si dos
 personas actúan a la vez, la segunda recibe «otra persona ya cambió este pedido» y la lista
@@ -110,8 +110,12 @@ Al abrirla está el editor del presupuesto:
 1. Cargá un **precio unitario** para cada línea y el **envío**. El total se actualiza mientras
    escribís (el oficial lo calcula el servidor al guardar).
 2. **Guardar** deja los precios sin avisarle al cliente. **Guardar y enviar** además marca el
-   presupuesto como enviado y le manda al cliente un e-mail con un enlace firmado.
-3. El cliente abre el enlace, ve el presupuesto y lo acepta eligiendo cómo pagar. La tarjeta pasa
+   presupuesto como enviado y, **si hay un proveedor de correo configurado**, le manda al cliente
+   un e-mail con un enlace firmado. El panel dice si el e-mail salió de verdad. En cualquier caso
+   el editor muestra ese enlace, con **Copiar enlace** y **Mandar por WhatsApp** (un mensaje ya
+   escrito al teléfono del cliente), así el presupuesto siempre se puede entregar.
+3. El cliente abre el enlace, ve el presupuesto y lo acepta eligiendo cómo pagar, y dando la
+   dirección de entrega si el presupuesto cobra envío. La tarjeta pasa
    a «Nuevo» y desde ahí es un pedido como cualquier otro: confirmar el pago, preparar, entregar.
 
 Hasta que no se envía, el cliente no puede aceptarlo ni pagarlo. Si cambiás un precio después de
@@ -130,8 +134,10 @@ horaria de la tienda (`commerce.booking.timeZone`):
 - Cada turno muestra la hora, el servicio, el cliente, los lugares, si está pagado y el número de
   pedido; al tocarlo se abre el pedido.
 
-Un turno es una línea de un pedido: cancelar el pedido (o dejarlo vencer sin pagar) libera el
-turno, y no hay nada más que mantener sincronizado. Los horarios, los días cerrados y hasta
+Un turno es una línea de un pedido: cancelar el pedido libera el turno, y un pedido impago deja
+de retenerlo cuando vence la retención (`booking.holdHours`, 12 por defecto): la Agenda deja de
+mostrarlo en el acto. Es una agenda por servicio, no por profesional. La Agenda necesita un
+adaptador que guarde pedidos; en la demo de sólo lectura muestra turnos de ejemplo. Los horarios, los días cerrados y hasta
 cuándo se abre la agenda se configuran en `config/commerce.ts` (ver
 [`product-types.es.md`](product-types.es.md)). Todavía no está hecho: crear un turno a mano desde
 el panel, moverlo y los recordatorios.

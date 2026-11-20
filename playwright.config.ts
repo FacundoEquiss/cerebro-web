@@ -36,6 +36,7 @@ export default defineConfig({
       reuseExistingServer: false,
       timeout: 240_000,
       env: { PORT: String(PORT), DEMO_MODE: "true" },
+      // (the same command also serves PORT + 2 and PORT + 3: the store without a place to keep orders)
     },
     // A copy of the project with a preset applied by the real command, built and served apart.
     {

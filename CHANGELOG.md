@@ -36,10 +36,32 @@ by weight or measure, and a cart can mix them. See [`docs/product-types.md`](doc
   mixed preset, and in demo mode the home page says what the project is.
 - Home texts in `content/site.json`; example downloads in `content/downloads/` (`npm run samples`).
 - Data adapter methods: `createQuote`, `acceptQuote`, `setQuote`, `sendQuote`, `listBookings`,
-  `getDigitalFile`. Storage adapter methods: `putPrivate`, `getPrivate`.
+  `getDigitalFile`. Storage adapter methods: `putPrivate`, `openPrivate`.
 - Routes: `POST /api/quotes`, `POST /api/quotes/accept`, `GET /api/slots`,
   `GET /api/downloads/[id]/[line]`, `POST /api/admin/upload-file`, `/admin/agenda`.
-- `db/migrations/`: `0001_initial.sql` (the 0.1.0 schema) and `0002_product_types.sql`.
+- `db/migrations/`: `0001_initial.sql` (the 0.1.0 schema) and `0002_product_types.sql`
+  (self-contained for the data: it recreates the public catalogue view it has to drop).
+- **A store that cannot keep orders is honest about it** (`lib/store-mode.ts`): services, quotes
+  and digital products need an adapter that stores orders. On `json` in production a real store
+  shows a "message us" button for them and the server answers `needs_store`; in demo mode the
+  flows can be tried and the pages say nothing is reserved, priced or delivered.
+- **Appointments**: capacity counts overlapping bookings (a change of duration cannot
+  double-book); an unpaid order holds its slot for `booking.holdHours` / `BOOKING_HOLD_HOURS`
+  (12 h) and a lapsed hold stops counting at once, with nothing to run; at most
+  `booking.maxSlotsPerOrder` appointments per order and `booking.maxUnpaidPerBuyer` unpaid ones
+  per buyer; times the clocks skip on a daylight-saving change are not offered.
+- **Quotes**: the panel says whether the e-mail really went out and shows the customer's signed
+  link with "copy" and "send by WhatsApp"; a quote that charges shipping asks for the delivery
+  address before it can be accepted.
+- **Money** is computed in integers and rounded half up (`lib/decimal.ts`), so TypeScript and
+  PostgreSQL give the same cent; tested over a grid of prices and quantities.
+- **`npm run preset` is safe**: it refuses (unless `--force`) over a catalogue, home texts or
+  colours that are not a preset's, or over uncommitted changes; it always keeps a timestamped copy
+  in `.preset-backups/` and sets aside the local `catalog.json` and `orders.json`.
+- Downloads are streamed; a public Supabase bucket is refused for private files; the example
+  downloads travel with the serverless bundle and the Docker image.
+- The signed order link stays under 12 000 characters even for 50 lines with slots (big orders
+  are slimmed: no photos, short names), and never carries the free text of an enquiry.
 - The brain: a new branch, «Adaptar a tu rubro» (331 nodes).
 
 ### Changed
@@ -47,10 +69,11 @@ by weight or measure, and a cart can mix them. See [`docs/product-types.md`](doc
 - **Feeds** (Google, Meta) list only physical products with a price; products by weight carry
   `unit_pricing_measure`.
 - **Structured data** per type: `Service` for services; no `offers` for products without a price.
-- Order workflow: a new first status, `quote`; an order may go from «Paid» straight to
-  «Delivered» (services and downloads have nothing to ship).
+- Order workflow: a new first status, `quote`; an order **with nothing to ship** (services,
+  downloads) may go from «Paid» straight to «Delivered» — the server refuses it for the rest.
+- A digital product is one per order line (quantity 1).
 - The "payment confirmed" e-mail is now also sent when the admin marks an order as paid by hand
-  (it is the e-mail that carries the download links).
+  (it is the e-mail that carries the download links) — once per order, the first time it is paid.
 - The sales summary does not count enquiries as orders or as pending payments.
 - The subtotal is the sum of the lines rounded one by one (it only differs from 0.1.0 with
   decimal quantities).
@@ -97,19 +120,21 @@ the piece; existing orders keep working.
    the functions and the permissions). Running `db/schema.sql` alone gives the same result. Both
    are safe to run twice. What changes: `products` gets `type`, `unit`, `step`, `max_quantity`,
    `service`, `digital`; quantities and stock become `numeric(12,3)`; `orders` gets `is_quote`,
-   `quote_sent_at`, `accepted_at` and the status `quote`; `order_lines` gets `type`, `unit`,
+   `quote_sent_at`, `accepted_at`, `hold_until` and the status `quote`; `order_lines` gets `type`, `unit`,
    `slot_start`, `slot_end`, `note`; a new table `product_files`; `set_stock` takes a numeric.
 3. **`json` adapter**: nothing to do. Catalogues and orders saved by 0.1.0 under `DATA_DIR` are
    read with the defaults.
 4. **Your own data adapter**: implement the six new methods (TypeScript lists them). The
-   guarantees are in [`docs/adapters.md`](docs/adapters.md), items 9 to 14.
-5. **Your own storage adapter**: implement `putPrivate` and `getPrivate`.
+   guarantees are in [`docs/adapters.md`](docs/adapters.md), items 9 to 17.
+5. **Your own storage adapter**: implement `putPrivate` and `openPrivate` (a stream).
 6. **Code that builds a `Product`, an `OrderLine` or an `Order`** needs the new fields: `type`,
    `unit`, `step`, `maxQuantity`, `service`, `digital` (product); `type`, `unit`, `slot` (line);
    `quote` (order). `ShippingTerms` are now optional in `priceOrder`, and `PricedOrder` returns
    `shippingMethodId`.
 7. **Supabase with digital products**: create a **private** bucket (`downloads`, or the name in
-   `SUPABASE_PRIVATE_BUCKET`).
+   `SUPABASE_PRIVATE_BUCKET`). The server refuses to use it if it is public.
+   **Services, quotes and digital products need `supabase` or `postgres`** (or `json` on your
+   own machine): `json` in production stores no orders.
 8. **The demo catalogue changed.** If your store still used `content/products.json` as it came,
    it is now the mixed preset; `npm run preset moda` brings back a clothing catalogue. A catalogue
    you already edited is yours and is not touched.

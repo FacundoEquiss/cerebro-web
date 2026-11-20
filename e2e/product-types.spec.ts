@@ -193,11 +193,21 @@ test("a quote: the customer asks, the admin prices and sends it, the customer ac
   await expect(editor.getByTestId("quote-preview")).toContainText("386.000");
   await editor.getByTestId("quote-send").click();
   await expect(editor.getByTestId("quote-state")).toContainText("Enviado el");
+  // No mail provider in this server: the panel does not claim an e-mail went out, and hands the
+  // owner the customer's link — to copy, or to send by WhatsApp.
+  await expect(editor.getByTestId("quote-note")).toContainText("NO se le envió ningún e-mail");
+  const link = await editor.getByTestId("quote-link").inputValue();
+  expect(link).toMatch(new RegExp(`/pedido/${orderId}\\?t=v1\\.`));
+  await expect(editor.getByTestId("quote-link-copy")).toBeVisible();
+  const whatsappHref = (await editor.getByTestId("quote-link-whatsapp").getAttribute("href"))!;
+  expect(whatsappHref).toMatch(/^https:\/\/wa\.me\/0+1000\?text=/); // the customer's own phone
+  // (Each link is signed when it is made, so two of them differ in their expiry: compare the order.)
+  expect(decodeURIComponent(whatsappHref)).toContain(link.split("?t=")[0]! + "?t=v1.");
   await page.getByTestId("detail-close").click();
   await expect(page.locator(`[data-order="${orderId}"]`).getByTestId("card-quote")).toHaveText("Enviado");
 
-  // The customer opens the link: the quote, and a way to accept it.
-  await page.goto(orderUrl.toString());
+  // The customer opens the link the owner passed on: the quote, and a way to accept it.
+  await page.goto(link);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Tu presupuesto está listo");
   await expect(page.getByTestId("quote-total")).toContainText("386.000");
   // A total that is not the one that was sent is refused, and nothing changes.
@@ -206,6 +216,13 @@ test("a quote: the customer asks, the admin prices and sends it, the customer ac
   await page.reload();
   await expect(page.getByTestId("order-status")).toHaveText("Consulta");
 
+  // The quote charges shipping, so it asks where to deliver — and is not accepted without it.
+  await expect(page.getByTestId("quote-address")).toBeVisible();
+  const noAddress = await page.request.post("/api/quotes/accept", { form: { id: orderId, t: new URL(link).searchParams.get("t")!, total: "386000", payment: "bank_transfer" }, maxRedirects: 0 });
+  expect(noAddress.headers().location).toContain("quote=address");
+  await page.getByTestId("quote-address-line").fill("Calle de Ejemplo 123");
+  await page.getByTestId("quote-address-city").fill("Ciudad de Ejemplo");
+  await page.getByTestId("quote-address-postal").fill("0000");
   await page.getByTestId("quote-payment-bank_transfer").check();
   await page.getByTestId("quote-accept").click();
   // Now it is a normal order, to be paid by transfer.
@@ -218,6 +235,7 @@ test("a quote: the customer asks, the admin prices and sends it, the customer ac
   await page.goto("/admin");
   await expect(page.getByTestId("column-new").locator(`[data-order="${orderId}"]`)).toBeVisible();
   await openOrder(page, orderId);
+  await expect(page.getByTestId("order-detail")).toContainText("Calle de Ejemplo 123");
   await page.getByTestId("detail-primary").click();
   await expect(page.getByTestId("detail-status")).toHaveText("Pagado");
   expect(errors).toEqual([]);

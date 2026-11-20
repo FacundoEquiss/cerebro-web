@@ -22,6 +22,25 @@ Tres reglas valen para todos, y son las mismas en `lib/orders/pricing.ts` (adapt
    pide dirección y no cobra envío, mande lo que mande el navegador.
 3. **Un carrito puede mezclar tipos.** Una descarga, un turno y una taza son un solo pedido.
 
+## Estos tres necesitan una tienda que guarde los pedidos
+
+Un turno lo reserva un pedido **guardado**, un presupuesto se cotiza sobre una consulta
+**guardada** y un archivo se entrega cuando un pedido **guardado** está pagado. Por eso los
+productos `service`, `quote` y `digital` necesitan un adaptador de datos que guarde pedidos:
+`supabase`, `postgres`, o `json` en una máquina tuya con un `DATA_DIR` escribible. **`json` en
+producción no guarda nada** (`APP_ENV=production`, o cualquier despliegue en Vercel): es el
+adaptador de la demo.
+
+Qué pasa sin uno (`lib/store-mode.ts`):
+
+| | La tienda | El servidor |
+|---|---|---|
+| **Una tienda real** (sin modo demo) | La ficha no muestra calendario, formulario de presupuesto ni «agregar al carrito» para esos productos: lo dice y ofrece WhatsApp y la página de contacto | `POST /api/orders` y `POST /api/quotes` responden `409 needs_store` |
+| **Modo demo** (`DEMO_MODE`, la demo publicada) | Los flujos se pueden probar, y la ficha y la página del pedido avisan que no se guarda nada: el turno **no** queda tomado de verdad, la consulta no le llega a nadie y la descarga no se entrega. Ningún horario figura como ocupado | Los pedidos se calculan y se responden, pero no se guardan |
+
+Los productos físicos no cambian: siempre se pueden vender con el comprobante firmado como única
+copia del pedido.
+
 ## Dónde se define el tipo
 
 - En el panel: **Productos → un producto → Tipo y forma de venta**.
@@ -78,8 +97,18 @@ Sirve para cualquier producto físico (y para presupuestos: «por m²»).
   **privado** (`SUPABASE_PRIVATE_BUCKET`, `downloads` por defecto: crealo como privado). Las
   subidas tienen un tope de 50 MB y aceptan tipos comunes de documento, comprimido, audio, video e
   imagen (`DIGITAL_TYPES`); en hospedajes serverless el tope de la plataforma es menor.
-- Necesita un adaptador que **guarde pedidos** (una base de datos, o `json` en una máquina con
-  disco): sin eso nadie puede saber si un pedido se pagó, así que no se entrega nada.
+- Necesita un adaptador que **guarde pedidos**: una base de datos, o `json` **fuera de
+  producción** con un `DATA_DIR` escribible. `json` con `APP_ENV=production` (o en Vercel) no
+  guarda nada, tenga el disco que tenga: nadie puede saber si un pedido se pagó, así que no se
+  entrega nada. Ver la sección de arriba.
+- Una descarga es **una por línea** (el servidor rechaza una cantidad distinta de 1).
+- El archivo se **transmite por partes**, nunca se carga entero en memoria. En hospedajes
+  serverless la plataforma igual limita el tamaño y la duración de una respuesta (pocos MB y
+  segundos en los planes más chicos): para archivos grandes usá un servidor propio o subí esos
+  límites.
+- Con `STORAGE_PROVIDER=supabase` el servidor **comprueba que el bucket sea privado** antes de la
+  primera lectura o escritura privada (y de nuevo cada 10 minutos). Un bucket público —o uno
+  cuya configuración no se puede leer— se rechaza: no se sirve nada y el log dice por qué.
 - Los archivos de ejemplo de los presets son PDF mínimos en `content/downloads/`
   (`npm run samples`).
 
@@ -97,15 +126,28 @@ Un servicio tiene `service: { "durationMinutes": 30, "capacity": 1 }`.
 - **Zona horaria**: los horarios se escriben como hora de `booking.timeZone`; el turno se guarda
   como el instante exacto en que empieza y termina. Un visitante en otro huso, un servidor en otra
   zona o un cambio de horario de verano no pueden mover un turno.
-- **Reserva**: el turno se reserva al **crear** el pedido. El servidor primero comprueba que sea
-  un turno que el servicio ofrece de verdad en ese momento (`lib/booking/slots.ts`) y después
-  `create_order()` revisa el cupo con la fila del producto bloqueada —dos pedidos simultáneos no
-  pueden llevarse el último lugar—; la misma clave de idempotencia devuelve siempre el mismo
-  pedido.
+- **Horario de verano**: una hora que los relojes saltean ese día (las 02:30 cuando pasan de
+  02:00 a 03:00, o las 00:30 en una zona que cambia a medianoche) no se ofrece; una hora que
+  ocurre dos veces es siempre la primera de las dos.
+- **Reserva** (con un adaptador que guarde pedidos; ver arriba): el turno se reserva al **crear**
+  el pedido. El servidor primero comprueba que sea un turno que el servicio ofrece de verdad en
+  ese momento (`lib/booking/slots.ts`) y después `create_order()` revisa el cupo con la fila del
+  producto bloqueada —dos pedidos simultáneos no pueden llevarse el último lugar—; la misma clave
+  de idempotencia devuelve siempre el mismo pedido.
+- **El cupo cuenta lo que se superpone**, no lo que arranca en el mismo minuto: si cambiás la
+  duración de un servicio, los turnos ya tomados siguen bloqueando el tiempo que ocupan. Es **una
+  agenda por producto**: dos servicios no se bloquean entre sí, y no hay agenda por profesional
+  ni por sala (está en la hoja de ruta).
+- **Retenciones**: un pedido sin pagar conserva su turno durante `booking.holdHours` (12 por
+  defecto; la variable `BOOKING_HOLD_HOURS` lo pisa), menos que `ORDER_EXPIRY_HOURS` a propósito.
+  Cuando la retención vence, el lugar queda libre **en el acto**: cada lectura (el calendario, la
+  Agenda, un pedido nuevo) deja de contarlo, sin que tenga que correr nada. El pedido en sí lo
+  cancela la limpieza de siempre (al pasar, y por la ruta del cron). Un turno pagado no vence.
+- **Topes**: un pedido puede traer `booking.maxSlotsPerOrder` turnos (3) y un comprador —por
+  e-mail— puede retener `booking.maxUnpaidPerBuyer` turnos impagos a la vez (3). Los lugares son
+  enteros.
 - **Liberación**: una reserva es la línea de servicio de un pedido que no está cancelado. Cancelar
-  el pedido, o dejarlo vencer sin pagar (`ORDER_EXPIRY_HOURS`), libera el lugar solo. Ojo: un
-  pedido sin pagar retiene su turno hasta que vence; bajá `ORDER_EXPIRY_HOURS` si es mucho para tu
-  negocio.
+  el pedido libera el lugar solo.
 - **Agenda**: `/admin/agenda`, por día o por semana (ver [`admin.es.md`](admin.es.md)). El turno
   también se ve en la tarjeta del kanban y en el detalle del pedido.
 - **Lo que no está hecho**: recordatorios, que el cliente reprograme, una agenda por profesional,
@@ -131,6 +173,13 @@ Lo que garantiza el servidor (`accept_quote()` en SQL, `acceptQuote` en los adap
 - Un producto sin precio nunca entra a un carrito ni a un pedido (`quote_only`).
 - Una consulta no vence como «impaga»; un presupuesto aceptado cuenta su `ORDER_EXPIRY_HOURS`
   desde que se aceptó.
+- **Un presupuesto que cobra envío pide la dirección de entrega** cuando el cliente lo acepta, y
+  sin ella no se acepta.
+- **Cómo llega el presupuesto**: al enviarlo se le manda un e-mail al cliente **si hay un
+  proveedor de correo configurado**; el panel dice si el e-mail salió de verdad. En cualquier
+  caso el editor muestra el enlace firmado del cliente, con un botón para copiarlo y otro para
+  mandarlo por WhatsApp.
+- El texto libre de una consulta nunca viaja en el enlace del pedido: la página lo lee de la base.
 
 ## Feeds y datos estructurados
 
@@ -170,7 +219,15 @@ Los productos por peso llevan `unit_pricing_measure` («1 kg») en los feeds.
 npm run preset              # los lista
 npm run preset servicios    # aplica uno
 npm run preset moda -- --keep-theme   # …sin tocar los colores
+npm run preset moda -- --force        # …sobre un catálogo que ya es tuyo
 ```
+
+**Reemplaza archivos, así que cuida tu trabajo.** Se niega a correr —salvo con `--force`— cuando
+`content/products.json`, `content/site.json` o los colores de `config/brand.ts` ya no son los de
+un preset, o cuando esos archivos (o `db/seed.sql`) tienen cambios sin commitear. Antes de
+escribir siempre copia lo que había en `.preset-backups/<fecha-hora>/` (una carpeta por corrida,
+nunca se pisa, git la ignora) y aparta el `catalog.json` y el `orders.json` locales de
+`DATA_DIR`, que apuntarían a productos que ya no existen.
 
 | Preset | Para | Qué tipos muestra |
 |---|---|---|

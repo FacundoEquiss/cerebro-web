@@ -61,7 +61,8 @@ Moving a card:
 
 The allowed moves are one table, `lib/orders/status.ts`: an order must be paid before it is
 prepared, a step can be undone before delivery, a paid order never goes back to «New», an order
-with nothing to ship (a service, a download) may go from «Paid» straight to «Delivered», and
+with nothing to ship (a service, a download) — and only such an order — may go from «Paid»
+straight to «Delivered», and
 «Cancelled» is final (it needs a reason and returns the stock). The server checks every move and
 writes it to the order's **history** with who did it and when. If two people act at once, the
 second gets "someone else already changed this order" and a fresh list.
@@ -106,8 +107,12 @@ Open it and you get the quote editor:
 1. Type a **unit price** for each line and the **shipping**. The total updates as you type (the
    official one is calculated by the server when you save).
 2. **Save** keeps the prices without telling the customer. **Save and send** also marks the quote
-   as sent and e-mails the customer a signed link.
-3. The customer opens the link, sees the quote and accepts it, choosing how to pay. The card moves
+   as sent and, **if a mail provider is set up**, e-mails the customer a signed link. The panel
+   says whether the e-mail really went out. Either way the editor then shows that link, with
+   **Copy link** and **Send by WhatsApp** (a message to the customer's phone, already written),
+   so the quote can always be delivered.
+3. The customer opens the link, sees the quote and accepts it, choosing how to pay — and giving
+   the delivery address when the quote charges shipping. The card moves
    to «New» and from there it is an order like any other: confirm the payment, prepare, deliver.
 
 Until it is sent the customer can neither accept nor pay. If you change a price after sending,
@@ -126,8 +131,10 @@ the store (`commerce.booking.timeZone`):
 - Each appointment shows the time, the service, the customer, the seats, whether it is paid and
   the order number; tapping it opens the order.
 
-An appointment is a line of an order: cancelling the order (or letting it expire unpaid) frees
-the slot, and there is nothing else to keep in step. Opening hours, closed days and how far ahead
+An appointment is a line of an order: cancelling the order frees the slot, and an unpaid order
+stops holding it when its hold lapses (`booking.holdHours`, 12 by default) — the Agenda stops
+showing it at once. It is one calendar per service, not per member of staff. The Agenda needs an
+adapter that stores orders; in the read-only demo it shows example bookings. Opening hours, closed days and how far ahead
 the calendar opens are set in `config/commerce.ts` (see [`product-types.md`](product-types.md)).
 Not built yet: creating an appointment by hand from the panel, moving one, reminders.
 

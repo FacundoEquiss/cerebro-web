@@ -34,13 +34,20 @@ the places to look first:
 | Unpaid orders do not hold stock forever; money for a cancelled order is flagged, never credited | `lib/orders/expiry.ts`, `expire_orders()`, `lib/payments/credit.ts` |
 | Uploads are checked by content, not by name | `lib/storage/index.ts`, `app/api/admin/upload/route.ts` |
 | A digital file has no public address: it is served only through a signed link that expires, and only while the stored order is paid | `lib/orders/download.ts`, `app/api/downloads/[id]/[line]/route.ts`, the private side of `lib/storage/index.ts`, the `product_files` table |
-| A slot cannot be oversold by simultaneous orders, and the browser cannot invent one | `lib/booking/slots.ts` (`resolveSlot`), the capacity check of `create_order()` |
+| With an adapter that stores orders, a slot cannot be oversold by simultaneous orders, the browser cannot invent one, capacity counts overlapping appointments, and an unpaid order holds it for a limited time. **Without one nothing is reserved**: a real store refuses the booking (`needs_store`), a demo says so | `lib/booking/slots.ts` (`resolveSlot`), `lib/booking/hold.ts`, the capacity check of `create_order()`, `lib/store-mode.ts` |
 | A quote cannot be accepted before it is sent, nor for another total | `accept_quote()` in `db/schema.sql`, `acceptQuote` in `lib/data/json.ts`, `app/api/quotes/accept/route.ts` |
 | Quantities are validated on the server (minimum, step, maximum) and totals are rounded there | `validQuantity` in `lib/data/availability.ts`, `lib/orders/pricing.ts`, `create_order()` |
 | Secrets never reach the browser | `lib/env.ts` (server) vs `lib/public-env.ts` (public) |
 
 ## Known limits (by design, documented)
 
+- **`json` in production stores no orders.** Services, quotes and digital products depend on a
+  stored order, so a real store on that adapter does not sell them online (the page offers to get
+  in touch, the server answers `needs_store`); in demo mode they can be tried and the pages say
+  that nothing is reserved, priced or delivered. Use `supabase` or `postgres` for them.
+- A private Supabase bucket is **checked** to be private before use and refused if it is not
+  (`privateBucketIsPrivate` in `lib/storage/index.ts`); this check could not be run against a real
+  project while writing it.
 - The in-memory rate limiter counts per server process. On serverless hosting put a shared store
   behind `lib/rate-limit.ts`.
 - With `DATA_SOURCE=json` nothing is stored in production. It is a demo mode: a payment gateway

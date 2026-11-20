@@ -89,6 +89,20 @@ y `sendQuote(id, actor)`.
     «enviado». Aceptar dos veces es lo mismo que aceptar una.
 14. `expireOrders` nunca toca una consulta, y cuenta un presupuesto aceptado desde que se aceptó.
 
+15. El cupo cuenta toda reserva que se **superpone** con el turno, y un pedido impago deja de
+    retener su turno cuando vence la retención (`lib/booking/hold.ts`): se controla al LEER
+    (`createOrder`, `listBookings`), no sólo cuando corre la limpieza. `expireOrders` cancela las
+    retenciones vencidas aunque `hours` sea 0.
+16. A lo sumo `booking.maxSlotsPerOrder` turnos por pedido y `booking.maxUnpaidPerBuyer` turnos
+    impagos por e-mail de comprador (`booking_limit`); una línea digital lleva cantidad 1; los
+    lugares son enteros.
+17. `acceptQuote` exige la dirección de entrega cuando el presupuesto cobra envío
+    (`address_required`).
+
+Un adaptador con `storesOrders: false` no puede cumplir nada de lo prometido sobre turnos,
+presupuestos o descargas: la tienda rechaza esos productos o, en modo demo, avisa que nada queda
+tomado (`lib/store-mode.ts`).
+
 Un adaptador sobre SQL recibe todo esto de `db/schema.sql` (`create_order`, `create_quote`,
 `set_quote`, `send_quote`, `accept_quote`, `bookings_between`, `digital_file`). Uno escrito desde
 cero puede reusar las funciones puras: `priceOrder`, `buildQuote`, `quoteTotals`
@@ -169,9 +183,9 @@ cambian. Siempre hacé un pago real de punta a punta antes de salir.
   `put(name, bytes, contentType): Promise<url>`: `local` escribe en `DATA_DIR/uploads` y lo sirve
   en `/media/<archivo>` (necesita un disco persistente); `supabase` escribe en un bucket público
   de Storage. **Privado** —los archivos de los productos digitales—
-  `putPrivate(name, bytes, contentType): Promise<clave>` y `getPrivate(clave): Promise<bytes | null>`:
+  `putPrivate(name, bytes, contentType): Promise<clave>` y `openPrivate(clave): Promise<{ stream, size } | null>` (un stream, nunca el archivo entero):
   `local` los guarda en `DATA_DIR/private` y `supabase` en un bucket privado
-  (`SUPABASE_PRIVATE_BUCKET`). Un archivo privado no tiene URL: sólo sale por `/api/downloads/…`,
+  (`SUPABASE_PRIVATE_BUCKET`), que el servidor comprueba que sea privado antes de usarlo. Un archivo privado no tiene URL: sólo sale por `/api/downloads/…`,
   para un pedido pagado. El almacenamiento compatible con S3 está en el roadmap.
 - **Antibots** (`verify(token, ip): Promise<boolean>`): `none` o `turnstile`. El token es de un
   solo uso: después de cada envío el formulario espera uno fresco.

@@ -22,6 +22,24 @@ adapter) and in `create_order()` (`db/schema.sql`, the database adapters):
    `none`, asks for no address and costs no shipping — whatever the browser sent.
 3. **A cart can mix types.** One download, one appointment and one mug are one order.
 
+## These three need a store that remembers orders
+
+A slot is reserved by a **stored** order, a quote is priced on a **stored** enquiry and a file is
+delivered when a **stored** order is paid. So `service`, `quote` and `digital` products need a
+data adapter that stores orders: `supabase`, `postgres`, or `json` on a machine you run yourself
+with a writable `DATA_DIR`. **`json` in production stores nothing** (`APP_ENV=production`, or any
+deployment on Vercel) — it is the adapter of the demo.
+
+What happens without one (`lib/store-mode.ts`):
+
+| | The store | The server |
+|---|---|---|
+| **A real store** (not demo mode) | The product page shows no calendar, no quote form and no "add to cart" for those products: it says so and offers WhatsApp and the contact page | `POST /api/orders` and `POST /api/quotes` answer `409 needs_store` |
+| **Demo mode** (`DEMO_MODE`, the published demo) | The flows can be tried, and the product page and the order page say that nothing is stored: the slot is **not** really held, the enquiry reaches nobody, the download is not delivered. No seat is shown as taken | Orders are priced and answered, never stored |
+
+Physical products are not affected: they can always be sold with the signed receipt as the only
+copy of the order.
+
 ## Where a product gets its type
 
 - In the admin panel: **Products → a product → Type and how it is sold**.
@@ -77,8 +95,17 @@ Works for any physical product (and for quotes: "per m²").
   (`SUPABASE_PRIVATE_BUCKET`, `downloads` by default — create it as private). Uploads are limited
   to 50 MB and to common document, archive, audio, video and image types (`DIGITAL_TYPES`); on
   serverless hosting the platform's request limit is lower.
-- It needs an adapter that **stores orders** (a database, or `json` on a machine with a disk):
-  without one nothing can tell whether an order was paid, so nothing is delivered.
+- It needs an adapter that **stores orders**: a database, or `json` **outside production** with a
+  writable `DATA_DIR`. `json` with `APP_ENV=production` (or on Vercel) stores nothing, whatever
+  the disk: nothing can tell whether an order was paid, so nothing is delivered — see the section
+  above.
+- A download is **one per order line** (the server rejects a quantity other than 1).
+- The file is **streamed**, never loaded whole in memory. On serverless hosting the platform
+  still limits how big a response may be and how long it may take (a few MB and seconds on the
+  smallest plans): for big files use a server you run, or raise those limits.
+- With `STORAGE_PROVIDER=supabase` the server **checks that the bucket is private** before the
+  first private read or write (and again every 10 minutes). A public bucket — or one whose
+  settings cannot be read — is refused: nothing is served and the log says why.
 - The example files of the presets are tiny PDFs in `content/downloads/` (`npm run samples`).
 
 ## Services by appointment
@@ -94,14 +121,27 @@ A service has `service: { "durationMinutes": 30, "capacity": 1 }`.
 - **Time zone**: hours are written as wall time of `booking.timeZone`; a slot is stored as the
   exact instant it starts and ends. A visitor elsewhere, a server in another zone and daylight
   saving changes cannot move an appointment.
-- **Reservation**: the slot is reserved when the order is **created**. The server first checks
-  that the slot is one the service really offers now (`lib/booking/slots.ts`), then
-  `create_order()` checks the capacity with the product row locked — two simultaneous orders
-  cannot take the last seat — and the same idempotency key always returns the same order.
+- **Daylight saving**: a time the clocks skip that day (02:30 when they jump from 02:00 to 03:00,
+  or 00:30 in a zone that switches at midnight) is not offered; an hour that happens twice is
+  always the first of the two.
+- **Reservation** (with an adapter that stores orders — see above): the slot is reserved when the
+  order is **created**. The server first checks that the slot is one the service really offers now
+  (`lib/booking/slots.ts`), then `create_order()` checks the capacity with the product row locked
+  — two simultaneous orders cannot take the last seat — and the same idempotency key always
+  returns the same order.
+- **Capacity counts what overlaps**, not what starts at the same minute: if you change the
+  duration of a service, the appointments already taken still block the time they occupy. It is
+  **one calendar per product**: two services do not block each other, and there is no calendar
+  per member of staff or per room (on the roadmap).
+- **Holds**: an unpaid order keeps its slot for `booking.holdHours` (12 by default; the variable
+  `BOOKING_HOLD_HOURS` overrides it) — shorter than `ORDER_EXPIRY_HOURS` on purpose. When the hold
+  lapses the seat is free **at once**: every read (the calendar, the Agenda, a new order) stops
+  counting it, with nothing to run. The order itself is cancelled by the usual clean-up (lazily,
+  and by the cron route). Paid bookings never lapse.
+- **Limits**: one order may contain `booking.maxSlotsPerOrder` appointments (3), and one buyer —
+  by e-mail — may hold `booking.maxUnpaidPerBuyer` unpaid ones at a time (3). Seats are whole.
 - **Release**: a booking is a service line of an order that is not cancelled. Cancelling the
-  order, or letting it expire unpaid (`ORDER_EXPIRY_HOURS`), frees the seat by itself. Mind that
-  an unpaid order holds its slot until it expires: lower `ORDER_EXPIRY_HOURS` if that is too long
-  for your business.
+  order frees the seat by itself.
 - **Agenda**: `/admin/agenda`, by day or by week (see [`admin.md`](admin.md)). The slot is also on
   the kanban card and in the order detail.
 - **What is not built**: reminders, rescheduling by the customer, one calendar per member of
@@ -127,6 +167,12 @@ What the server guarantees (`accept_quote()` in SQL, `acceptQuote` in the adapte
 - A product without a price can never be added to a cart or to an order (`quote_only`).
 - An enquiry never expires as "unpaid"; an accepted quote counts its `ORDER_EXPIRY_HOURS` from the
   moment it was accepted.
+- **A quote that charges shipping asks for the delivery address** when the customer accepts it,
+  and is not accepted without it.
+- **Delivering the quote**: sending it e-mails the customer **if a mail provider is set up**; the
+  panel says whether the e-mail really went out. Either way the quote editor shows the customer's
+  signed link, with a button to copy it and one to send it by WhatsApp.
+- The free text of an enquiry never travels in the order link: the page reads it from the store.
 
 ## Feeds and structured data
 
@@ -164,7 +210,15 @@ Products sold by weight carry `unit_pricing_measure` ("1 kg") in the feeds.
 npm run preset              # lists them
 npm run preset servicios    # applies one
 npm run preset moda -- --keep-theme   # …without touching the colours
+npm run preset moda -- --force        # …over a catalogue that is already yours
 ```
+
+**It replaces files, so it protects your work.** It refuses to run — unless you pass `--force` —
+when `content/products.json`, `content/site.json` or the colours of `config/brand.ts` are no
+longer a preset's, or when those files (or `db/seed.sql`) have uncommitted changes. Before writing
+it always copies what was there to `.preset-backups/<date-time>/` (one folder per run, never
+overwritten, ignored by git), and it sets aside the local `catalog.json` and `orders.json` of
+`DATA_DIR`, which would point at products that no longer exist.
 
 | Preset | For | Types it shows |
 |---|---|---|
