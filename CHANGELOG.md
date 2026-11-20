@@ -49,7 +49,11 @@ All notable changes to this project are documented here. The format follows
   product on a database without migration 0004 is refused with a message that names it.
 - A `repeat.count` that is not a usable number falls back to 3 dates and is logged once, instead
   of silently giving no dates.
-- `.dockerignore` leaves out `.next-fixtures` and `public/fixtures`.
+- `.dockerignore` leaves out `.next-fixtures` and `public/cerebro-test-fixtures`.
+- The images of the test store are copied, while the e2e suite runs, to
+  `public/cerebro-test-fixtures/` — a name reserved for that — instead of `public/fixtures/`. A
+  real build clears a leftover copy, and can no longer delete a `public/fixtures/` folder that
+  belongs to the store.
 
 ### Migrating from 0.3.0
 

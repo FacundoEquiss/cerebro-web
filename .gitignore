@@ -2,7 +2,7 @@ node_modules/
 .next/
 # The build and the images of the test store (tests/fixtures), made by `npm run test:e2e`.
 .next-fixtures/
-/public/fixtures/
+/public/cerebro-test-fixtures/
 out/
 .vercel/
 .env

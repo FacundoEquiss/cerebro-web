@@ -76,10 +76,11 @@ const nextConfig: NextConfig = {
   },
 };
 
-// The e2e server copies the images of the test store into public/fixtures/ and removes them when
+// The e2e server copies the images of the test store into public/cerebro-test-fixtures/ and removes them when
 // it stops. If it was killed, that folder is still there: a build of the REAL store clears it
-// first, so the test images can never be shipped.
+// first, so the test images can never be shipped. The name is reserved for this and nothing else:
+// do not keep your own files in a folder with that name.
 export default function config(phase: string): NextConfig {
-  if (phase === "phase-production-build" && !fixtures) rmSync("public/fixtures", { recursive: true, force: true });
+  if (phase === "phase-production-build" && !fixtures) rmSync("public/cerebro-test-fixtures", { recursive: true, force: true });
   return nextConfig;
 }

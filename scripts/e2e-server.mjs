@@ -22,9 +22,9 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const base = Number(port);
   const next = join(root, "node_modules/next/dist/bin/next");
   // With CEREBRO_FIXTURES=1 the store is the one of tests/fixtures. Its images are served from
-  // public/fixtures/ (a copy made here, ignored by git, removed on the way out).
+  // public/cerebro-test-fixtures/ (a copy made here, ignored by git, removed on the way out).
   const fixtures = process.env.CEREBRO_FIXTURES === "1";
-  const fixtureImages = join(root, "public", "fixtures");
+  const fixtureImages = join(root, "public", "cerebro-test-fixtures");
   if (fixtures) {
     rmSync(fixtureImages, { recursive: true, force: true });
     cpSync(join(root, "tests/fixtures/public"), fixtureImages, { recursive: true });
