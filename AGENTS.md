@@ -9,10 +9,11 @@ ask you for outcomes ("adapt this to my business", "add free shipping over X"); 
 
 ## 0. Read the brain first
 
-`cerebro/` holds the guide for building, launching and growing a business website (316 nodes, in
+`cerebro/` holds the guide for building, launching and growing a business website (331 nodes, in
 Spanish). Before your first change:
 
-1. Read `cerebro/dist/llms-full.txt` — at least the branch **«Cómo usar este cerebro»** and the
+1. Read `cerebro/dist/llms-full.txt` — at least the branches **«Cómo usar este cerebro»** and
+   **«Adaptar a tu rubro»** (which preset and product type fit the business), and the
    **essential** nodes of the phase you are in. (Online: <https://cerebro-web-negocios.vercel.app/llms-full.txt>.)
 2. Read [`GETTING-STARTED.md`](GETTING-STARTED.md): the ordered checklist to turn this template
    into a real site, split into what you do and what only the owner can do.
@@ -52,7 +53,10 @@ disagree, check the code: it is what runs.
 | Path | What |
 |---|---|
 | `config/` | `brand.ts` (the brand, in one place), `commerce.ts` (commercial rules), `fonts.ts`, `redirects.ts` |
-| `content/products.json` | The demo catalogue (the `json` data adapter) |
+| `content/products.json` | The catalogue in use (the `json` data adapter). The demo is the `mixto` preset |
+| `content/presets/` | Starting catalogues per line of business; `npm run preset <name>` applies one |
+| `content/site.json` | Which preset was applied and the home texts (hero, benefits, questions) |
+| `content/downloads/` | Example files of the digital products (private: never under `public/`) |
 | `i18n/` | `es.ts`, `en.ts` (dictionaries), `routes.ts` (public URL of each page per language) |
 | `app/(store)/` | Storefront pages. Folders are the English routes; other languages are rewritten |
 | `app/admin/` | Admin panel: `login`, `(panel)/` (kanban, summary, products, customers, settings), print pages |
@@ -60,14 +64,16 @@ disagree, check the code: it is what runs.
 | `app/robots.ts`, `sitemap.ts`, `llms.txt`, `llms-full.txt`, `feeds/` | Search engines, AI assistants, product feeds |
 | `components/` | By domain: `layout`, `catalog`, `product`, `cart`, `checkout`, `admin`, `analytics` |
 | `lib/data/` | Data adapters: `types.ts` (the contract), `json.ts`, `sql.ts` + `supabase.ts` / `postgres.ts` |
-| `lib/orders/` | `pricing.ts`, `idempotency.ts`, `receipt.ts` (signed order link), `status.ts` (the workflow) |
+| `lib/orders/` | `pricing.ts`, `idempotency.ts`, `receipt.ts` (signed order link), `status.ts` (the workflow), `download.ts` (signed download link) |
+| `lib/booking/` | `slots.ts`: the slots of a service (opening hours, time zone, capacity) |
 | `lib/payments/` | `manual`, `mercadopago`, `stripe`, `credit.ts` (credit a payment once) |
-| `lib/admin/` | `auth.ts`, `session.ts`, `password.ts`, `login.ts`, `orders.ts`, `reports.ts`, `products.ts` |
+| `lib/admin/` | `auth.ts`, `session.ts`, `password.ts`, `login.ts`, `orders.ts`, `quotes.ts`, `reports.ts`, `products.ts` |
 | `lib/analytics/`, `lib/feeds/`, `lib/seo.ts`, `lib/indexnow.ts` | Measurement, feeds, metadata and structured data |
 | `db/schema.sql`, `db/seed.sql` | The shared SQL schema (Supabase and plain PostgreSQL) and the demo data |
+| `db/migrations/` | One file per schema change, for databases that already exist |
 | `proxy.ts` | Guards `/admin` and `/api/admin` |
 | `stores/` | Browser state (the cart) |
-| `scripts/` | `check-brand`, `check-i18n`, `admin-hash`, `generate-images`, `generate-seed`, `screenshots` |
+| `scripts/` | `check-brand`, `check-i18n`, `admin-hash`, `preset`, `generate-images`, `generate-samples`, `generate-seed`, `screenshots` |
 | `tests/`, `e2e/` | Vitest unit tests, Playwright end-to-end tests |
 | `cerebro/` | The brain: `datos.json` (source), `armar.mjs` (builder), `dist/` (generated, committed) |
 
@@ -85,8 +91,9 @@ disagree, check the code: it is what runs.
   route in `i18n/routes.ts` if it is public, and a decision about `robots` and the sitemap.
 - **A changed URL** needs a 301 in `config/redirects.ts`.
 - **A new environment variable** is added to `lib/env.ts` (validated) and `.env.example` (explained).
-- **A schema change** goes in `db/schema.sql`, must be safe to run twice, and is tested in
-  `tests/sql.test.ts`. Never run it on a real database without the owner's approval.
+- **A schema change** goes in `db/schema.sql` **and** in a new file of `db/migrations/`, must be
+  safe to run twice, and is tested in `tests/sql.test.ts` (including the upgrade of a database
+  made with the previous version). Never run it on a real database without the owner's approval.
 
 ## 4. Verify — it is not optional
 
@@ -107,3 +114,41 @@ a fact.
 
 A short summary: what changed, how you verified it (with numbers), what is pending and who has to
 do it (you or the owner), and anything that needs their approval.
+
+## 6. Adapting it to a line of business
+
+This is a **base to be modified end to end**, not a theme: design, texts, purchase flow, data
+model and admin panel are all yours to change. The demo (a mixed catalogue) is one example.
+
+**Start from the preset, not from the demo.**
+
+1. `npm run preset` lists the starting catalogues; `npm run preset <name>` applies the one closest
+   to the business (products, categories, home texts, a suggested palette). Read the node of that
+   line of business in the brain, branch **«Adaptar a tu rubro»**.
+2. Give every product its **type** — `physical`, `digital`, `service` or `quote` — and, when it is
+   sold by weight or measure, its `unit`, `step` and minimum. [`docs/product-types.md`](docs/product-types.md)
+   says what each one does and what the server guarantees.
+3. Replace **every** EXAMPLE with what the owner confirmed. A preset's prices, opening hours,
+   policies and texts are placeholders: publishing them is inventing business data (rule 1).
+4. Ask the owner what only they know for that business: cancellation and return policies, lead
+   times, what happens when the real weight differs, licences of digital files, and which
+   permits or rules apply to what they sell. Never assume a regulation.
+
+**If the business needs something that does not exist**, extend the base without breaking its
+contract:
+
+1. Look first: [`README.md`](README.md#which-businesses-it-fits) and [`ROADMAP.md`](ROADMAP.md) say
+   what is built and what is not. Tell the owner plainly when something is not built.
+2. Try what is there: a type, a unit, options, `attributes`, texts and `config/commerce.ts` solve
+   more cases than it seems.
+3. A new field or type goes through the whole chain, in this order: `lib/data/types.ts` → the pure
+   rule in `lib/orders/` → `db/schema.sql` + a migration in `db/migrations/` → the three data
+   adapters (`json.ts`, and `sql.ts` for the two databases) → the screens → `i18n/es.ts` and
+   `en.ts` → the docs and `CHANGELOG.md` with migration notes.
+4. Keep the invariants: the server sets every amount; whatever must not be oversold (stock, a
+   slot) is checked where the order is created, atomically; a private file never gets a public
+   address; nothing is credited without a verified payment for the exact total.
+5. Every new field has a default, so existing data keeps working, and every new adapter method
+   is implemented in all three adapters (TypeScript will tell you which are missing).
+6. Test it at three levels — the pure rule, the SQL on PGlite, and end to end on a phone and a
+   computer — before saying it works.

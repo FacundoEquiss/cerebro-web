@@ -4,7 +4,7 @@
 
 Sirve como guía de trabajo reutilizable: cada nodo dice qué es, para qué sirve, cómo se hace, con qué herramientas, cuál es el error común, su prioridad y su fase. Es genérico: los datos del negocio concreto los aporta su dueño.
 
-Versión 1.0.0 · actualizado el 2026-11-19 · 18 ramas · 316 nodos · Fuente: https://cerebro-web-negocios.vercel.app/
+Versión 1.1.0 · actualizado el 2026-11-20 · 19 ramas · 331 nodos · Fuente: https://cerebro-web-negocios.vercel.app/
 
 ## Instrucciones para el agente
 
@@ -22,23 +22,24 @@ Cada nodo trae: identificador, prioridad (esencial, recomendado, opcional, avanz
 ## Índice de ramas
 
 1. Cómo usar este cerebro — Instrucciones para el agente (o la persona) que va a construir una web de negocio con este mapa.
-2. Estrategia y marca — Qué se vende, a quién, con qué números y con qué identidad, antes de escribir una línea de código.
-3. Arquitectura y datos — El stack, el backend, la lógica de servidor y la relación con el sistema de gestión.
-4. Tienda y catálogo — Portada, catálogo, ficha de producto, carrito y, si aplica, configurador de producto.
-5. Checkout, pagos y envíos — El tramo donde el interés se convierte en dinero: datos, pedido, pago, envío y confirmación.
-6. Diseño y UX — Interfaz pensada primero para el móvil, accesible, coherente y con animaciones que no frenan.
-7. Multimedia — Fotos, video e imágenes preparadas en formato, tamaño, peso y texto alternativo.
-8. SEO técnico — Lo que hace que buscadores y asistentes puedan rastrear, entender e indexar cada página.
-9. Google, Bing y fichas — Herramientas de buscadores, perfil de negocio, reseñas y catálogos de producto.
-10. Contenido e IA — Cómo aparecer en asistentes de IA y qué contenido crear para cada búsqueda.
-11. Performance — Velocidad de carga y de respuesta, medida con Core Web Vitals.
-12. Medición y atribución — Saber qué pasa en la web, de dónde viene cada venta y qué anuncio la trajo.
-13. Publicidad paga — Anuncios en Meta y Google por etapas, con presupuesto calculado y reglas para cortar o escalar.
-14. Redes y contenido — Presencia orgánica: rutina de publicación, formatos, calendario y cómo llevar gente a la web.
-15. Seguridad y legal — Protección de la aplicación y de los datos, y cumplimiento legal y de privacidad.
-16. Calidad y operación — Pruebas, integración continua, versionado, verificación visual y observabilidad.
-17. Trabajo con agentes IA — Cómo dirigir agentes de IA: instrucciones, decisiones cerradas, aprobaciones y verificación.
-18. Lanzamiento y 90 días — Checklist para salir a producción y plan de los primeros tres meses.
+2. Adaptar a tu rubro — Qué preset usar, qué tipo de producto y qué cuidar según lo que vende el negocio: desde moda hasta servicios con turno o trabajos a presupuesto.
+3. Estrategia y marca — Qué se vende, a quién, con qué números y con qué identidad, antes de escribir una línea de código.
+4. Arquitectura y datos — El stack, el backend, la lógica de servidor y la relación con el sistema de gestión.
+5. Tienda y catálogo — Portada, catálogo, ficha de producto, carrito y, si aplica, configurador de producto.
+6. Checkout, pagos y envíos — El tramo donde el interés se convierte en dinero: datos, pedido, pago, envío y confirmación.
+7. Diseño y UX — Interfaz pensada primero para el móvil, accesible, coherente y con animaciones que no frenan.
+8. Multimedia — Fotos, video e imágenes preparadas en formato, tamaño, peso y texto alternativo.
+9. SEO técnico — Lo que hace que buscadores y asistentes puedan rastrear, entender e indexar cada página.
+10. Google, Bing y fichas — Herramientas de buscadores, perfil de negocio, reseñas y catálogos de producto.
+11. Contenido e IA — Cómo aparecer en asistentes de IA y qué contenido crear para cada búsqueda.
+12. Performance — Velocidad de carga y de respuesta, medida con Core Web Vitals.
+13. Medición y atribución — Saber qué pasa en la web, de dónde viene cada venta y qué anuncio la trajo.
+14. Publicidad paga — Anuncios en Meta y Google por etapas, con presupuesto calculado y reglas para cortar o escalar.
+15. Redes y contenido — Presencia orgánica: rutina de publicación, formatos, calendario y cómo llevar gente a la web.
+16. Seguridad y legal — Protección de la aplicación y de los datos, y cumplimiento legal y de privacidad.
+17. Calidad y operación — Pruebas, integración continua, versionado, verificación visual y observabilidad.
+18. Trabajo con agentes IA — Cómo dirigir agentes de IA: instrucciones, decisiones cerradas, aprobaciones y verificación.
+19. Lanzamiento y 90 días — Checklist para salir a producción y plan de los primeros tres meses.
 
 ---
 
@@ -241,6 +242,302 @@ Cada tarea cierra con un informe corto: qué se hizo, cómo se verificó y qué 
 **Herramientas / dónde se hace:** Registro de cambios · archivo de instrucciones del repositorio
 
 **Error común / regla de oro:** No declarar terminado lo que quedó a medias: nombrar con precisión lo pendiente.
+
+---
+
+## Adaptar a tu rubro
+
+`rub` · Prioridad: esencial · Fase 1: antes de construir
+
+Qué preset usar, qué tipo de producto y qué cuidar según lo que vende el negocio: desde moda hasta servicios con turno o trabajos a presupuesto.
+
+**Para qué sirve:** La base sirve para cualquier rubro, pero cada uno pide otra configuración y otras preguntas al dueño.
+
+**Cómo se hace:**
+
+1. Elegir el preset más parecido al rubro y aplicarlo.
+2. Definir el tipo de cada producto y cómo se vende.
+3. Recorrer el nodo del rubro: qué configurar y qué consultar al dueño.
+4. Si falta algo, ver si está en la hoja de ruta o cómo extender la base.
+
+**Herramientas / dónde se hace:** `npm run preset` · docs/product-types.es.md · README (tabla por rubro)
+
+**Error común / regla de oro:** Adaptar los textos y dejar el modelo de venta de otro rubro: un turno no es una prenda y un presupuesto no es un precio.
+
+### Empezar por un preset
+
+`rub-preset` · Prioridad: esencial · Fase 1: antes de construir
+
+Un catálogo de arranque por rubro: productos, categorías, textos de la portada y una paleta sugerida, todo de ejemplo.
+
+**Para qué sirve:** Evita arrancar de una tienda que parece de otro rubro y muestra en minutos cómo va a quedar la del negocio.
+
+**Cómo se hace:**
+
+1. Listar los presets con `npm run preset` y elegir el más cercano al rubro del negocio; ante la duda, `mixto` (uno de cada tipo).
+2. Aplicarlo con `npm run preset <nombre>`: reemplaza `content/products.json`, `content/site.json`, los ocho colores de `config/brand.ts` y `db/seed.sql`.
+3. Reiniciar el servidor y revisar la portada, una ficha de cada tipo y el checkout en celular y en computadora.
+4. Reemplazar cada EJEMPLO por el dato real que dé el dueño: nombres, precios, textos, fotos, políticas. Lo que falte queda marcado como pendiente.
+
+**Herramientas / dónde se hace:** `content/presets/` · `npm run preset` · GETTING-STARTED.md
+
+**Error común / regla de oro:** Un preset es un punto de partida, no el negocio: publicar con sus precios y textos de ejemplo es inventar datos.
+
+### Tipo de cada producto
+
+`rub-tipos` · Prioridad: esencial · Fase 1: antes de construir
+
+Cada producto es físico, digital, servicio con turno o a presupuesto, y además se vende por unidad o por peso o medida.
+
+**Para qué sirve:** El tipo decide qué pide la ficha, si el pedido lleva envío y qué pasa después del pago.
+
+**Cómo se hace:**
+
+1. Físico (`physical`): se envía o se retira; puede tener opciones, variantes y stock.
+2. Digital (`digital`): sin envío; el archivo es privado y se entrega con un enlace firmado y con vencimiento cuando el pedido está pagado.
+3. Servicio (`service`): el cliente elige día y hora; el turno se reserva al crear el pedido y se libera si se cancela o vence.
+4. A presupuesto (`quote`): sin precio público; entra como consulta, el dueño cotiza y envía, y el cliente acepta y paga.
+5. Por peso o medida: `unit` (kg, g, m, l…), `step` y mínimo; el precio es por esa unidad y las cantidades pueden ser decimales.
+
+**Herramientas / dónde se hace:** docs/product-types.es.md · editor de productos del panel · `lib/data/types.ts`
+
+**Error común / regla de oro:** Forzar un servicio o un presupuesto dentro de un producto físico con «precio 0»: el tipo existe para no mentirle al cliente ni al servidor.
+
+### Moda e indumentaria
+
+`rub-moda` · Prioridad: recomendado · Fase 1: antes de construir
+
+Prendas y accesorios con talle y color, stock por variante y una foto por color.
+
+**Para qué sirve:** Es el caso clásico de variantes: el cliente tiene que elegir antes de comprar y el stock es de cada combinación.
+
+**Cómo se hace:**
+
+1. Usar el preset `moda`. Tipo `physical`, opciones talle y color, variantes generadas con su stock.
+2. Cargar la tabla de talles real de cada prenda y decir cómo mide el modelo de la foto, si hay.
+3. Asociar cada foto a su color para que la ficha cambie al elegir.
+4. Escribir la política de cambios de talle y devoluciones con los plazos que confirme el dueño.
+5. Completar género, grupo de edad y material: los piden los catálogos de Google y Meta para indumentaria.
+
+**Herramientas / dónde se hace:** preset `moda` · editor de productos (opciones y variantes) · feeds de productos
+
+**Error común / regla de oro:** Declarar talles sin obligar a elegir: entra un pedido que no se puede cumplir.
+
+### Hogar y decoración
+
+`rub-hogar` · Prioridad: recomendado · Fase 1: antes de construir
+
+Objetos con variantes de color, piezas a pedido y productos frágiles o voluminosos.
+
+**Para qué sirve:** El envío y el plazo pesan tanto como el producto: un objeto frágil o grande cambia el costo y la promesa.
+
+**Cómo se hace:**
+
+1. Usar el preset `hogar`. Tipo `physical`; stock `null` para lo que se hace a pedido.
+2. Indicar medidas, materiales y cuidados en la descripción; son las preguntas que frenan la compra.
+3. Definir con el dueño cómo se embala lo frágil y qué pasa si llega roto.
+4. Revisar las tarifas de envío para piezas grandes: una tarifa fija puede no alcanzar.
+
+**Herramientas / dónde se hace:** preset `hogar` · `config/commerce.ts` (envíos y plazos)
+
+**Error común / regla de oro:** Prometer el plazo de un producto en stock para una pieza que se fabrica a pedido.
+
+### Tecnología y electrónica
+
+`rub-tecno` · Prioridad: recomendado · Fase 1: antes de construir
+
+Productos con stock real, precio de lista, garantía y, a veces, un servicio de instalación.
+
+**Para qué sirve:** El comprador compara precio, garantía y disponibilidad; un dato flojo en cualquiera de los tres pierde la venta.
+
+**Cómo se hace:**
+
+1. Usar el preset `tecnologia`. Tipo `physical` con stock numérico; `service` para instalación o soporte con turno.
+2. Cargar la ficha técnica real y el código de barras (GTIN) si el producto lo tiene: mejora los catálogos.
+3. Escribir la garantía de cada producto tal como la da el fabricante o el negocio, y cómo se gestiona.
+4. Consultar con el dueño qué exige la normativa local sobre garantías y comprobantes: no asumirla.
+
+**Herramientas / dónde se hace:** preset `tecnologia` · atributos del producto (`gtin`) · feeds de productos
+
+**Error común / regla de oro:** Publicar stock que no existe: en este rubro la disponibilidad es parte de la oferta.
+
+### Almacén y venta por peso
+
+`rub-almacen` · Prioridad: recomendado · Fase 1: antes de construir
+
+Productos que se venden por kilo, por gramo o por litro, junto a envasados con precio por unidad.
+
+**Para qué sirve:** El precio es por unidad de medida y la cantidad es decimal: la tienda tiene que mostrarlo y el servidor validarlo.
+
+**Cómo se hace:**
+
+1. Usar el preset `almacen`. Tipo `physical` con `unit` (kg, g, l…), `step` (de a cuánto) y mínimo; el stock va en esa misma unidad.
+2. Definir con el dueño qué pasa cuando el peso real difiere del pedido: se cobra la diferencia, se devuelve o se ajusta. Escribirlo en la ficha y en los términos.
+3. Indicar ingredientes, alérgenos, origen y vencimiento según lo que el dueño confirme.
+4. Consultar qué habilitaciones y rotulados exige la normativa local para vender alimentos: es una pregunta para el dueño o su asesor.
+5. Revisar el envío de productos frágiles o que necesitan frío.
+
+**Herramientas / dónde se hace:** preset `almacen` · editor de productos (unidad, paso, mínimo) · `lib/orders/pricing.ts`
+
+**Error común / regla de oro:** Vender por peso sin decir qué pasa con la variación del peso real: es la primera discusión con un cliente.
+
+### Gastronomía y delivery
+
+`rub-gastro` · Prioridad: recomendado · Fase 1: antes de construir
+
+Comidas para pedir, con tamaños, productos por kilo a pedido y catering a presupuesto.
+
+**Para qué sirve:** Lo que importa es la zona, el horario y el tiempo: un pedido fuera de eso no se puede cumplir.
+
+**Cómo se hace:**
+
+1. Usar el preset `gastronomia`. `physical` con opciones para tamaños; por kilo para tortas; `quote` para catering o eventos.
+2. Cargar en `config/commerce.ts` las formas de entrega reales y su costo; escribir la zona y los horarios en la portada y en las preguntas frecuentes.
+3. Informar alérgenos e ingredientes con lo que confirme el dueño.
+4. Consultar qué habilitaciones exige la normativa local para elaborar y repartir alimentos.
+5. Tener en cuenta que la plantilla no cierra el checkout fuera de horario ni calcula el envío por distancia: si hacen falta, están en la hoja de ruta o se construyen.
+
+**Herramientas / dónde se hace:** preset `gastronomia` · `config/commerce.ts` · panel de pedidos en vivo
+
+**Error común / regla de oro:** Aceptar pedidos a cualquier hora sin decir cuándo se preparan: el cliente espera comida, no un pedido en cola.
+
+### Servicios con turno
+
+`rub-servicios` · Prioridad: recomendado · Fase 1: antes de construir
+
+Peluquerías, consultorios, clases, asesorías: el cliente reserva un día y una hora.
+
+**Para qué sirve:** El turno es el producto: tiene que reservarse sin sobreventa y verse en una agenda.
+
+**Cómo se hace:**
+
+1. Usar el preset `servicios`. Tipo `service` con duración y cupo por turno (1 para una atención individual, más para una clase).
+2. Configurar en `config/commerce.ts` → `booking` la zona horaria, los horarios por día, los días bloqueados, la anticipación mínima y hasta cuándo se abre la agenda; un producto puede tener sus propios horarios.
+3. Definir con el dueño la política de cancelación y reprogramación, y si se cobra el turno completo o una seña (hoy se cobra el total del turno).
+4. Revisar el plazo de `ORDER_EXPIRY_HOURS`: un pedido sin pagar retiene el turno hasta que vence.
+5. Usar la Agenda del panel (día y semana) para ver los turnos; el recordatorio al cliente hoy es manual.
+6. Consultar si la actividad requiere matrícula, consentimiento o resguardo especial de datos (por ejemplo, salud).
+
+**Herramientas / dónde se hace:** preset `servicios` · Agenda del panel · `lib/booking/slots.ts`
+
+**Error común / regla de oro:** Publicar horarios sin fijar la zona horaria ni los días cerrados: aparecen turnos que nadie puede atender.
+
+### Productos digitales
+
+`rub-digital` · Prioridad: recomendado · Fase 1: antes de construir
+
+Cursos, e-books y plantillas que se entregan como archivo después del pago.
+
+**Para qué sirve:** No hay envío y la entrega es inmediata, pero el archivo no puede quedar público.
+
+**Cómo se hace:**
+
+1. Usar el preset `digital`. Tipo `digital`; subir el archivo desde el panel (va al almacenamiento privado, nunca a `public/`).
+2. Verificar el recorrido completo: comprar, marcar pagado y descargar desde la página del pedido y desde el e-mail.
+3. Ajustar cuánto dura cada enlace en `config/commerce.ts` → `digital.linkHours`.
+4. Escribir con el dueño la política de reembolsos para productos digitales y qué licencia de uso tiene quien compra.
+5. Con pagos manuales, la entrega espera a que el dueño confirme el pago; con una pasarela es automática al acreditarse.
+
+**Herramientas / dónde se hace:** preset `digital` · `lib/orders/download.ts` · adaptador de almacenamiento
+
+**Error común / regla de oro:** Guardar el archivo en una carpeta pública «porque nadie conoce el enlace»: alguien lo va a conocer.
+
+### A medida, eventos y B2B
+
+`rub-medida` · Prioridad: recomendado · Fase 2: construcción
+
+Productos sin precio público: el cliente consulta, el negocio cotiza y el cliente acepta y paga.
+
+**Para qué sirve:** Cuando el precio depende de cantidades, medidas o fechas, publicar un número es mentir; el presupuesto ordena la conversación.
+
+**Cómo se hace:**
+
+1. Usar el preset `a-medida`. Tipo `quote`, con cantidad mínima y unidad si corresponde (por ejemplo, metro cuadrado).
+2. Pedir en la ficha lo necesario para cotizar: cantidad, medidas, fecha, lugar.
+3. En el panel, la consulta entra en su propia columna: cargar el precio de cada línea y el envío, y enviarla. El cliente recibe un enlace firmado para verla, aceptarla y pagarla.
+4. Si después de enviar cambia un precio, hay que volver a enviar: sólo se puede aceptar lo último enviado.
+5. Definir con el dueño la validez del presupuesto, la seña y los plazos de producción, y escribirlos.
+
+**Herramientas / dónde se hace:** preset `a-medida` · columna de consultas del panel · docs/product-types.es.md
+
+**Error común / regla de oro:** Mostrar «precio 0» o «desde» inventado para llenar el catálogo: el precio lo pone el presupuesto.
+
+### Suscripciones
+
+`rub-suscripciones` · Prioridad: opcional · Fase 4: crecimiento
+
+Cobros que se repiten: cajas mensuales, membresías, abonos.
+
+**Para qué sirve:** Es otro modelo de venta: necesita cobro recurrente, altas, bajas y avisos.
+
+**Cómo se hace:**
+
+1. Hoy no está incluido: figura en la hoja de ruta. No prometerlo como disponible.
+2. Mientras tanto, se puede vender el primer período como un producto y renovar a mano, avisándolo con claridad.
+3. Si el negocio lo necesita ya, construirlo sobre los adaptadores: el cobro recurrente en el adaptador de pagos y el estado de la suscripción en el de datos.
+4. Consultar qué exige la normativa local sobre renovación automática y baja.
+
+**Herramientas / dónde se hace:** ROADMAP.md · docs/adapters.es.md
+
+**Error común / regla de oro:** Simular una suscripción con un pedido que el cliente «debería» repetir: sin cobro recurrente no es una suscripción.
+
+### Venta mayorista
+
+`rub-mayorista` · Prioridad: opcional · Fase 4: crecimiento
+
+Precios por cantidad, mínimos de compra y listas distintas según el cliente.
+
+**Para qué sirve:** El mayorista compra por volumen: sin precios por cantidad la tienda minorista no le sirve.
+
+**Cómo se hace:**
+
+1. Hoy se cubre con lo que hay: cantidad mínima por producto, pedido mínimo en `config/commerce.ts` y productos a presupuesto para lo que se negocia.
+2. Los precios escalonados por cantidad y las listas por cliente no están incluidos: figuran en la hoja de ruta.
+3. Para volúmenes grandes, usar el presupuesto: el dueño pone el precio de esa operación.
+4. Definir con el dueño condiciones de pago, plazos y facturación.
+
+**Herramientas / dónde se hace:** `config/commerce.ts` (pedido mínimo) · productos `quote` · ROADMAP.md
+
+**Error común / regla de oro:** Mostrar el precio mayorista a todo el mundo por no tener listas: mejor cotizar a pedido.
+
+### Marketplace multivendedor
+
+`rub-marketplace` · Prioridad: avanzado · Fase 4: crecimiento
+
+Una tienda donde venden varios, cada uno con sus productos, sus pedidos y su cobro.
+
+**Para qué sirve:** Cambia el modelo de datos entero: vendedores, comisiones, liquidaciones y permisos.
+
+**Cómo se hace:**
+
+1. No está incluido y no es una adaptación chica: figura en la hoja de ruta como exploración.
+2. Si la idea es mostrar productos de terceros y cobrar todo en una sola caja, alcanza con la tienda actual y un acuerdo por fuera.
+3. Si cada vendedor cobra lo suyo, hace falta separar pedidos y pagos por vendedor: es un proyecto aparte.
+4. Decirle al dueño con claridad qué existe y qué habría que construir.
+
+**Herramientas / dónde se hace:** ROADMAP.md · `lib/data/types.ts`
+
+**Error común / regla de oro:** Prometer un marketplace sobre una tienda de un solo vendedor.
+
+### Si falta algo: extender
+
+`rub-extender` · Prioridad: recomendado · Fase 2: construcción
+
+Cómo agregar un tipo, un campo o un paso sin romper el contrato de la base.
+
+**Para qué sirve:** La base se modifica entera, pero hay un orden que evita romper pedidos, pagos y adaptadores.
+
+**Cómo se hace:**
+
+1. Primero probar con lo que hay: tipo, unidad, opciones, atributos y textos resuelven más casos de los que parece.
+2. Si hace falta un campo nuevo: `lib/data/types.ts`, después `db/schema.sql` con una migración en `db/migrations/` que se pueda correr dos veces, y los tres adaptadores.
+3. Todo importe se calcula en el servidor (`lib/orders/pricing.ts` y `create_order()`); el navegador nunca manda precios.
+4. Agregar la prueba antes de darlo por hecho: unitaria, en SQL y de punta a punta.
+5. Documentar el cambio y anotar en el registro de cambios cómo migrar.
+
+**Herramientas / dónde se hace:** AGENTS.md · docs/adapters.es.md · `tests/`
+
+**Error común / regla de oro:** Resolverlo sólo en la pantalla: si el servidor y la base no lo saben, es un dato que el navegador puede falsear.
 
 ---
 

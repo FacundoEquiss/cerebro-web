@@ -2,9 +2,19 @@
 
 # Cerebro Web
 
-**La web de un negocio, tuya, en un solo repositorio: una tienda que funciona, un panel de gestión
-que recibe los pedidos en un tablero kanban y un «cerebro» que les explica a los agentes de IA
-cómo construirla y hacerla crecer.**
+**La web de un negocio, tuya, en un solo repositorio: una tienda que sirve para cualquier rubro,
+un panel de gestión que recibe los pedidos en un tablero kanban y un «cerebro» que les explica a
+los agentes de IA cómo construirla y hacerla crecer.**
+
+> ### No es una plataforma: es una base que es tuya
+>
+> Tenés **todo el código** y cambiás **cualquier cosa**, de punta a punta: el diseño, los textos,
+> el flujo de compra, el modelo de datos, el panel. Sin comisiones, sin abono mensual a una
+> plataforma de tiendas y sin depender de la hoja de ruta de nadie. Y no hace falta hacerlo a
+> mano: un agente de IA la adapta a tu negocio siguiendo el cerebro.
+>
+> La demo es **un ejemplo** de cómo puede quedar la base —un catálogo mixto con un producto de
+> cada tipo—. Es un punto de partida para reescribir, no un tema para conservar.
 
 Código abierto (MIT), genérica y sin atarse a ninguna plataforma. Hecha con Next.js; corre con
 `next start` en cualquier servidor Node, en Docker o en Vercel.
@@ -15,7 +25,33 @@ Código abierto (MIT), genérica y sin atarse a ninguna plataforma. Hecha con Ne
 | Tienda | Panel de gestión |
 |---|---|
 | ![Portada de la tienda de demostración](docs/screenshots/store-home.png) | ![Tablero kanban con pedidos en todos los estados](docs/screenshots/admin-kanban.png) |
-| ![Página de producto con selector de talle y color](docs/screenshots/store-product.png) | ![Detalle de un pedido en el celular](docs/screenshots/admin-order-mobile.png) |
+| ![Página de un servicio: selector de día y hora](docs/screenshots/store-product.png) | ![Detalle de un pedido en el celular](docs/screenshots/admin-order-mobile.png) |
+
+## Para qué rubros sirve
+
+La base vende cuatro tipos de producto —**físico**, **digital**, **servicio con turno** y **a
+presupuesto**—, por unidad o **por peso o medida**, y un carrito puede mezclarlos. Esto es lo que
+le da a cada rubro, sin prometer lo que no está hecho (el detalle, en
+[`docs/product-types.es.md`](docs/product-types.es.md)):
+
+| Rubro | Viene listo | Lo adapta el agente, y cómo | En la hoja de ruta |
+|---|---|---|---|
+| **Moda e indumentaria** | Preset `moda`: talle y color que el cliente tiene que elegir, stock por variante, una foto por color, feeds con género, edad y material | Tabla de talles y política de cambios (textos); cuidados y calce en cada descripción | Reseñas con compra verificada; personalizador de productos |
+| **Hogar y deco** | Preset `hogar`: variantes de color, piezas a pedido junto a las de stock, plazos en un solo lugar | Medidas, materiales y cuidados (textos); cómo viaja lo frágil o voluminoso (`config/commerce.ts`) | Envío por zona o por peso |
+| **Tecnología y electrónica** | Preset `tecnologia`: stock real, precio de lista y de oferta, código de barras (GTIN) en los feeds, un servicio de instalación con turno | Garantía y ficha técnica (textos y atributos del producto) | Reseñas; alertas de stock |
+| **Almacén, dietética y venta por peso** | Preset `almacen`: precio por kg, g, l…, cantidades decimales con mínimo y paso que valida el servidor, stock decimal y totales redondeados en el servidor | La política para cuando el peso real difiere del pedido (texto); ingredientes y alérgenos | Cobrar la diferencia del peso real; envío por peso |
+| **Gastronomía y delivery** | Preset `gastronomia`: platos con tamaños, venta por kilo a pedido, catering a presupuesto, recepción de pedidos en vivo con sonido, retiro y envío con tarifa fija | Zona, horarios y alérgenos (textos); cerrar el checkout fuera de horario (código, chico) | Zonas de entrega por distancia; extras por plato; interruptor de abierto/cerrado |
+| **Servicios con turno** (peluquería, consultorio, clases) | Preset `servicios`: selector de día y hora, duración, cupo por turno, horarios semanales, días bloqueados, zona horaria, sin sobreventa, el turno se libera si el pedido se cancela o vence, y una **Agenda** (día y semana) en el panel | Horarios propios de un servicio (archivo del catálogo); política de cancelación (texto); cobrar una seña en vez del total (código) | Recordatorios; que el cliente reprograme; agendas por profesional o sala; sincronizar calendarios |
+| **Productos digitales** (cursos, e-books, plantillas) | Preset `digital`: archivo privado, enlace de descarga firmado y con vencimiento, entregado en la página del pedido y por e-mail cuando el pedido está pagado; sin envío | Licencia y política de reembolso (textos); varios archivos por producto (código, chico) | Reproductor de cursos / streaming; claves de licencia; límite de descargas |
+| **Trabajos a medida, eventos y B2B** | Preset `a-medida`: sin precio público, formulario «Pedir presupuesto», consultas en su propia columna del kanban, precio por línea más envío, enlace firmado para aceptar y pagar | Preguntas extra en el formulario (código, chico); validez y seña (textos) | Presupuestos armados desde cero en el panel; presupuesto en PDF; fecha de vencimiento |
+| **Suscripciones** | — | Vender el primer período como un producto y renovar a mano, avisándolo con claridad | Cobro recurrente |
+| **Mayorista** | Cantidad mínima por producto, pedido mínimo, presupuesto para volúmenes | Un despliegue sólo mayorista con su propio catálogo | Precios escalonados por cantidad; listas por cliente; cuentas de cliente |
+| **Marketplace de varios vendedores** | — | Un solo vendedor que publica productos de terceros y liquida por fuera | Multivendedor (en exploración: cambia el modelo de datos) |
+
+**Empezá por tu rubro**: `npm run preset` lista los catálogos de arranque y
+`npm run preset <nombre>` aplica uno (productos, categorías, textos de la portada y una paleta
+sugerida; todo de ejemplo, para reemplazar). Si tu negocio necesita algo que todavía no existe,
+[`AGENTS.es.md`](AGENTS.es.md) §6 explica cómo extender la base sin romper su contrato.
 
 ## Por qué existe
 
@@ -58,7 +94,7 @@ JavaScript).
 - Ingreso sin proveedor externo: contraseñas con hash scrypt en una variable de entorno y cookie
   de sesión firmada.
 
-**3. El cerebro (`cerebro/`)** — un mapa mental con 316 nodos accionables sobre cómo construir,
+**3. El cerebro (`cerebro/`)** — un mapa mental con 331 nodos accionables sobre cómo construir,
 lanzar y hacer crecer la web de un negocio: estrategia, tienda, checkout, SEO, buscadores con IA,
 medición, publicidad, seguridad, calidad y trabajo con agentes. Se publica aparte en
 <https://cerebro-web-negocios.vercel.app> y este proyecto lo cumple.
@@ -144,7 +180,8 @@ La pantalla **Ajustes** del panel lista lo que todavía falta.
 | `npm run test:e2e` | Pruebas de punta a punta (Playwright) contra el build de producción, en celu y compu |
 | `npm run admin:hash` | Crea la línea de un usuario para `ADMIN_USERS` |
 | `npm run brain` | Regenera el sitio estático del cerebro en `cerebro/dist/` |
-| `npm run images` / `npm run db:seed` | Redibuja las imágenes de demo / regenera `db/seed.sql` |
+| `npm run preset` / `npm run preset <nombre>` | Lista los catálogos de arranque / aplica uno (productos, textos de la portada, paleta) |
+| `npm run images` / `npm run samples` / `npm run db:seed` | Redibuja las imágenes / las descargas de ejemplo / regenera `db/seed.sql` |
 | `npm run data:export` | Copia los productos editados en local (modo json) a `content/products.json` |
 | `npm run screenshots` | Captura cada pantalla clave y falla ante errores de consola |
 
@@ -152,6 +189,7 @@ La pantalla **Ajustes** del panel lista lo que todavía falta.
 
 - [`AGENTS.es.md`](AGENTS.es.md) — instrucciones para agentes de IA (y personas).
 - [`GETTING-STARTED.es.md`](GETTING-STARTED.es.md) — de la plantilla a la web de un negocio.
+- [`docs/product-types.es.md`](docs/product-types.es.md) — físicos, digitales, servicios, presupuestos, venta por peso y presets.
 - [`docs/adapters.es.md`](docs/adapters.es.md) — los contratos de los adaptadores y cómo sumar uno.
 - [`docs/admin.es.md`](docs/admin.es.md) — el panel: acceso, kanban y recepción en vivo.
 - [`docs/deploy.es.md`](docs/deploy.es.md) — hospedaje en cualquier servidor Node, Docker o Vercel.

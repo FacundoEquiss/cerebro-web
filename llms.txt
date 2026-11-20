@@ -1,12 +1,12 @@
 # Cerebro Web
 
-> Open-source (MIT) Next.js project: a working online store, an admin panel that receives orders on a kanban board, and "the brain" — a guide for AI agents on how to build and grow a business website. One repository, generic, no platform lock-in. The owner of the business does not program: an agent adapts this template to their business and verifies its own work.
+> Open-source (MIT) Next.js project: a base for the online store of ANY line of business (physical and digital products, services by appointment, sale by weight, quotes on request), an admin panel that receives orders on a kanban board, and "the brain" — a guide for AI agents on how to build and grow a business website. One repository, generic, no platform lock-in. It is a base to be modified end to end, not a theme. The owner of the business does not program: an agent adapts this template to their business and verifies its own work.
 
 If you are an agent asked to "adapt this to my business following the brain", read in this order:
 
 1. `AGENTS.md` — the rules of this codebase and where everything lives (Spanish: `AGENTS.es.md`).
-2. `cerebro/dist/llms-full.txt` — the brain: 316 nodes on strategy, store, checkout, SEO, AI search, measurement, ads, security, quality and working with agents. Read the branch «Cómo usar este cerebro» first, then the essential nodes of your phase. (Spanish.)
-3. `GETTING-STARTED.md` — the ordered checklist from template to real site: what the agent does, what only the owner can do.
+2. `cerebro/dist/llms-full.txt` — the brain: 331 nodes on strategy, adapting to a line of business, store, checkout, SEO, AI search, measurement, ads, security, quality and working with agents. Read the branches «Cómo usar este cerebro» and «Adaptar a tu rubro» first, then the essential nodes of your phase. (Spanish.)
+3. `GETTING-STARTED.md` — the ordered checklist (its first step: `npm run preset <name>`, the starting catalogue closest to the business) from template to real site: what the agent does, what only the owner can do.
 4. `docs/adapters.md` — the contracts every data, payment, mail, storage and antibot adapter keeps.
 5. The code you are about to change, and the tests next to it.
 
@@ -17,8 +17,9 @@ Never invent business data. Never let the browser set a price. Verify before say
 - [AGENTS.md](AGENTS.md): rules that always apply, map of the repository, how to verify
 - [GETTING-STARTED.md](GETTING-STARTED.md): brand, products, photos, database, admin user, payments, shipping, legal pages, domain, search engines, feeds, measurement
 - [README.md](README.md): what the project is, how to run it, from demo to real use
+- [docs/product-types.md](docs/product-types.md): physical, digital, service and quote products; sale by weight; feeds and structured data per type; presets
 - [docs/adapters.md](docs/adapters.md): adapter interfaces and how to add one
-- [docs/admin.md](docs/admin.md): the admin panel — access, kanban, live reception, order detail
+- [docs/admin.md](docs/admin.md): the admin panel — access, kanban, live reception, order detail, quotes, agenda
 - [docs/deploy.md](docs/deploy.md): any Node server, Docker, Vercel
 - [ROADMAP.md](ROADMAP.md): what is planned and what is not
 - [SECURITY.md](SECURITY.md): the properties the project defends and where they live
@@ -33,11 +34,13 @@ Never invent business data. Never let the browser set a price. Verify before say
 ## Configuration (the business, in one place)
 
 - [config/brand.ts](config/brand.ts): name, tagline, colours, contact, social, country, currency, language
-- [config/commerce.ts](config/commerce.ts): shipping, minimum order, instalments, lead times, bank details
+- [config/commerce.ts](config/commerce.ts): shipping, minimum order, instalments, lead times, bank details, opening hours for appointments, download link expiry
 - [config/redirects.ts](config/redirects.ts): 301 redirects
 - [i18n/es.ts](i18n/es.ts), [i18n/en.ts](i18n/en.ts): every UI text
 - [i18n/routes.ts](i18n/routes.ts): the public URL of each page per language
-- [content/products.json](content/products.json): the demo catalogue
+- [content/products.json](content/products.json): the catalogue in use (the demo is the mixed preset)
+- [content/presets/](content/presets/): starting catalogues per line of business (`npm run preset`)
+- [content/site.json](content/site.json): the home texts (hero, benefits, questions)
 - [.env.example](.env.example): every environment variable, explained
 
 ## Code
@@ -48,6 +51,9 @@ Never invent business data. Never let the browser set a price. Verify before say
 - [lib/orders/pricing.ts](lib/orders/pricing.ts): the server sets the price
 - [lib/orders/idempotency.ts](lib/orders/idempotency.ts), [lib/orders/receipt.ts](lib/orders/receipt.ts): one order per attempt; the signed order link
 - [lib/orders/status.ts](lib/orders/status.ts): the order workflow and its allowed moves
+- [lib/booking/slots.ts](lib/booking/slots.ts): the slots of a service — opening hours, time zone, what the server accepts
+- [lib/orders/download.ts](lib/orders/download.ts): the signed, expiring download link of a digital product
+- [lib/admin/quotes.ts](lib/admin/quotes.ts): pricing and sending a quote
 - [lib/payments/credit.ts](lib/payments/credit.ts): credit a payment once, for the right amount
 - [lib/admin/auth.ts](lib/admin/auth.ts), [proxy.ts](proxy.ts): who may enter the admin panel
 - [lib/env.ts](lib/env.ts): environment variables, validated

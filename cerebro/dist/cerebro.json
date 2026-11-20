@@ -1,6 +1,6 @@
 {
- "generado": "2026-11-19",
- "version": "1.0.0",
+ "generado": "2026-11-20",
+ "version": "1.1.0",
  "idioma": "es",
  "raiz": {
   "id": "web",
@@ -230,6 +230,343 @@
       "error_comun": "No declarar terminado lo que quedó a medias: nombrar con precisión lo pendiente.",
       "prioridad": "recomendado",
       "fase": "antes",
+      "hijos": []
+     }
+    ]
+   },
+   {
+    "id": "rub",
+    "titulo": "Adaptar a tu rubro",
+    "categoria": "rub",
+    "resumen": "Qué preset usar, qué tipo de producto y qué cuidar según lo que vende el negocio: desde moda hasta servicios con turno o trabajos a presupuesto.",
+    "para_que": "La base sirve para cualquier rubro, pero cada uno pide otra configuración y otras preguntas al dueño.",
+    "como": [
+     "Elegir el preset más parecido al rubro y aplicarlo.",
+     "Definir el tipo de cada producto y cómo se vende.",
+     "Recorrer el nodo del rubro: qué configurar y qué consultar al dueño.",
+     "Si falta algo, ver si está en la hoja de ruta o cómo extender la base."
+    ],
+    "herramientas": [
+     "`npm run preset`",
+     "docs/product-types.es.md",
+     "README (tabla por rubro)"
+    ],
+    "error_comun": "Adaptar los textos y dejar el modelo de venta de otro rubro: un turno no es una prenda y un presupuesto no es un precio.",
+    "prioridad": "esencial",
+    "fase": "antes",
+    "hijos": [
+     {
+      "id": "rub-preset",
+      "titulo": "Empezar por un preset",
+      "categoria": "rub",
+      "resumen": "Un catálogo de arranque por rubro: productos, categorías, textos de la portada y una paleta sugerida, todo de ejemplo.",
+      "para_que": "Evita arrancar de una tienda que parece de otro rubro y muestra en minutos cómo va a quedar la del negocio.",
+      "como": [
+       "Listar los presets con `npm run preset` y elegir el más cercano al rubro del negocio; ante la duda, `mixto` (uno de cada tipo).",
+       "Aplicarlo con `npm run preset <nombre>`: reemplaza `content/products.json`, `content/site.json`, los ocho colores de `config/brand.ts` y `db/seed.sql`.",
+       "Reiniciar el servidor y revisar la portada, una ficha de cada tipo y el checkout en celular y en computadora.",
+       "Reemplazar cada EJEMPLO por el dato real que dé el dueño: nombres, precios, textos, fotos, políticas. Lo que falte queda marcado como pendiente."
+      ],
+      "herramientas": [
+       "`content/presets/`",
+       "`npm run preset`",
+       "GETTING-STARTED.md"
+      ],
+      "error_comun": "Un preset es un punto de partida, no el negocio: publicar con sus precios y textos de ejemplo es inventar datos.",
+      "prioridad": "esencial",
+      "fase": "antes",
+      "hijos": []
+     },
+     {
+      "id": "rub-tipos",
+      "titulo": "Tipo de cada producto",
+      "categoria": "rub",
+      "resumen": "Cada producto es físico, digital, servicio con turno o a presupuesto, y además se vende por unidad o por peso o medida.",
+      "para_que": "El tipo decide qué pide la ficha, si el pedido lleva envío y qué pasa después del pago.",
+      "como": [
+       "Físico (`physical`): se envía o se retira; puede tener opciones, variantes y stock.",
+       "Digital (`digital`): sin envío; el archivo es privado y se entrega con un enlace firmado y con vencimiento cuando el pedido está pagado.",
+       "Servicio (`service`): el cliente elige día y hora; el turno se reserva al crear el pedido y se libera si se cancela o vence.",
+       "A presupuesto (`quote`): sin precio público; entra como consulta, el dueño cotiza y envía, y el cliente acepta y paga.",
+       "Por peso o medida: `unit` (kg, g, m, l…), `step` y mínimo; el precio es por esa unidad y las cantidades pueden ser decimales."
+      ],
+      "herramientas": [
+       "docs/product-types.es.md",
+       "editor de productos del panel",
+       "`lib/data/types.ts`"
+      ],
+      "error_comun": "Forzar un servicio o un presupuesto dentro de un producto físico con «precio 0»: el tipo existe para no mentirle al cliente ni al servidor.",
+      "prioridad": "esencial",
+      "fase": "antes",
+      "hijos": []
+     },
+     {
+      "id": "rub-moda",
+      "titulo": "Moda e indumentaria",
+      "categoria": "rub",
+      "resumen": "Prendas y accesorios con talle y color, stock por variante y una foto por color.",
+      "para_que": "Es el caso clásico de variantes: el cliente tiene que elegir antes de comprar y el stock es de cada combinación.",
+      "como": [
+       "Usar el preset `moda`. Tipo `physical`, opciones talle y color, variantes generadas con su stock.",
+       "Cargar la tabla de talles real de cada prenda y decir cómo mide el modelo de la foto, si hay.",
+       "Asociar cada foto a su color para que la ficha cambie al elegir.",
+       "Escribir la política de cambios de talle y devoluciones con los plazos que confirme el dueño.",
+       "Completar género, grupo de edad y material: los piden los catálogos de Google y Meta para indumentaria."
+      ],
+      "herramientas": [
+       "preset `moda`",
+       "editor de productos (opciones y variantes)",
+       "feeds de productos"
+      ],
+      "error_comun": "Declarar talles sin obligar a elegir: entra un pedido que no se puede cumplir.",
+      "prioridad": "recomendado",
+      "fase": "antes",
+      "hijos": []
+     },
+     {
+      "id": "rub-hogar",
+      "titulo": "Hogar y decoración",
+      "categoria": "rub",
+      "resumen": "Objetos con variantes de color, piezas a pedido y productos frágiles o voluminosos.",
+      "para_que": "El envío y el plazo pesan tanto como el producto: un objeto frágil o grande cambia el costo y la promesa.",
+      "como": [
+       "Usar el preset `hogar`. Tipo `physical`; stock `null` para lo que se hace a pedido.",
+       "Indicar medidas, materiales y cuidados en la descripción; son las preguntas que frenan la compra.",
+       "Definir con el dueño cómo se embala lo frágil y qué pasa si llega roto.",
+       "Revisar las tarifas de envío para piezas grandes: una tarifa fija puede no alcanzar."
+      ],
+      "herramientas": [
+       "preset `hogar`",
+       "`config/commerce.ts` (envíos y plazos)"
+      ],
+      "error_comun": "Prometer el plazo de un producto en stock para una pieza que se fabrica a pedido.",
+      "prioridad": "recomendado",
+      "fase": "antes",
+      "hijos": []
+     },
+     {
+      "id": "rub-tecno",
+      "titulo": "Tecnología y electrónica",
+      "categoria": "rub",
+      "resumen": "Productos con stock real, precio de lista, garantía y, a veces, un servicio de instalación.",
+      "para_que": "El comprador compara precio, garantía y disponibilidad; un dato flojo en cualquiera de los tres pierde la venta.",
+      "como": [
+       "Usar el preset `tecnologia`. Tipo `physical` con stock numérico; `service` para instalación o soporte con turno.",
+       "Cargar la ficha técnica real y el código de barras (GTIN) si el producto lo tiene: mejora los catálogos.",
+       "Escribir la garantía de cada producto tal como la da el fabricante o el negocio, y cómo se gestiona.",
+       "Consultar con el dueño qué exige la normativa local sobre garantías y comprobantes: no asumirla."
+      ],
+      "herramientas": [
+       "preset `tecnologia`",
+       "atributos del producto (`gtin`)",
+       "feeds de productos"
+      ],
+      "error_comun": "Publicar stock que no existe: en este rubro la disponibilidad es parte de la oferta.",
+      "prioridad": "recomendado",
+      "fase": "antes",
+      "hijos": []
+     },
+     {
+      "id": "rub-almacen",
+      "titulo": "Almacén y venta por peso",
+      "categoria": "rub",
+      "resumen": "Productos que se venden por kilo, por gramo o por litro, junto a envasados con precio por unidad.",
+      "para_que": "El precio es por unidad de medida y la cantidad es decimal: la tienda tiene que mostrarlo y el servidor validarlo.",
+      "como": [
+       "Usar el preset `almacen`. Tipo `physical` con `unit` (kg, g, l…), `step` (de a cuánto) y mínimo; el stock va en esa misma unidad.",
+       "Definir con el dueño qué pasa cuando el peso real difiere del pedido: se cobra la diferencia, se devuelve o se ajusta. Escribirlo en la ficha y en los términos.",
+       "Indicar ingredientes, alérgenos, origen y vencimiento según lo que el dueño confirme.",
+       "Consultar qué habilitaciones y rotulados exige la normativa local para vender alimentos: es una pregunta para el dueño o su asesor.",
+       "Revisar el envío de productos frágiles o que necesitan frío."
+      ],
+      "herramientas": [
+       "preset `almacen`",
+       "editor de productos (unidad, paso, mínimo)",
+       "`lib/orders/pricing.ts`"
+      ],
+      "error_comun": "Vender por peso sin decir qué pasa con la variación del peso real: es la primera discusión con un cliente.",
+      "prioridad": "recomendado",
+      "fase": "antes",
+      "hijos": []
+     },
+     {
+      "id": "rub-gastro",
+      "titulo": "Gastronomía y delivery",
+      "categoria": "rub",
+      "resumen": "Comidas para pedir, con tamaños, productos por kilo a pedido y catering a presupuesto.",
+      "para_que": "Lo que importa es la zona, el horario y el tiempo: un pedido fuera de eso no se puede cumplir.",
+      "como": [
+       "Usar el preset `gastronomia`. `physical` con opciones para tamaños; por kilo para tortas; `quote` para catering o eventos.",
+       "Cargar en `config/commerce.ts` las formas de entrega reales y su costo; escribir la zona y los horarios en la portada y en las preguntas frecuentes.",
+       "Informar alérgenos e ingredientes con lo que confirme el dueño.",
+       "Consultar qué habilitaciones exige la normativa local para elaborar y repartir alimentos.",
+       "Tener en cuenta que la plantilla no cierra el checkout fuera de horario ni calcula el envío por distancia: si hacen falta, están en la hoja de ruta o se construyen."
+      ],
+      "herramientas": [
+       "preset `gastronomia`",
+       "`config/commerce.ts`",
+       "panel de pedidos en vivo"
+      ],
+      "error_comun": "Aceptar pedidos a cualquier hora sin decir cuándo se preparan: el cliente espera comida, no un pedido en cola.",
+      "prioridad": "recomendado",
+      "fase": "antes",
+      "hijos": []
+     },
+     {
+      "id": "rub-servicios",
+      "titulo": "Servicios con turno",
+      "categoria": "rub",
+      "resumen": "Peluquerías, consultorios, clases, asesorías: el cliente reserva un día y una hora.",
+      "para_que": "El turno es el producto: tiene que reservarse sin sobreventa y verse en una agenda.",
+      "como": [
+       "Usar el preset `servicios`. Tipo `service` con duración y cupo por turno (1 para una atención individual, más para una clase).",
+       "Configurar en `config/commerce.ts` → `booking` la zona horaria, los horarios por día, los días bloqueados, la anticipación mínima y hasta cuándo se abre la agenda; un producto puede tener sus propios horarios.",
+       "Definir con el dueño la política de cancelación y reprogramación, y si se cobra el turno completo o una seña (hoy se cobra el total del turno).",
+       "Revisar el plazo de `ORDER_EXPIRY_HOURS`: un pedido sin pagar retiene el turno hasta que vence.",
+       "Usar la Agenda del panel (día y semana) para ver los turnos; el recordatorio al cliente hoy es manual.",
+       "Consultar si la actividad requiere matrícula, consentimiento o resguardo especial de datos (por ejemplo, salud)."
+      ],
+      "herramientas": [
+       "preset `servicios`",
+       "Agenda del panel",
+       "`lib/booking/slots.ts`"
+      ],
+      "error_comun": "Publicar horarios sin fijar la zona horaria ni los días cerrados: aparecen turnos que nadie puede atender.",
+      "prioridad": "recomendado",
+      "fase": "antes",
+      "hijos": []
+     },
+     {
+      "id": "rub-digital",
+      "titulo": "Productos digitales",
+      "categoria": "rub",
+      "resumen": "Cursos, e-books y plantillas que se entregan como archivo después del pago.",
+      "para_que": "No hay envío y la entrega es inmediata, pero el archivo no puede quedar público.",
+      "como": [
+       "Usar el preset `digital`. Tipo `digital`; subir el archivo desde el panel (va al almacenamiento privado, nunca a `public/`).",
+       "Verificar el recorrido completo: comprar, marcar pagado y descargar desde la página del pedido y desde el e-mail.",
+       "Ajustar cuánto dura cada enlace en `config/commerce.ts` → `digital.linkHours`.",
+       "Escribir con el dueño la política de reembolsos para productos digitales y qué licencia de uso tiene quien compra.",
+       "Con pagos manuales, la entrega espera a que el dueño confirme el pago; con una pasarela es automática al acreditarse."
+      ],
+      "herramientas": [
+       "preset `digital`",
+       "`lib/orders/download.ts`",
+       "adaptador de almacenamiento"
+      ],
+      "error_comun": "Guardar el archivo en una carpeta pública «porque nadie conoce el enlace»: alguien lo va a conocer.",
+      "prioridad": "recomendado",
+      "fase": "antes",
+      "hijos": []
+     },
+     {
+      "id": "rub-medida",
+      "titulo": "A medida, eventos y B2B",
+      "categoria": "rub",
+      "resumen": "Productos sin precio público: el cliente consulta, el negocio cotiza y el cliente acepta y paga.",
+      "para_que": "Cuando el precio depende de cantidades, medidas o fechas, publicar un número es mentir; el presupuesto ordena la conversación.",
+      "como": [
+       "Usar el preset `a-medida`. Tipo `quote`, con cantidad mínima y unidad si corresponde (por ejemplo, metro cuadrado).",
+       "Pedir en la ficha lo necesario para cotizar: cantidad, medidas, fecha, lugar.",
+       "En el panel, la consulta entra en su propia columna: cargar el precio de cada línea y el envío, y enviarla. El cliente recibe un enlace firmado para verla, aceptarla y pagarla.",
+       "Si después de enviar cambia un precio, hay que volver a enviar: sólo se puede aceptar lo último enviado.",
+       "Definir con el dueño la validez del presupuesto, la seña y los plazos de producción, y escribirlos."
+      ],
+      "herramientas": [
+       "preset `a-medida`",
+       "columna de consultas del panel",
+       "docs/product-types.es.md"
+      ],
+      "error_comun": "Mostrar «precio 0» o «desde» inventado para llenar el catálogo: el precio lo pone el presupuesto.",
+      "prioridad": "recomendado",
+      "fase": "construccion",
+      "hijos": []
+     },
+     {
+      "id": "rub-suscripciones",
+      "titulo": "Suscripciones",
+      "categoria": "rub",
+      "resumen": "Cobros que se repiten: cajas mensuales, membresías, abonos.",
+      "para_que": "Es otro modelo de venta: necesita cobro recurrente, altas, bajas y avisos.",
+      "como": [
+       "Hoy no está incluido: figura en la hoja de ruta. No prometerlo como disponible.",
+       "Mientras tanto, se puede vender el primer período como un producto y renovar a mano, avisándolo con claridad.",
+       "Si el negocio lo necesita ya, construirlo sobre los adaptadores: el cobro recurrente en el adaptador de pagos y el estado de la suscripción en el de datos.",
+       "Consultar qué exige la normativa local sobre renovación automática y baja."
+      ],
+      "herramientas": [
+       "ROADMAP.md",
+       "docs/adapters.es.md"
+      ],
+      "error_comun": "Simular una suscripción con un pedido que el cliente «debería» repetir: sin cobro recurrente no es una suscripción.",
+      "prioridad": "opcional",
+      "fase": "crecimiento",
+      "hijos": []
+     },
+     {
+      "id": "rub-mayorista",
+      "titulo": "Venta mayorista",
+      "categoria": "rub",
+      "resumen": "Precios por cantidad, mínimos de compra y listas distintas según el cliente.",
+      "para_que": "El mayorista compra por volumen: sin precios por cantidad la tienda minorista no le sirve.",
+      "como": [
+       "Hoy se cubre con lo que hay: cantidad mínima por producto, pedido mínimo en `config/commerce.ts` y productos a presupuesto para lo que se negocia.",
+       "Los precios escalonados por cantidad y las listas por cliente no están incluidos: figuran en la hoja de ruta.",
+       "Para volúmenes grandes, usar el presupuesto: el dueño pone el precio de esa operación.",
+       "Definir con el dueño condiciones de pago, plazos y facturación."
+      ],
+      "herramientas": [
+       "`config/commerce.ts` (pedido mínimo)",
+       "productos `quote`",
+       "ROADMAP.md"
+      ],
+      "error_comun": "Mostrar el precio mayorista a todo el mundo por no tener listas: mejor cotizar a pedido.",
+      "prioridad": "opcional",
+      "fase": "crecimiento",
+      "hijos": []
+     },
+     {
+      "id": "rub-marketplace",
+      "titulo": "Marketplace multivendedor",
+      "categoria": "rub",
+      "resumen": "Una tienda donde venden varios, cada uno con sus productos, sus pedidos y su cobro.",
+      "para_que": "Cambia el modelo de datos entero: vendedores, comisiones, liquidaciones y permisos.",
+      "como": [
+       "No está incluido y no es una adaptación chica: figura en la hoja de ruta como exploración.",
+       "Si la idea es mostrar productos de terceros y cobrar todo en una sola caja, alcanza con la tienda actual y un acuerdo por fuera.",
+       "Si cada vendedor cobra lo suyo, hace falta separar pedidos y pagos por vendedor: es un proyecto aparte.",
+       "Decirle al dueño con claridad qué existe y qué habría que construir."
+      ],
+      "herramientas": [
+       "ROADMAP.md",
+       "`lib/data/types.ts`"
+      ],
+      "error_comun": "Prometer un marketplace sobre una tienda de un solo vendedor.",
+      "prioridad": "avanzado",
+      "fase": "crecimiento",
+      "hijos": []
+     },
+     {
+      "id": "rub-extender",
+      "titulo": "Si falta algo: extender",
+      "categoria": "rub",
+      "resumen": "Cómo agregar un tipo, un campo o un paso sin romper el contrato de la base.",
+      "para_que": "La base se modifica entera, pero hay un orden que evita romper pedidos, pagos y adaptadores.",
+      "como": [
+       "Primero probar con lo que hay: tipo, unidad, opciones, atributos y textos resuelven más casos de los que parece.",
+       "Si hace falta un campo nuevo: `lib/data/types.ts`, después `db/schema.sql` con una migración en `db/migrations/` que se pueda correr dos veces, y los tres adaptadores.",
+       "Todo importe se calcula en el servidor (`lib/orders/pricing.ts` y `create_order()`); el navegador nunca manda precios.",
+       "Agregar la prueba antes de darlo por hecho: unitaria, en SQL y de punta a punta.",
+       "Documentar el cambio y anotar en el registro de cambios cómo migrar."
+      ],
+      "herramientas": [
+       "AGENTS.md",
+       "docs/adapters.es.md",
+       "`tests/`"
+      ],
+      "error_comun": "Resolverlo sólo en la pantalla: si el servidor y la base no lo saben, es un dato que el navegador puede falsear.",
+      "prioridad": "recomendado",
+      "fase": "construccion",
       "hijos": []
      }
     ]

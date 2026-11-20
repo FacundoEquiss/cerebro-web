@@ -2,7 +2,7 @@
 
 > Mapa de todo lo necesario para construir, lanzar y hacer crecer la web de un negocio, pensado para agentes de IA y personas.
 
-Es una guía genérica y reutilizable: 18 ramas y 316 nodos, cada uno con qué es, para qué sirve, cómo se hace, herramientas, error común, prioridad y fase. No contiene datos de ningún negocio concreto.
+Es una guía genérica y reutilizable: 19 ramas y 331 nodos, cada uno con qué es, para qué sirve, cómo se hace, herramientas, error común, prioridad y fase. No contiene datos de ningún negocio concreto.
 
 Instrucciones para agentes:
 
@@ -25,6 +25,7 @@ Instrucciones para agentes:
 ## Ramas
 
 - [Cómo usar este cerebro](https://cerebro-web-negocios.vercel.app/guia#uso): Instrucciones para el agente (o la persona) que va a construir una web de negocio con este mapa.
+- [Adaptar a tu rubro](https://cerebro-web-negocios.vercel.app/guia#rub): Qué preset usar, qué tipo de producto y qué cuidar según lo que vende el negocio: desde moda hasta servicios con turno o trabajos a presupuesto.
 - [Estrategia y marca](https://cerebro-web-negocios.vercel.app/guia#est): Qué se vende, a quién, con qué números y con qué identidad, antes de escribir una línea de código.
 - [Arquitectura y datos](https://cerebro-web-negocios.vercel.app/guia#arq): El stack, el backend, la lógica de servidor y la relación con el sistema de gestión.
 - [Tienda y catálogo](https://cerebro-web-negocios.vercel.app/guia#tie): Portada, catálogo, ficha de producto, carrito y, si aplica, configurador de producto.

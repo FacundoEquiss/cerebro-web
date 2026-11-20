@@ -17,6 +17,7 @@ cerebro, «Preguntar sólo lo necesario») y nunca tapar un hueco con un dato in
 | ☐ | 🤖 | Leer `AGENTS.es.md` y los nodos esenciales de `cerebro/dist/llms-full.txt`. |
 | ☐ | 🤖 | Correrla: `npm install && npm run dev`. Comprar algo en la demo; abrir `/admin`. |
 | ☐ | 🧑 | Responder la ficha del negocio: qué vendés, a quién, país, moneda, cómo entregás, cómo cobrás y por dónde te contactan. |
+| ☐ | 🤖 | **Primer paso: elegí el preset más parecido a tu rubro.** `npm run preset` los lista (moda, hogar, tecnología, almacén por peso, gastronomía, servicios con turno, productos digitales, trabajos a medida, o la demo mixta); `npm run preset <nombre>` lo aplica. Reemplaza el catálogo, los textos de la portada y la paleta por **ejemplos** de ese rubro: un punto de partida, para reescribir en los pasos que siguen. Ver [`docs/product-types.es.md`](docs/product-types.es.md). |
 
 ## 1. Marca
 
@@ -25,7 +26,7 @@ cerebro, «Preguntar sólo lo necesario») y nunca tapar un hueco con un dato in
 | ☐ | 🧑 | Nombre, slogan, logo (si hay), colores o una referencia que te guste, datos de contacto y redes. |
 | ☐ | 🤖 | Completar `config/brand.ts`: nombre, slogan, descripción, `locale` (`es` o `en`), país, moneda, contacto, redes y los 8 colores del tema. Revisar el contraste (4,5:1 para el texto). |
 | ☐ | 🤖 | Tipografías en `config/fonts.ts` (cualquier familia de licencia abierta). Reemplazar `app/icon.svg`. Revisar `app/opengraph-image.tsx`. |
-| ☐ | 🤖 | Reescribir los textos de la portada, los beneficios y las preguntas frecuentes en `i18n/<idioma>.ts` con datos **reales**. Sacar todos los «EJEMPLO». |
+| ☐ | 🤖 | Reescribir los textos de la portada, los beneficios y las preguntas frecuentes en `content/site.json` (lo escribe el preset; los textos de respaldo están en `i18n/<idioma>.ts`) con datos **reales**. Sacar todos los «EJEMPLO». |
 
 ## 2. Reglas comerciales
 
@@ -33,12 +34,15 @@ cerebro, «Preguntar sólo lo necesario») y nunca tapar un hueco con un dato in
 |---|---|---|
 | ☐ | 🧑 | Formas y costos de envío, monto del envío gratis, pedido mínimo, plazo de preparación, datos bancarios para transferencias y si ofrecés cuotas. |
 | ☐ | 🤖 | Completar `config/commerce.ts`. Lo que no está confirmado queda apagado (`enabled: false`) o en `null`. |
+| ☐ | 🧑 | **Si vendés servicios**: horarios por día, días cerrados, zona horaria, con cuánta anticipación se reserva, hasta cuándo se abre la agenda y tu política de cancelación. |
+| ☐ | 🤖 | Completar `booking` en `config/commerce.ts` (y `service.weekly` en un producto con horarios propios). Reservar un turno y encontrarlo en `/admin/agenda`. |
+| ☐ | 🧑 | **Si vendés por peso**: qué pasa cuando el peso real difiere del pedido. **Si vendés archivos digitales**: la licencia y la política de reembolso. **Si cotizás**: cuánto dura un presupuesto y si pedís seña. |
 
 ## 3. Productos y fotos
 
 | | Quién | Qué |
 |---|---|---|
-| ☐ | 🧑 | La lista de productos: nombre, descripción, precio, precio de lista, talles y colores, stock. Fotos sobre las que tengas derechos (ver el cerebro, «Multimedia»). |
+| ☐ | 🧑 | La lista de productos: nombre, descripción, **tipo** (físico, digital, servicio, a presupuesto), precio y unidad (unidad, kg, m…), precio de lista, opciones (talles, colores…) y stock; en un servicio, la duración y el cupo por turno; en un digital, el archivo. Fotos sobre las que tengas derechos (ver el cerebro, «Multimedia»). |
 | ☐ | 🤖 | Cargarlos: editar `content/products.json` o —con una base de datos— crearlos en `/admin/products`. Las fotos que se suben por el panel se achican a WebP (1600 px) y necesitan texto alternativo. |
 | ☐ | 🤖 | Borrar los productos de demo y `public/products/*.svg`. Comprobar que un producto con opciones y sin variantes igual obliga a elegir. |
 

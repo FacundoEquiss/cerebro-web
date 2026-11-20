@@ -45,9 +45,14 @@ va `DEMO_MODE=false`.
 
 ## El kanban
 
-Columnas: **Nuevo → Pagado → En preparación → Listo / Enviado → Entregado**. Los cancelados quedan
-plegados aparte. Cada tarjeta muestra el número, el cliente, el total, los ítems, el medio y el
-estado del pago, la forma de entrega y hace cuánto entró.
+Columnas: **Consultas → Nuevo → Pagado → En preparación → Listo / Enviado → Entregado**. Los
+cancelados quedan plegados aparte. Cada tarjeta muestra el número, el cliente, el total, los
+ítems, el medio y el estado del pago, la forma de entrega (sólo si hay algo para enviar), el
+**turno** de un servicio y hace cuánto entró.
+
+**Consultas** es la columna de los productos sin precio público: una tarjeta ahí todavía no es un
+pedido. No se puede arrastrar a otra columna —pasa sola a «Nuevo» cuando el cliente acepta el
+presupuesto— y sólo se puede cancelar. Ver [Presupuestos](#presupuestos).
 
 Para mover una tarjeta:
 
@@ -59,7 +64,8 @@ Para mover una tarjeta:
 
 Los movimientos permitidos son una sola tabla, `lib/orders/status.ts`: un pedido tiene que estar
 pagado antes de prepararse, un paso se puede deshacer antes de la entrega, un pedido pagado nunca
-vuelve a «Nuevo» y «Cancelado» es final (pide un motivo y devuelve el stock). El servidor revisa
+vuelve a «Nuevo», un pedido sin nada para enviar (un servicio, una descarga) puede pasar de
+«Pagado» directo a «Entregado» y «Cancelado» es final (pide un motivo y devuelve el stock). El servidor revisa
 cada movimiento y lo deja en el **historial** del pedido con quién lo hizo y cuándo. Si dos
 personas actúan a la vez, la segunda recibe «otra persona ya cambió este pedido» y la lista
 actualizada.
@@ -95,6 +101,47 @@ al cliente por WhatsApp con un mensaje armado según el estado.
 Cuando un pedido pasa a **Pagado** —a mano desde acá o por el webhook de un procesador— la compra
 se informa a la API de conversiones **una sola vez**: el adaptador guarda que ya se mandó y el id
 del pedido es el `event_id`.
+
+## Presupuestos
+
+Cuando un cliente pide un presupuesto, la consulta aparece en **Consultas** con lo que escribió.
+Al abrirla está el editor del presupuesto:
+
+1. Cargá un **precio unitario** para cada línea y el **envío**. El total se actualiza mientras
+   escribís (el oficial lo calcula el servidor al guardar).
+2. **Guardar** deja los precios sin avisarle al cliente. **Guardar y enviar** además marca el
+   presupuesto como enviado y le manda al cliente un e-mail con un enlace firmado.
+3. El cliente abre el enlace, ve el presupuesto y lo acepta eligiendo cómo pagar. La tarjeta pasa
+   a «Nuevo» y desde ahí es un pedido como cualquier otro: confirmar el pago, preparar, entregar.
+
+Hasta que no se envía, el cliente no puede aceptarlo ni pagarlo. Si cambiás un precio después de
+enviarlo, el presupuesto **deja de estar enviado**: hay que mandarlo de nuevo. El cliente sólo
+puede aceptar el total exacto de lo último que se envió. Cada guardado y cada envío queda en el
+historial del pedido. Una consulta no vence sola: cancelá las que no llegan a nada.
+
+## Agenda
+
+`/admin/agenda` muestra todos los turnos reservados de los productos `service`, en la zona
+horaria de la tienda (`commerce.booking.timeZone`):
+
+- **Semana**: siete columnas en la computadora y una lista de días en el celular. Cada día dice
+  cuántos lugares quedan libres.
+- **Día**: los turnos de un día. Tocá el nombre de un día para abrirlo.
+- Cada turno muestra la hora, el servicio, el cliente, los lugares, si está pagado y el número de
+  pedido; al tocarlo se abre el pedido.
+
+Un turno es una línea de un pedido: cancelar el pedido (o dejarlo vencer sin pagar) libera el
+turno, y no hay nada más que mantener sincronizado. Los horarios, los días cerrados y hasta
+cuándo se abre la agenda se configuran en `config/commerce.ts` (ver
+[`product-types.es.md`](product-types.es.md)). Todavía no está hecho: crear un turno a mano desde
+el panel, moverlo y los recordatorios.
+
+## Productos de cualquier tipo
+
+El editor de productos tiene un bloque **Tipo y forma de venta**: físico (unidad de medida, paso,
+mínimo y máximo), digital (el archivo privado y el nombre que ve el cliente), servicio (duración
+y cupo por turno) y a presupuesto (sin precio público). El detalle está en
+[`product-types.es.md`](product-types.es.md).
 
 ## Dónde se guardan los cambios
 

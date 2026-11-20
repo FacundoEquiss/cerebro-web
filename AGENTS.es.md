@@ -9,11 +9,12 @@ pedir resultados («adaptá esto a mi negocio», «sumá envío gratis desde X»
 
 ## 0. Primero, el cerebro
 
-`cerebro/` tiene la guía para construir, lanzar y hacer crecer la web de un negocio (316 nodos).
+`cerebro/` tiene la guía para construir, lanzar y hacer crecer la web de un negocio (331 nodos).
 Antes de tu primer cambio:
 
-1. Leé `cerebro/dist/llms-full.txt` — como mínimo la rama **«Cómo usar este cerebro»** y los nodos
-   **esenciales** de la fase en la que estás. (En línea: <https://cerebro-web-negocios.vercel.app/llms-full.txt>.)
+1. Leé `cerebro/dist/llms-full.txt` — como mínimo las ramas **«Cómo usar este cerebro»** y
+   **«Adaptar a tu rubro»** (qué preset y qué tipo de producto le corresponden al negocio) y los
+   nodos **esenciales** de la fase en la que estás. (En línea: <https://cerebro-web-negocios.vercel.app/llms-full.txt>.)
 2. Leé [`GETTING-STARTED.es.md`](GETTING-STARTED.es.md): el checklist ordenado para convertir esta
    plantilla en una web real, separando lo que hacés vos de lo que sólo puede hacer el dueño.
 3. Volvé acá por las reglas de este código.
@@ -55,7 +56,10 @@ coinciden, revisá el código: es lo que corre.
 | Ruta | Qué es |
 |---|---|
 | `config/` | `brand.ts` (la marca, en un solo lugar), `commerce.ts` (reglas comerciales), `fonts.ts`, `redirects.ts` |
-| `content/products.json` | El catálogo de demostración (adaptador de datos `json`) |
+| `content/products.json` | El catálogo en uso (adaptador de datos `json`). La demo es el preset `mixto` |
+| `content/presets/` | Catálogos de arranque por rubro; `npm run preset <nombre>` aplica uno |
+| `content/site.json` | Qué preset se aplicó y los textos de la portada (hero, beneficios, preguntas) |
+| `content/downloads/` | Archivos de ejemplo de los productos digitales (privados: nunca en `public/`) |
 | `i18n/` | `es.ts`, `en.ts` (diccionarios), `routes.ts` (URL pública de cada página por idioma) |
 | `app/(store)/` | Páginas de la tienda. Las carpetas son las rutas en inglés; los otros idiomas se reescriben |
 | `app/admin/` | El panel: `login`, `(panel)/` (kanban, resumen, productos, clientes, ajustes), impresión |
@@ -70,7 +74,9 @@ coinciden, revisá el código: es lo que corre.
 | `db/schema.sql`, `db/seed.sql` | El esquema SQL compartido (Supabase y PostgreSQL) y los datos de demo |
 | `proxy.ts` | Protege `/admin` y `/api/admin` |
 | `stores/` | Estado del navegador (el carrito) |
-| `scripts/` | `check-brand`, `check-i18n`, `admin-hash`, `generate-images`, `generate-seed`, `screenshots` |
+| `scripts/` | `check-brand`, `check-i18n`, `admin-hash`, `preset`, `generate-images`, `generate-samples`, `generate-seed`, `screenshots` |
+| `lib/booking/`, `lib/orders/download.ts`, `lib/admin/quotes.ts` | Turnos de un servicio, enlace de descarga firmado y presupuestos |
+| `db/migrations/` | Un archivo por cambio de esquema, para bases que ya existen |
 | `tests/`, `e2e/` | Pruebas unitarias (Vitest) y de punta a punta (Playwright) |
 | `cerebro/` | El cerebro: `datos.json` (fuente), `armar.mjs` (generador), `dist/` (generado y commiteado) |
 
@@ -91,8 +97,10 @@ coinciden, revisá el código: es lo que corre.
 - **Una URL que cambia** necesita un 301 en `config/redirects.ts`.
 - **Una variable de entorno nueva** se suma en `lib/env.ts` (validada) y en `.env.example`
   (explicada).
-- **Un cambio de esquema** va en `db/schema.sql`, tiene que poder correrse dos veces y se prueba
-  en `tests/sql.test.ts`. Nunca lo corras en una base real sin la aprobación del dueño.
+- **Un cambio de esquema** va en `db/schema.sql` **y** en un archivo nuevo de `db/migrations/`,
+  tiene que poder correrse dos veces y se prueba en `tests/sql.test.ts` (incluida la actualización
+  de una base creada con la versión anterior). Nunca lo corras en una base real sin la aprobación
+  del dueño.
 
 ## 4. Verificar: no es opcional
 
@@ -113,3 +121,41 @@ como un hecho.
 
 Un resumen corto: qué cambió, cómo lo verificaste (con números), qué queda pendiente y quién lo
 tiene que hacer (vos o el dueño), y lo que necesita su aprobación.
+
+## 6. Adaptarla a un rubro
+
+Esto es una **base para modificar de punta a punta**, no un tema: el diseño, los textos, el flujo
+de compra, el modelo de datos y el panel son tuyos para cambiar. La demo (un catálogo mixto) es
+un ejemplo.
+
+**Arrancá por el preset, no por la demo.**
+
+1. `npm run preset` lista los catálogos de arranque; `npm run preset <nombre>` aplica el más
+   parecido al negocio (productos, categorías, textos de la portada y una paleta sugerida). Leé
+   el nodo de ese rubro en el cerebro, rama **«Adaptar a tu rubro»**.
+2. Dale a cada producto su **tipo** —`physical`, `digital`, `service` o `quote`— y, si se vende
+   por peso o medida, su `unit`, `step` y mínimo. [`docs/product-types.es.md`](docs/product-types.es.md)
+   dice qué hace cada uno y qué garantiza el servidor.
+3. Reemplazá **cada** EJEMPLO por lo que confirmó el dueño. Los precios, horarios, políticas y
+   textos de un preset son de relleno: publicarlos es inventar datos del negocio (regla 1).
+4. Preguntale al dueño lo que sólo él sabe de ese rubro: políticas de cancelación y devolución,
+   plazos, qué pasa si el peso real difiere, licencias de los archivos digitales y qué
+   habilitaciones o normas alcanzan a lo que vende. Nunca des por supuesta una regulación.
+
+**Si el rubro necesita algo que no existe**, extendé la base sin romper su contrato:
+
+1. Primero mirá: [`README.es.md`](README.es.md#para-qué-rubros-sirve) y [`ROADMAP.md`](ROADMAP.md)
+   dicen qué está hecho y qué no. Si algo no está hecho, decíselo al dueño sin vueltas.
+2. Probá con lo que hay: un tipo, una unidad, las opciones, los `attributes`, los textos y
+   `config/commerce.ts` resuelven más casos de los que parece.
+3. Un campo o un tipo nuevo recorre toda la cadena, en este orden: `lib/data/types.ts` → la regla
+   pura en `lib/orders/` → `db/schema.sql` + una migración en `db/migrations/` → los tres
+   adaptadores de datos (`json.ts`, y `sql.ts` para las dos bases) → las pantallas →
+   `i18n/es.ts` y `en.ts` → la documentación y `CHANGELOG.md` con notas de migración.
+4. Mantené las invariantes: todo importe lo pone el servidor; lo que no se puede sobrevender
+   (stock, un turno) se controla donde se crea el pedido, de forma atómica; un archivo privado
+   nunca tiene una dirección pública; nada se acredita sin un pago verificado por el total exacto.
+5. Todo campo nuevo tiene un valor por defecto, para que los datos existentes sigan andando, y
+   todo método nuevo del adaptador se implementa en los tres (TypeScript te dice cuál falta).
+6. Probalo en tres niveles —la regla pura, el SQL sobre PGlite y de punta a punta en celu y en
+   compu— antes de decir que funciona.

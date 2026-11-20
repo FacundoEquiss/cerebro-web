@@ -27,7 +27,11 @@ interface DataAdapter {
   // storefront
   listProducts(): Promise<Product[]>;            // active products only
   listCategories(): Promise<Category[]>;
-  createOrder(request, shipping): Promise<Order>; // prices calculated HERE, idempotent
+  createOrder(request, shipping): Promise<Order>; // prices calculated HERE, idempotent; reserves slots
+  createQuote(request): Promise<Order>;           // an enquiry about a `quote` product (status "quote")
+  acceptQuote(id, expectedTotal, provider, method): Promise<Order>; // only a SENT quote, for that exact total
+  listBookings(from, to): Promise<Booking[]>;     // reserved slots between two instants (cancelled orders excluded)
+  getDigitalFile(productId): Promise<{ name; file } | null>; // the private file of a digital product — server only
   getOrder(id): Promise<Order | null>;            // public shape: no personal data
   recordPayment(payment): Promise<{ firstTime; amountMatches }>;
 
@@ -39,6 +43,8 @@ interface DataAdapter {
   getAdminOrder(id): Promise<AdminOrder | null>;
   setOrderStatus(id, from, to, actor, reason?): Promise<AdminOrder>;
   addOrderNote(id, text, actor): Promise<AdminOrder>;
+  setQuote(id, { prices, shipping }, actor): Promise<AdminOrder>; // price an enquiry (it stops being "sent")
+  sendQuote(id, actor): Promise<AdminOrder>;      // from now on the customer can accept it
   setOrderTracking(id, tracking, actor): Promise<AdminOrder>;
   claimPurchaseEvent(id): Promise<boolean>;       // true ONLY for the first caller
   expireOrders(hours, reason): Promise<number>;   // cancel unpaid orders, return their stock
@@ -60,6 +66,28 @@ interface DataAdapter {
 7. Cancelling or expiring an order returns **only the stock that order really took**, once.
 8. A payment for a **cancelled** order is recorded in its timeline and reported back
    (`orderStatus: "cancelled"`), never credited.
+
+**Since 0.2.0** (product types — see [`product-types.md`](product-types.md)):
+
+9. `createOrder` accepts a quantity only if it is at least the product's minimum, at most its
+   maximum and a **multiple of its `step`** (quantities may be decimals), rounds each line to
+   cents on its own, and refuses a `quote` product (`quote_only`).
+10. `createOrder` charges **shipping only if a line is a physical product**; otherwise the method
+    is `none` and the shipping 0, whatever was sent.
+11. A `service` line needs a slot. The slot is checked against the opening hours by the server
+    (`lib/booking/slots.ts`) and its **capacity is checked atomically** when the order is created:
+    simultaneous orders cannot oversell it. A cancelled or expired order holds no seat.
+12. `listProducts` never returns the storage key of a digital file; only `getDigitalFile` and
+    `listAllProducts` (behind a session) do.
+13. `acceptQuote` throws `quote_not_sent` unless the quote was sent, and `quote_changed` unless
+    `expectedTotal` equals the stored total. `setQuote` clears the "sent" mark. Accepting twice
+    is the same as accepting once.
+14. `expireOrders` never touches an enquiry, and counts an accepted quote from its acceptance.
+
+A SQL-backed adapter gets all of this from `db/schema.sql` (`create_order`, `create_quote`,
+`set_quote`, `send_quote`, `accept_quote`, `bookings_between`, `digital_file`). An adapter written
+from scratch can reuse the pure functions: `priceOrder`, `buildQuote`, `quoteTotals`
+(`lib/orders/pricing.ts`) and `resolveSlot` (`lib/booking/slots.ts`).
 
 ### `json` (default)
 
@@ -130,8 +158,12 @@ Always make one real payment end to end before going live.
 
 - **E-mail** (`send(mail): Promise<boolean>`, must never throw): `console` only logs; `resend`
   uses its HTTP API; `smtp` uses any SMTP server (`SMTP_URL`).
-- **Storage** (`put(name, bytes, contentType): Promise<url>`): `local` writes to
-  `DATA_DIR/uploads` and serves it at `/media/<file>` (needs a persistent disk); `supabase` writes
-  to a public Storage bucket. S3-compatible storage is on the roadmap.
+- **Storage** has two sides. Public — product photos — `put(name, bytes, contentType): Promise<url>`:
+  `local` writes to `DATA_DIR/uploads` and serves it at `/media/<file>` (needs a persistent
+  disk); `supabase` writes to a public Storage bucket. **Private** — the files of digital
+  products — `putPrivate(name, bytes, contentType): Promise<key>` and
+  `getPrivate(key): Promise<bytes | null>`: `local` keeps them in `DATA_DIR/private`, `supabase`
+  in a private bucket (`SUPABASE_PRIVATE_BUCKET`). A private file has no URL: it leaves only
+  through `/api/downloads/…`, for a paid order. S3-compatible storage is on the roadmap.
 - **Antibot** (`verify(token, ip): Promise<boolean>`): `none`, or `turnstile`. The token is
   single-use: after every submit the form waits for a fresh one.

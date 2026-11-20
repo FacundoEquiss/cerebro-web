@@ -43,9 +43,14 @@ change nothing — the server refuses its writes with 403. Set `DEMO_MODE=false`
 
 ## The kanban
 
-Columns: **New → Paid → Preparing → Ready / Shipped → Delivered**. Cancelled orders are folded
-apart. Each card shows the number, customer, total, items, payment method and status, delivery
-method and how long ago it came in.
+Columns: **Enquiries → New → Paid → Preparing → Ready / Shipped → Delivered**. Cancelled orders are
+folded apart. Each card shows the number, customer, total, items, payment method and status,
+delivery method (only when something is shipped), the **appointment** of a service and how long
+ago it came in.
+
+**Enquiries** is the column of the products without a public price: a card there is not an order
+yet. It cannot be dragged to another column — it becomes «New» on its own when the customer
+accepts the quote — and it can only be cancelled. See [Quotes](#quotes).
 
 Moving a card:
 
@@ -55,7 +60,8 @@ Moving a card:
 - **Keyboard**: focus a card, `Shift + →` / `Shift + ←`; `Enter` opens it. The menu works too.
 
 The allowed moves are one table, `lib/orders/status.ts`: an order must be paid before it is
-prepared, a step can be undone before delivery, a paid order never goes back to «New», and
+prepared, a step can be undone before delivery, a paid order never goes back to «New», an order
+with nothing to ship (a service, a download) may go from «Paid» straight to «Delivered», and
 «Cancelled» is final (it needs a reason and returns the stock). The server checks every move and
 writes it to the order's **history** with who did it and when. If two people act at once, the
 second gets "someone else already changed this order" and a fresh list.
@@ -91,6 +97,46 @@ customer on WhatsApp with a text written for the current status.
 When an order becomes **Paid** — by hand here or by a gateway webhook — the purchase is reported
 to the Conversions API **once**: the adapter records that it was sent and the order id is the
 `event_id`.
+
+## Quotes
+
+When a customer asks for a quote, the enquiry appears in **Enquiries** with what they wrote.
+Open it and you get the quote editor:
+
+1. Type a **unit price** for each line and the **shipping**. The total updates as you type (the
+   official one is calculated by the server when you save).
+2. **Save** keeps the prices without telling the customer. **Save and send** also marks the quote
+   as sent and e-mails the customer a signed link.
+3. The customer opens the link, sees the quote and accepts it, choosing how to pay. The card moves
+   to «New» and from there it is an order like any other: confirm the payment, prepare, deliver.
+
+Until it is sent the customer can neither accept nor pay. If you change a price after sending,
+the quote is **no longer sent**: send it again. The customer can only accept the exact total that
+was last sent. Every save and every send is written to the order's history. An enquiry never
+expires on its own; cancel the ones that lead nowhere.
+
+## Agenda
+
+`/admin/agenda` shows every reserved appointment of the `service` products, in the time zone of
+the store (`commerce.booking.timeZone`):
+
+- **Week**: seven columns on a computer, a list of days on a phone. Each day says how many seats
+  are still free.
+- **Day**: the appointments of one day. Tap a day's name to open it.
+- Each appointment shows the time, the service, the customer, the seats, whether it is paid and
+  the order number; tapping it opens the order.
+
+An appointment is a line of an order: cancelling the order (or letting it expire unpaid) frees
+the slot, and there is nothing else to keep in step. Opening hours, closed days and how far ahead
+the calendar opens are set in `config/commerce.ts` (see [`product-types.md`](product-types.md)).
+Not built yet: creating an appointment by hand from the panel, moving one, reminders.
+
+## Products of every type
+
+The product editor has a **Type and how it is sold** block: physical (unit of measure, step,
+minimum, maximum), digital (the private file and the name the customer sees), service (duration
+and seats per slot) and quote (no public price). The details are in
+[`product-types.md`](product-types.md).
 
 ## Where changes are saved
 

@@ -33,6 +33,10 @@ the places to look first:
 | The public database key can read the catalogue and write nothing, even with permissive default grants | the permissions block and the `security_invoker` views of `db/schema.sql`, `tests/sql.test.ts` |
 | Unpaid orders do not hold stock forever; money for a cancelled order is flagged, never credited | `lib/orders/expiry.ts`, `expire_orders()`, `lib/payments/credit.ts` |
 | Uploads are checked by content, not by name | `lib/storage/index.ts`, `app/api/admin/upload/route.ts` |
+| A digital file has no public address: it is served only through a signed link that expires, and only while the stored order is paid | `lib/orders/download.ts`, `app/api/downloads/[id]/[line]/route.ts`, the private side of `lib/storage/index.ts`, the `product_files` table |
+| A slot cannot be oversold by simultaneous orders, and the browser cannot invent one | `lib/booking/slots.ts` (`resolveSlot`), the capacity check of `create_order()` |
+| A quote cannot be accepted before it is sent, nor for another total | `accept_quote()` in `db/schema.sql`, `acceptQuote` in `lib/data/json.ts`, `app/api/quotes/accept/route.ts` |
+| Quantities are validated on the server (minimum, step, maximum) and totals are rounded there | `validQuantity` in `lib/data/availability.ts`, `lib/orders/pricing.ts`, `create_order()` |
 | Secrets never reach the browser | `lib/env.ts` (server) vs `lib/public-env.ts` (public) |
 
 ## Known limits (by design, documented)

@@ -42,6 +42,14 @@ interface DataAdapter {
   setOrderTracking(id, tracking, actor): Promise<AdminOrder>;
   claimPurchaseEvent(id): Promise<boolean>;       // true SÓLO para el primero que llama
   expireOrders(hours, reason): Promise<number>;   // cancela los impagos y devuelve su stock
+
+  // desde 0.2.0
+  createQuote(request): Promise<Order>;           // una consulta sobre un producto `quote`
+  acceptQuote(id, expectedTotal, provider, method): Promise<Order>; // sólo un presupuesto ENVIADO, por ese total exacto
+  listBookings(from, to): Promise<Booking[]>;     // turnos reservados entre dos instantes
+  getDigitalFile(productId): Promise<{ name; file } | null>; // el archivo privado de un digital (sólo servidor)
+  setQuote(id, { prices, shipping }, actor): Promise<AdminOrder>; // cotiza una consulta (deja de estar «enviada»)
+  sendQuote(id, actor): Promise<AdminOrder>;      // desde acá el cliente puede aceptarla
 }
 ```
 
@@ -60,6 +68,31 @@ interface DataAdapter {
 7. Cancelar o vencer un pedido devuelve **sólo el stock que ese pedido descontó de verdad**, una vez.
 8. Un pago sobre un pedido **cancelado** queda en su historial y se informa
    (`orderStatus: "cancelled"`); nunca se acredita.
+
+**Desde 0.2.0** (tipos de producto: ver [`product-types.es.md`](product-types.es.md)). Métodos
+nuevos del contrato: `createQuote(request)`, `acceptQuote(id, totalEsperado, proveedor, medio)`,
+`listBookings(desde, hasta)`, `getDigitalFile(productId)`, `setQuote(id, { prices, shipping }, actor)`
+y `sendQuote(id, actor)`.
+
+9. `createOrder` acepta una cantidad sólo si es al menos el mínimo del producto, a lo sumo su
+   máximo y **múltiplo de su `step`** (las cantidades pueden ser decimales), redondea cada línea
+   a centavos por separado y rechaza un producto `quote` (`quote_only`).
+10. `createOrder` cobra **envío sólo si alguna línea es un producto físico**; si no, el método es
+    `none` y el envío 0, se mande lo que se mande.
+11. Una línea `service` necesita un turno. El servidor lo valida contra los horarios
+    (`lib/booking/slots.ts`) y su **cupo se revisa de forma atómica** al crear el pedido: pedidos
+    simultáneos no pueden sobrevenderlo. Un pedido cancelado o vencido no retiene ningún lugar.
+12. `listProducts` nunca devuelve la clave de almacenamiento de un archivo digital; sólo
+    `getDigitalFile` y `listAllProducts` (detrás de una sesión).
+13. `acceptQuote` falla con `quote_not_sent` si el presupuesto no fue enviado y con
+    `quote_changed` si el total esperado no es el guardado. `setQuote` borra la marca de
+    «enviado». Aceptar dos veces es lo mismo que aceptar una.
+14. `expireOrders` nunca toca una consulta, y cuenta un presupuesto aceptado desde que se aceptó.
+
+Un adaptador sobre SQL recibe todo esto de `db/schema.sql` (`create_order`, `create_quote`,
+`set_quote`, `send_quote`, `accept_quote`, `bookings_between`, `digital_file`). Uno escrito desde
+cero puede reusar las funciones puras: `priceOrder`, `buildQuote`, `quoteTotals`
+(`lib/orders/pricing.ts`) y `resolveSlot` (`lib/booking/slots.ts`).
 
 ### `json` (por defecto)
 
@@ -132,8 +165,13 @@ cambian. Siempre hacé un pago real de punta a punta antes de salir.
 
 - **Correo** (`send(mail): Promise<boolean>`, nunca tiene que tirar un error): `console` sólo
   registra; `resend` usa su API HTTP; `smtp` usa cualquier servidor SMTP (`SMTP_URL`).
-- **Fotos** (`put(name, bytes, contentType): Promise<url>`): `local` escribe en `DATA_DIR/uploads`
-  y lo sirve en `/media/<archivo>` (necesita un disco persistente); `supabase` escribe en un bucket
-  público de Storage. El almacenamiento compatible con S3 está en el roadmap.
+- **Almacenamiento**, con dos lados. Público —fotos de productos—
+  `put(name, bytes, contentType): Promise<url>`: `local` escribe en `DATA_DIR/uploads` y lo sirve
+  en `/media/<archivo>` (necesita un disco persistente); `supabase` escribe en un bucket público
+  de Storage. **Privado** —los archivos de los productos digitales—
+  `putPrivate(name, bytes, contentType): Promise<clave>` y `getPrivate(clave): Promise<bytes | null>`:
+  `local` los guarda en `DATA_DIR/private` y `supabase` en un bucket privado
+  (`SUPABASE_PRIVATE_BUCKET`). Un archivo privado no tiene URL: sólo sale por `/api/downloads/…`,
+  para un pedido pagado. El almacenamiento compatible con S3 está en el roadmap.
 - **Antibots** (`verify(token, ip): Promise<boolean>`): `none` o `turnstile`. El token es de un
   solo uso: después de cada envío el formulario espera uno fresco.

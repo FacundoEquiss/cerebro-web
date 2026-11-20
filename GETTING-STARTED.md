@@ -17,6 +17,7 @@ The agent should ask for everything in the 🧑 column **in one batch** at the s
 | ☐ | 🤖 | Read `AGENTS.md` and the essential nodes of `cerebro/dist/llms-full.txt`. |
 | ☐ | 🤖 | Run it: `npm install && npm run dev`. Buy something in the demo; open `/admin`. |
 | ☐ | 🧑 | Answer the business sheet: what you sell, to whom, country, currency, how you deliver, how you charge, contact channels. |
+| ☐ | 🤖 | **First step: choose the preset closest to the line of business.** `npm run preset` lists them (fashion, home, technology, pantry by weight, food, services by appointment, digital products, made-to-measure work, or the mixed demo); `npm run preset <name>` applies it. It replaces the catalogue, the home texts and the palette with **examples** for that business — a starting point, to be rewritten in the steps below. See [`docs/product-types.md`](docs/product-types.md). |
 
 ## 1. Brand
 
@@ -25,7 +26,7 @@ The agent should ask for everything in the 🧑 column **in one batch** at the s
 | ☐ | 🧑 | Name, tagline, logo (if any), colours or a reference you like, contact details, social profiles. |
 | ☐ | 🤖 | Fill `config/brand.ts`: name, tagline, description, `locale` (`es` or `en`), country, currency, contact, social, the 8 theme colours. Check contrast (4.5:1 for text). |
 | ☐ | 🤖 | Fonts in `config/fonts.ts` (any open-licence family). Replace `app/icon.svg`. Review `app/opengraph-image.tsx`. |
-| ☐ | 🤖 | Rewrite the home texts, benefits and FAQ in `i18n/<locale>.ts` with **real** facts. Remove every "EXAMPLE". |
+| ☐ | 🤖 | Rewrite the home texts, benefits and FAQ in `content/site.json` (written by the preset; the fallback texts are in `i18n/<locale>.ts`) with **real** facts. Remove every "EXAMPLE". |
 
 ## 2. Commercial rules
 
@@ -33,14 +34,18 @@ The agent should ask for everything in the 🧑 column **in one batch** at the s
 |---|---|---|
 | ☐ | 🧑 | Shipping methods and prices, free-shipping threshold, minimum order, preparation time, bank details for transfers, whether you offer instalments. |
 | ☐ | 🤖 | Fill `config/commerce.ts`. Anything not confirmed stays off (`enabled: false`) or `null`. |
+| ☐ | 🧑 | **If you sell services**: opening hours per weekday, closed days, time zone, how much notice you need, how far ahead you take bookings, and your cancellation policy. |
+| ☐ | 🤖 | Fill `booking` in `config/commerce.ts` (and `service.weekly` on a product with its own hours). Book a slot and find it in `/admin/agenda`. |
+| ☐ | 🧑 | **If you sell by weight**: what happens when the real weight differs from the order. **If you sell digital files**: the licence and the refund policy. **If you quote**: how long a quote is valid and whether you ask for a deposit. |
 
 ## 3. Products and photos
 
 | | Who | What |
 |---|---|---|
-| ☐ | 🧑 | The product list: name, description, price, list price, sizes/colours, stock. Photos you own the rights to (see the brain, «Multimedia»). |
+| ☐ | 🧑 | The product list: name, description, **type** (physical, digital, service, on a quote), price and unit (piece, kg, m…), list price, options (sizes, colours…), stock; for a service, its duration and seats per slot; for a digital product, the file. Photos you own the rights to (see the brain, «Multimedia»). |
 | ☐ | 🤖 | Load them: edit `content/products.json`, or — with a database — create them in `/admin/products`. Photos uploaded in the panel are shrunk to WebP (1600 px) and need alternative text. |
-| ☐ | 🤖 | Delete the demo products and `public/products/*.svg`. Check a product with options but no variants still forces the choice. |
+| ☐ | 🤖 | Upload the file of each digital product from the panel (it goes to the private storage, never to `public/`). Buy one, mark it paid, download it. |
+| ☐ | 🤖 | Delete the example products, `public/products/*.svg`, `content/downloads/` and — once the store is yours — `content/presets/`. Check a product with options but no variants still forces the choice. |
 
 ## 4. Database (to store orders and stock)
 
