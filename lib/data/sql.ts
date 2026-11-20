@@ -73,6 +73,7 @@ export function rowToProduct(r: Record<string, unknown>): Product {
     featured: Boolean(r.featured),
     active: r.active === undefined ? true : Boolean(r.active),
     draft: Boolean(r.draft),
+    free: Boolean(r.free),
     minQuantity: num(r.min_quantity ?? 1),
     attributes: (r.attributes as Record<string, string>) ?? {},
     type: (r.type as ProductType | undefined) ?? "physical",
@@ -120,6 +121,13 @@ export function toOrderError(e: unknown): unknown {
   return m ? new OrderError(m[1] as OrderError["code"], (m[2] ?? "").trim()) : e;
 }
 
+const warned = new Set<string>();
+function warnOnce(key: string, message: string) {
+  if (warned.has(key)) return;
+  warned.add(key);
+  console.warn(message);
+}
+
 /** ORDER_NOT_FOUND / ORDER_CONFLICT / PRODUCT_ERROR raised by the admin functions → `AdminError`. */
 export function toAdminError(e: unknown): unknown {
   const message = e instanceof Error ? e.message : String(e);
@@ -127,7 +135,7 @@ export function toAdminError(e: unknown): unknown {
   if (message.includes("ORDER_CONFLICT")) return new AdminError("conflict");
   if (message.includes("QUOTE_INCOMPLETE")) return new AdminError("quote_incomplete");
   const m = /PRODUCT_ERROR:([a-z_]+)/.exec(message);
-  if (m) return new AdminError(m[1] === "slug_taken" || m[1] === "category" ? m[1] : "invalid");
+  if (m) return new AdminError(m[1] === "slug_taken" || m[1] === "category" ? m[1] : "invalid", m[1] === "price" ? "price" : "");
   return e;
 }
 
@@ -235,17 +243,26 @@ export function sqlAdapter(id: string, gateway: SqlGateway): DataAdapter {
     },
     async saveProduct(input) {
       try {
-        const row = (await gateway.call("save_product", [input])) as Record<string, unknown> | null;
+        let row = (await gateway.call("save_product", [input])) as Record<string, unknown> | null;
         gateway.invalidate?.();
-        // A database that was not upgraded to 0.3.0 does not know what a draft is: it would
-        // store this product as "for sale" — a draft without a price, on sale for 0.
-        if (!row || !("draft" in row)) {
-          if (input.draft) await gateway.call("save_product", [{ ...input, active: false }]).catch(() => undefined);
-          throw new Error("The database is not upgraded to 0.3.0 (it has no drafts). Run db/migrations/0003_drafts.sql — see CHANGELOG.md — and save again.");
+        if (!row) throw new AdminError("invalid");
+        // A DATABASE BEHIND THE CODE. The save worked, so it is reported as saved — with the
+        // migration that is missing, for the panel to say so. One case cannot wait: a database
+        // without drafts would put a draft on sale (for 0), so that product is stored PAUSED.
+        let migrationNeeded: string | undefined;
+        if (!("draft" in row)) {
+          migrationNeeded = "0003_drafts";
+          if (input.draft && input.active) row = (await gateway.call("save_product", [{ ...input, active: false }])) as Record<string, unknown>;
+        } else if (!("free" in row)) {
+          migrationNeeded = "0004_free";
         }
-        return rowToProduct(row);
+        if (migrationNeeded) warnOnce(`migration:${migrationNeeded}`, `[data] The database is behind the code: run db/migrations/${migrationNeeded}.sql (see CHANGELOG.md).`);
+        return { ...rowToProduct(row), ...(migrationNeeded ? { migrationNeeded } : {}) };
       } catch (e) {
-        throw toAdminError(e);
+        const error = toAdminError(e);
+        // A free product on a database that does not know the word: its old rule refuses price 0.
+        if (input.free && input.price === 0 && error instanceof AdminError && error.code === "invalid" && error.detail === "price") throw new AdminError("needs_migration", "0004_free");
+        throw error;
       }
     },
     async setStock(productId, variantId, stock) {

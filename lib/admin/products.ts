@@ -22,6 +22,8 @@ export const productInputSchema = z.object({
   active: z.boolean(),
   // Draft = something is still missing (the price): not for sale, only the panel shows it.
   draft: z.boolean().default(false),
+  // Free on purpose: the only way something for sale may cost 0.
+  free: z.boolean().default(false),
   // May be a decimal: 0.25 kg.
   minQuantity: z.number().positive().max(100_000),
   type: z.enum(["physical", "digital", "service", "quote"]).default("physical"),
@@ -67,7 +69,8 @@ export const productInputSchema = z.object({
 }).superRefine((form, ctx) => {
   // Price 0 on something for sale is an empty field, never a free product: without a price it
   // stays a draft. A quote is the one type whose price comes later, per request.
-  if (!form.draft && form.type !== "quote" && form.price === 0) ctx.addIssue({ code: "custom", path: ["price"], message: "price_required" });
+  if (form.free && form.price !== 0) ctx.addIssue({ code: "custom", path: ["price"], message: "free_has_price" });
+  else if (!form.free && !form.draft && form.type !== "quote" && form.price === 0) ctx.addIssue({ code: "custom", path: ["price"], message: "price_required" });
 });
 
 export type ProductForm = z.infer<typeof productInputSchema>;
@@ -82,6 +85,8 @@ export function toProductInput(form: ProductForm): ProductInput {
     unit: piece ? "u" : form.unit,
     step: piece ? 1 : form.step,
     minQuantity: piece ? Math.max(1, Math.trunc(form.minQuantity)) : form.minQuantity,
+    // A quote is priced per request: «free» says nothing there.
+    free: form.type === "quote" ? false : form.free,
     // A service has no shelf: its limit is the capacity of each slot.
     stock: form.type === "service" || form.type === "quote" ? null : form.stock,
     service: form.type === "service" ? (form.service ?? { durationMinutes: 60, capacity: 1 }) as ProductInput["service"] : null,
@@ -119,7 +124,7 @@ export function generateVariants(productId: string, options: ProductOption[], ex
 export function emptyProduct(category: string): Product {
   return {
     id: "", slug: "", name: "", description: "", category, price: 0, compareAtPrice: null, images: [], options: [],
-    variants: [], stock: 0, featured: false, active: true, draft: false, minQuantity: 1, attributes: {}, createdAt: "",
+    variants: [], stock: 0, featured: false, active: true, draft: false, free: false, minQuantity: 1, attributes: {}, createdAt: "",
     type: "physical", unit: "u", step: 1, maxQuantity: null, service: null, digital: null,
   };
 }

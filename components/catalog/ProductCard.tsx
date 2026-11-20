@@ -40,7 +40,7 @@ export function ProductCard({ product, priority = false }: { product: Product; p
         ) : (
           <p className={styles.price}>
             {hasRange ? <span className={styles.from}>{t.product.from} </span> : null}
-            <span className={`price ${onSale ? "price-sale" : ""}`}>{formatUnitPrice(lowest, product.unit)}</span>
+            <span className={`price ${onSale ? "price-sale" : ""}`} data-free={product.free && lowest === 0 ? "" : undefined}>{product.free && lowest === 0 ? t.common.free : formatUnitPrice(lowest, product.unit)}</span>
             {onSale ? <span className="price-compare">{formatPrice(product.compareAtPrice!)}</span> : null}
           </p>
         )}

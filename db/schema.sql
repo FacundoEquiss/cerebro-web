@@ -190,6 +190,8 @@ alter table products add column if not exists service jsonb;
 alter table products add column if not exists digital jsonb;
 -- 0.3.0 (db/migrations/0003_drafts.sql)
 alter table products add column if not exists draft boolean not null default false;
+-- 0.3.1 (db/migrations/0004_free.sql): price 0 on purpose
+alter table products add column if not exists free boolean not null default false;
 
 alter table orders add column if not exists is_quote boolean not null default false;
 alter table orders add column if not exists quote_sent_at timestamptz;
@@ -257,7 +259,7 @@ select
        from variants v where v.product_id = p.id and v.active),
     '[]'::jsonb
   ) as variants,
-  p.type, p.unit, p.step, p.max_quantity, p.service, p.digital
+  p.type, p.unit, p.step, p.max_quantity, p.service, p.digital, p.free
 from products p
 where p.active and not p.draft;
 
@@ -908,7 +910,7 @@ language sql stable security definer set search_path = public as $$
   select coalesce(jsonb_agg(jsonb_build_object(
     'id', p.id, 'slug', p.slug, 'name', p.name, 'description', p.description, 'category', p.category,
     'price', p.price, 'compare_at_price', p.compare_at_price, 'images', p.images, 'options', p.options,
-    'stock', p.stock, 'featured', p.featured, 'active', p.active, 'draft', p.draft, 'min_quantity', p.min_quantity,
+    'stock', p.stock, 'featured', p.featured, 'active', p.active, 'draft', p.draft, 'free', p.free, 'min_quantity', p.min_quantity,
     'attributes', p.attributes, 'created_at', p.created_at,
     'type', p.type, 'unit', p.unit, 'step', p.step, 'max_quantity', p.max_quantity, 'service', p.service,
     'digital', case when p.digital is null then null
@@ -937,15 +939,19 @@ begin
   if not exists (select 1 from categories where slug = p ->> 'category') then
     raise exception 'PRODUCT_ERROR:category';
   end if;
-  -- Price 0 on something that is for sale is a mistake (an empty field), never a free product:
-  -- without a price it is a draft; a quote is the one type whose price comes later.
-  if coalesce((p ->> 'price')::numeric, 0) = 0 and coalesce(p ->> 'type', 'physical') <> 'quote'
+  -- Price 0 on something that is for sale is taken for an empty field, unless it says so: a
+  -- draft (no price yet), a quote (priced per request) or a product marked FREE. And free means 0.
+  if coalesce((p ->> 'free')::boolean, false) then
+    if coalesce((p ->> 'price')::numeric, 0) <> 0 then
+      raise exception 'PRODUCT_ERROR:price';
+    end if;
+  elsif coalesce((p ->> 'price')::numeric, 0) = 0 and coalesce(p ->> 'type', 'physical') <> 'quote'
      and not coalesce((p ->> 'draft')::boolean, false) and (p ->> 'price') is not null then
     raise exception 'PRODUCT_ERROR:price';
   end if;
 
   insert into products (id, slug, name, description, category, price, compare_at_price, images, options,
-                        stock, featured, active, min_quantity, attributes, type, unit, step, max_quantity, service, digital, draft)
+                        stock, featured, active, min_quantity, attributes, type, unit, step, max_quantity, service, digital, draft, free)
   values (v_id, p ->> 'slug', p ->> 'name', coalesce(p ->> 'description', ''), p ->> 'category',
           -- No price = a draft, stored as 0 and never sold (see `draft`). A quote has no public price by nature.
           coalesce((p ->> 'price')::numeric, 0), (p ->> 'compareAtPrice')::numeric,
@@ -957,14 +963,15 @@ begin
           case when jsonb_typeof(p -> 'service') = 'object' then p -> 'service' else null end,
           -- Only the visible name is kept with the product; the storage key goes to product_files.
           case when jsonb_typeof(p -> 'digital') = 'object' then (p -> 'digital') - 'file' else null end,
-          coalesce((p ->> 'draft')::boolean, false) or ((p ->> 'price') is null and coalesce(p ->> 'type', 'physical') <> 'quote'))
+          coalesce((p ->> 'draft')::boolean, false) or ((p ->> 'price') is null and coalesce(p ->> 'type', 'physical') <> 'quote'),
+          coalesce((p ->> 'free')::boolean, false))
   on conflict (id) do update set
     slug = excluded.slug, name = excluded.name, description = excluded.description, category = excluded.category,
     price = excluded.price, compare_at_price = excluded.compare_at_price, images = excluded.images,
     options = excluded.options, stock = excluded.stock, featured = excluded.featured, active = excluded.active,
     min_quantity = excluded.min_quantity, attributes = excluded.attributes, type = excluded.type, unit = excluded.unit,
     step = excluded.step, max_quantity = excluded.max_quantity, service = excluded.service, digital = excluded.digital,
-    draft = excluded.draft;
+    draft = excluded.draft, free = excluded.free;
 
   if coalesce(p #>> '{digital,file}', '') <> '' then
     insert into product_files (product_id, file) values (v_id, p #>> '{digital,file}')

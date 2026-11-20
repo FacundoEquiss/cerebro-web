@@ -16,7 +16,7 @@ const schema = z.discriminatedUnion("action", [
   z.object({ action: z.enum(["quote", "send_quote"]), prices: z.array(z.number().min(0).max(1_000_000_000)).min(1).max(50), shipping: z.number().min(0).max(1_000_000_000) }),
 ]);
 
-const STATUS: Record<AdminError["code"], number> = { not_found: 404, conflict: 409, invalid_transition: 422, slug_taken: 409, category: 422, invalid: 400, quote_incomplete: 422 };
+const STATUS: Record<AdminError["code"], number> = { not_found: 404, conflict: 409, invalid_transition: 422, slug_taken: 409, category: 422, invalid: 400, needs_migration: 409, quote_incomplete: 422 };
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const guard = await requireWriter(request);

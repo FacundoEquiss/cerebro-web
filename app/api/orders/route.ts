@@ -9,7 +9,7 @@ import { data } from "@/lib/data";
 import { OrderError } from "@/lib/data/types";
 import { env } from "@/lib/env";
 import { normalizeCustomer, normalizeLines } from "@/lib/orders/idempotency";
-import { notifyOrderCreated } from "@/lib/orders/notify";
+import { notifyOrderCreated, sendPaidMail } from "@/lib/orders/notify";
 import { NO_SHIPPING, requestNeedsShipping, shippingMethod, shippingTerms } from "@/lib/orders/pricing";
 import { expireStaleOrders } from "@/lib/orders/expiry";
 import { signReceipt } from "@/lib/orders/receipt";
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
 
     // Free the stock and the slots held by orders nobody paid, before this buyer is told "no".
     await expireStaleOrders();
-    const order = await adapter.createOrder(
+    const created = await adapter.createOrder(
       {
         idempotencyKey: body.idempotencyKey,
         lines: normalizeLines(body.lines),
@@ -86,6 +86,16 @@ export async function POST(request: Request) {
       shippingTerms(shippingMethodId),
     );
 
+    // NOTHING TO PAY. An order of free products adds up to 0: no gateway is opened and nobody
+    // has to confirm a transfer of nothing. It is marked as paid at once (the server worked the
+    // total out, not the browser), which is also what hands over a free download.
+    let order = created;
+    const nothingToPay = created.total === 0 && created.status === "new";
+    if (nothingToPay && adapter.storesOrders && created.paidAt === null) {
+      await adapter.setOrderStatus(created.id, "new", "paid", "system", "free").catch(() => undefined); // (a repeated request finds it already paid)
+      order = (await adapter.getOrder(created.id)) ?? created;
+    }
+
     // The buyer's key to their own order: a signed receipt in the URL, no cookie needed.
     const token = signReceipt(order, e.orderSecret);
     const orderPath = paths.order(order.id, token);
@@ -95,7 +105,7 @@ export async function POST(request: Request) {
 
     let redirect: string | null = null;
     let paymentError = false;
-    if (body.paymentMethod === "online") {
+    if (body.paymentMethod === "online" && !nothingToPay) {
       try {
         redirect = await startPayment(order, customer, attribution, token);
       } catch (err) {
@@ -114,7 +124,7 @@ export async function POST(request: Request) {
         orderUrl,
         { email: customer.email, phone: customer.phone, name: customer.name, fbp: attribution.fbp, fbc: attribution.fbc, gaClientId: attribution.ga_client_id, ip, userAgent: request.headers.get("user-agent") ?? undefined },
         consent,
-      ),
+      ).then(() => (nothingToPay && order.paidAt !== null ? sendPaidMail(order, orderUrl, customer.email) : undefined)),
     );
 
     return NextResponse.json({ orderId: order.id, url: paymentError ? `${orderPath}&pay=failed` : orderPath, redirect, paymentError });

@@ -68,6 +68,8 @@ export function CheckoutForm({
   const method = ships ? (shipping.find((m) => m.id === shippingId) ?? shipping[0]) : undefined;
   const subtotal = items.reduce((sum, i) => sum + lineTotal(i), 0);
   const shippingPrice = method ? (method.freeFrom !== null && subtotal >= method.freeFrom ? 0 : method.price) : 0;
+  // Free products only: there is nothing to pay, so no way of paying is asked (the server confirms the order at once).
+  const nothingToPay = items.length > 0 && subtotal + shippingPrice === 0;
 
   useEffect(() => {
     if (hydrated && items.length > 0) {
@@ -233,6 +235,8 @@ export function CheckoutForm({
 
         <section className={`card ${styles.block}`} aria-labelledby="checkout-payment">
           <h2 id="checkout-payment">{t.checkout.payment}</h2>
+          {nothingToPay ? <p className="notice" data-testid="checkout-free">{t.checkout.nothingToPay}</p> : null}
+          {nothingToPay ? null : (
           <div className={styles.choices} role="radiogroup" aria-labelledby="checkout-payment">
             {paymentMethods.map((m) => (
               <label key={m} className={styles.choice} data-active={m === payment || undefined}>
@@ -244,7 +248,8 @@ export function CheckoutForm({
               </label>
             ))}
           </div>
-          {payment === "online" ? <p className={`muted ${styles.hint}`}>{t.checkout.inAppHint}</p> : null}
+          )}
+          {payment === "online" && !nothingToPay ? <p className={`muted ${styles.hint}`}>{t.checkout.inAppHint}</p> : null}
         </section>
       </div>
 
@@ -265,7 +270,7 @@ export function CheckoutForm({
         <dl className={styles.totals}>
           <div><dt>{t.cart.subtotal}</dt><dd>{formatPrice(subtotal)}</dd></div>
           <div><dt>{t.cart.shipping}</dt><dd data-testid="checkout-shipping">{!ships ? t.checkout.noShipping : shippingPrice === 0 ? t.common.free : formatPrice(shippingPrice)}</dd></div>
-          <div className={styles.total}><dt>{t.cart.estimated}</dt><dd data-testid="checkout-total">{formatPrice(subtotal + shippingPrice)}</dd></div>
+          <div className={styles.total}><dt>{t.cart.estimated}</dt><dd data-testid="checkout-total">{nothingToPay ? t.common.free : formatPrice(subtotal + shippingPrice)}</dd></div>
         </dl>
         <AntibotWidget provider={antibot} onToken={setToken} resetSignal={resetSignal} />
         <div aria-live="assertive">

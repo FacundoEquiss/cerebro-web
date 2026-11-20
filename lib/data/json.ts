@@ -38,7 +38,7 @@ import {
 
 type Text = string | Record<string, string>;
 interface RawProduct {
-  id: string; slug: string; name: Text; description: Text; category: string; price: number | null; draft?: boolean;
+  id: string; slug: string; name: Text; description: Text; category: string; price: number | null; draft?: boolean; free?: boolean;
   compareAtPrice?: number | null; featured?: boolean; active?: boolean; minQuantity?: number; stock?: number | null;
   attributes?: Record<string, string>; createdAt?: string;
   type?: ProductType; unit?: string; step?: number; maxQuantity?: number | null;
@@ -64,7 +64,10 @@ export function parseCatalog(data: { categories: { slug: string; name: Text; des
     // A price that is not known yet is `null` in the file: the product is a draft, never "0".
     price: p.price ?? 0,
     // A quote has no public price by nature (the owner prices each request): there `null` is normal.
-    draft: p.draft === true || ((p.price === null || p.price === undefined) && p.type !== "quote"),
+    // …and price 0 is only for sale when it says so (`"free": true`): an unmarked 0 is an empty
+    // field, and it is kept off the store like a draft (`npm run check:catalog` names it).
+    draft: p.draft === true || ((p.price === null || p.price === undefined || (p.price === 0 && p.free !== true)) && p.type !== "quote"),
+    free: p.free === true && p.price === 0,
     compareAtPrice: p.compareAtPrice ?? null,
     images: p.images.map((i) => ({ src: i.src, alt: tr(i.alt), width: i.width, height: i.height, ...(i.option ? { option: i.option } : {}) })),
     options: (p.options ?? []).map((o) => ({
@@ -102,6 +105,7 @@ function upgradeCatalog(c: Catalog): Catalog {
   for (const p of c.products) {
     p.type ??= "physical";
     p.draft ??= false;
+    p.free ??= false;
     p.unit ??= "u";
     p.step ??= 1;
     p.maxQuantity ??= null;
@@ -122,6 +126,9 @@ function upgradeOrders(orders: StoredOrder[]): StoredOrder[] {
   }
   return orders;
 }
+
+/** Price 0 only when it is meant: a draft, a quote, or a product marked free. And free means 0. */
+export const priceIsMeant = (p: Pick<Product, "price" | "draft" | "free" | "type">) => (p.free ? p.price === 0 : p.price > 0 || p.draft || p.type === "quote");
 
 /** On sale: active and complete. A draft (price missing) is never listed and never ordered. */
 const forSale = (p: Product) => p.active && !p.draft;
@@ -470,8 +477,9 @@ export const jsonAdapter: DataAdapter = {
       if (!input.id || !input.slug || !input.name) throw new AdminError("invalid");
       if (catalog.products.some((p) => p.slug === input.slug && p.id !== input.id)) throw new AdminError("slug_taken");
       if (!catalog.categories.some((c) => c.slug === input.category)) throw new AdminError("category");
+      if (!priceIsMeant({ ...input, free: input.free ?? false })) throw new AdminError("invalid", "price");
       const i = catalog.products.findIndex((p) => p.id === input.id);
-      const product: Product = { ...input, createdAt: catalog.products[i]?.createdAt ?? input.createdAt ?? new Date().toISOString() };
+      const product: Product = { ...input, free: input.free ?? false, createdAt: catalog.products[i]?.createdAt ?? input.createdAt ?? new Date().toISOString() };
       if (i >= 0) catalog.products[i] = product;
       else catalog.products.unshift(product);
       await saveCatalog();

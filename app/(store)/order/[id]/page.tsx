@@ -66,6 +66,8 @@ export default async function OrderPage({ params, searchParams }: Props) {
     console.error("[order-page]", err instanceof Error ? err.message : err);
   }
 
+  // Nothing to pay: an order that adds up to 0 (free products) is confirmed as it is.
+  const free = order.status !== "quote" && order.total === 0;
   const paid = order.paidAt !== null;
   const cancelled = order.status === "cancelled";
   // An enquiry: no price until the owner SENDS the quote; then the customer can accept it here.
@@ -86,7 +88,7 @@ export default async function OrderPage({ params, searchParams }: Props) {
   const payMethods = payments().methods();
   // An online order nobody paid yet: the gateway failed, or the buyer closed its page. They can
   // open it again from here as many times as needed — it never creates a second order.
-  const canPay = !paid && !cancelled && !enquiry && !confirming && order.paymentMethod === "online" && payments().id !== "manual";
+  const canPay = !paid && !free && !cancelled && !enquiry && !confirming && order.paymentMethod === "online" && payments().id !== "manual";
   const payFailed = canPay && (Array.isArray(query.pay) ? query.pay[0] : query.pay) === "failed";
   const orderUrl = `${e.siteUrl}${paths.order(order.id, token)}`;
   const message = fill(t.order.whatsappMessage, { id: order.id, total: formatPrice(order.total), url: orderUrl });
@@ -97,15 +99,16 @@ export default async function OrderPage({ params, searchParams }: Props) {
   return (
     <div className={`container page ${styles.page}`} data-testid="order-page">
       <header className={styles.head}>
-        <span className={styles.icon} data-state={cancelled ? "cancelled" : paid || quoteSent ? "paid" : "pending"} aria-hidden>
-          {cancelled ? <XCircle /> : enquiry ? <FileText /> : paid ? <CheckCircle2 /> : <Clock />}
+        <span className={styles.icon} data-state={cancelled ? "cancelled" : paid || free || quoteSent ? "paid" : "pending"} aria-hidden>
+          {cancelled ? <XCircle /> : enquiry ? <FileText /> : paid || free ? <CheckCircle2 /> : <Clock />}
         </span>
         <p className="eyebrow">{fill(t.order.title, { id: order.id })}</p>
-        <h1>{cancelled ? t.order.statusCancelled : quoteSent ? t.types.quoteReadyTitle : enquiry ? t.types.quoteReceivedTitle : paid ? t.order.statusPaid : canPay ? t.order.payTitle : t.order.thanks}</h1>
+        <h1>{cancelled ? t.order.statusCancelled : quoteSent ? t.types.quoteReadyTitle : enquiry ? t.types.quoteReceivedTitle : free ? t.order.freeTitle : paid ? t.order.statusPaid : canPay ? t.order.payTitle : t.order.thanks}</h1>
         <p className="muted">
           {cancelled ? t.order.cancelledDetail
             : quoteSent ? t.types.quoteReadyText
             : enquiry ? t.types.quoteReceivedText
+            : free ? t.order.freeDetail
             : confirming ? t.order.confirmingDetail
             : paid ? t.order.paidDetail
             : order.paymentMethod === "bank_transfer" ? t.order.nextStepsTransfer
@@ -210,7 +213,7 @@ export default async function OrderPage({ params, searchParams }: Props) {
         </section>
       ) : null}
 
-      {!paid && !cancelled && !enquiry && order.paymentMethod === "bank_transfer" ? (
+      {!paid && !free && !cancelled && !enquiry && order.paymentMethod === "bank_transfer" ? (
         <section className={`card ${styles.block}`} aria-labelledby="order-transfer">
           <h2 id="order-transfer">{t.order.transferData}</h2>
           <ul className={styles.transfer}>
@@ -225,7 +228,7 @@ export default async function OrderPage({ params, searchParams }: Props) {
         </section>
       ) : null}
 
-      {!paid && !cancelled && !enquiry && order.paymentMethod === "whatsapp" && whatsapp ? (
+      {!paid && !free && !cancelled && !enquiry && order.paymentMethod === "whatsapp" && whatsapp ? (
         <a href={whatsapp} className="btn btn-lg btn-block" rel="noopener noreferrer" target="_blank" data-testid="order-whatsapp">
           <MessageCircle aria-hidden size={18} /> {t.order.sendWhatsapp}
         </a>

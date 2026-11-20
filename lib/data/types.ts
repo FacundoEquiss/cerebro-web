@@ -130,6 +130,13 @@ export interface Product {
    * Never invent a price to make a product appear: leave it as a draft and ask the owner.
    */
   draft: boolean;
+  /**
+   * FREE ON PURPOSE: the price is 0 and that is what the owner wants (a free download, a sample,
+   * an open class). Without this mark, price 0 on something for sale is taken for an empty field
+   * and refused. A free product is ordered like any other; an order that adds up to 0 needs no
+   * payment and is confirmed at once.
+   */
+  free: boolean;
   /** Smallest quantity of one line, in `unit` (the "min"). May be a decimal: 0.25 kg. */
   minQuantity: number;
   type: ProductType;
@@ -300,7 +307,7 @@ export interface AdminOrder extends Order {
 }
 
 /** What the admin panel sends to create or edit a product. */
-export type ProductInput = Omit<Product, "createdAt"> & { createdAt?: string };
+export type ProductInput = Omit<Product, "createdAt" | "free"> & { createdAt?: string; free?: boolean };
 
 export interface PaymentRecord {
   provider: string;
@@ -353,7 +360,7 @@ export class ReadOnlyError extends Error {
 
 /** Someone else changed the order first (or it does not exist). `code` is stable. */
 export class AdminError extends Error {
-  constructor(public code: "not_found" | "conflict" | "invalid_transition" | "slug_taken" | "category" | "invalid" | "quote_incomplete", detail = "") {
+  constructor(public code: "not_found" | "conflict" | "invalid_transition" | "slug_taken" | "category" | "invalid" | "quote_incomplete" | "needs_migration", public detail = "") {
     super(`${code}${detail ? `: ${detail}` : ""}`);
   }
 }
@@ -363,6 +370,12 @@ export class AdminError extends Error {
  * panel read and write only through this interface, so an external CRM can replace the panel.
  * Implementations: `json` (demo / local file), `supabase`, `postgres`. See docs/adapters.md.
  */
+/** What `saveProduct` answers: the product, plus a migration the database still needs (if any). */
+export interface SavedProduct extends Product {
+  /** e.g. "0003_drafts": the save WORKED, but the database is behind the code. */
+  migrationNeeded?: string;
+}
+
 export interface DataAdapter {
   readonly id: string;
   /** False when orders are not stored (the signed receipt is the only copy). */
@@ -407,7 +420,7 @@ export interface DataAdapter {
   /** Every product, paused ones included. */
   listAllProducts(): Promise<Product[]>;
   /** Creates or updates a product (same `id` = update). Throws `AdminError`. */
-  saveProduct(input: ProductInput): Promise<Product>;
+  saveProduct(input: ProductInput): Promise<SavedProduct>;
   /** `variantId` null = the product's own stock. `stock` null = made to order. */
   setStock(productId: string, variantId: string | null, stock: number | null): Promise<void>;
   /** Newest first (the latest 500). */

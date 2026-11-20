@@ -137,7 +137,7 @@ export function ProductView({ product, booking, antibot = "none" }: { product: P
       <div className={styles.buy}>
         <h1 className={styles.name} data-testid="product-name">{product.name}</h1>
         <p className={styles.price} data-testid="product-price">
-          {isQuote ? <span className="price">{t.types.consult}</span> : <span className={`price ${onSale ? "price-sale" : ""}`}>{formatUnitPrice(price, product.unit)}</span>}
+          {isQuote ? <span className="price">{t.types.consult}</span> : <span className={`price ${onSale ? "price-sale" : ""}`}>{product.free && price === 0 ? t.common.free : formatUnitPrice(price, product.unit)}</span>}
           {onSale && !isQuote ? (
             <>
               <span className="sr-only">{t.product.listPrice}: </span>
@@ -157,7 +157,7 @@ export function ProductView({ product, booking, antibot = "none" }: { product: P
             </span>
           </p>
         ) : null}
-        {commerce.installments.enabled && !isQuote ? (
+        {commerce.installments.enabled && !isQuote && price > 0 ? (
           <p className="muted">
             {commerce.installments.interestFree
               ? fill(t.product.installments, { n: commerce.installments.count, price: formatPrice(price / commerce.installments.count) })

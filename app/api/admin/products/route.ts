@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     // Dates of an event that people already signed up for and that this change takes away.
     const now = Date.now();
     const before = (await adapter.listAllProducts()).find((p) => p.id === input.id);
-    const product = await adapter.saveProduct(input);
+    const { migrationNeeded, ...product } = await adapter.saveProduct(input);
     const moved: { slot: string; seats: number }[] = [];
     if (before && isEvent(before) && adapter.storesOrders) {
       const kept = new Set(isEvent(product) ? upcomingSessions(product, now).map((s) => `${s.start}|${s.end}`) : []);
@@ -39,9 +39,10 @@ export async function POST(request: Request) {
     // The storefront is cached: drop it so the change shows right away.
     revalidatePath("/", "layout");
     if (product.active) void notifyIndexNow([paths.product(product.slug)]).catch(() => undefined);
-    return NextResponse.json({ product, ...(moved.length > 0 ? { moved } : {}) });
+    // `migration`: the save worked, and the database still needs that file (the panel says so).
+    return NextResponse.json({ product, ...(moved.length > 0 ? { moved } : {}), ...(migrationNeeded ? { migration: migrationNeeded } : {}) });
   } catch (e) {
-    if (e instanceof AdminError) return NextResponse.json({ error: e.code }, { status: e.code === "slug_taken" ? 409 : 400 });
+    if (e instanceof AdminError) return NextResponse.json({ error: e.code, ...(e.code === "invalid" && e.detail ? { field: e.detail } : {}), ...(e.code === "needs_migration" ? { migration: e.detail } : {}) }, { status: e.code === "slug_taken" || e.code === "needs_migration" ? 409 : 400 });
     if (e instanceof ReadOnlyError) return NextResponse.json({ error: "read_only" }, { status: 403 });
     console.error("[admin-product]", e instanceof Error ? e.message : e);
     return NextResponse.json({ error: "generic" }, { status: 500 });
