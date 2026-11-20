@@ -1,0 +1,1 @@
+export function diagnose(root?: string, env?: Record<string, string | undefined>, lang?: string): { items: { ok: boolean | null; text: string }[]; next: string | null; labels: Record<string, unknown> };

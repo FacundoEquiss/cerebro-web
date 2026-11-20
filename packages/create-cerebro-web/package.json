@@ -1,0 +1,12 @@
+{
+  "name": "create-cerebro-web",
+  "version": "0.3.0",
+  "description": "Start an online store from the Cerebro Web template in one command: npm create cerebro-web@latest my-store",
+  "license": "MIT",
+  "type": "module",
+  "bin": { "create-cerebro-web": "index.mjs" },
+  "files": ["index.mjs", "README.md"],
+  "engines": { "node": ">=20.9" },
+  "repository": { "type": "git", "url": "https://github.com/FacundoEquiss/cerebro-web", "directory": "packages/create-cerebro-web" },
+  "keywords": ["create", "cerebro-web", "nextjs", "ecommerce", "storefront", "template"]
+}

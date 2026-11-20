@@ -1,0 +1,42 @@
+name: Presets
+
+# The first official step of a new store is `npm run preset <name>`. This job applies every preset
+# to a clean checkout and proves that the checks and the unit tests are still green: the tests
+# run against tests/fixtures, never against the catalogue of the store.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: presets-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [mixto, moda, hogar, tecnologia, almacen, gastronomia, servicios, digital, a-medida]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Apply the preset
+        run: npm run preset ${{ matrix.preset }}
+      - name: Check (brand, dictionaries, the catalogue of the preset)
+        run: npm run check
+      - name: Type check
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+      - name: Build
+        run: npm run build
