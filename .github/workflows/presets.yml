@@ -17,6 +17,8 @@ concurrency:
 
 jobs:
   preset:
+    # Only in the template's own repository: a store has its own catalogue, the presets are not its tests.
+    if: github.repository == 'FacundoEquiss/cerebro-web'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:

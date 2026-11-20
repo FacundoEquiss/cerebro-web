@@ -24,6 +24,10 @@ npm create cerebro-web@latest my-store -- --preset almacen --no-install
 | `--no-git` | Do not start a git repository |
 | `--yes` | Never ask: take the defaults |
 | `--lang en` | Messages in English (default: Spanish) |
-| `--ref <branch>` | Another branch or tag of the template |
+| `--ref <name>` | Another branch or tag of the template |
+
+The new store keeps the brain (`cerebro/`), `AGENTS.md`, `CLAUDE.md` and `ROADMAP.md` (the agent
+that adapts it reads them), starts its own `CHANGELOG.md` at 0.1.0 and leaves the template's
+`packages/` and preset CI behind. If something fails on the way, the folder it made is removed.
 
 Needs Node 20.9+ and either `git` or `tar`. No dependencies. MIT.

@@ -19,7 +19,8 @@ says, follow the official guide — <https://docs.npmjs.com/creating-and-publish
 
 ## Every release
 
-1. The template must be on the `main` branch of GitHub: the creator downloads it from there.
+1. The template must be on the `main` branch of GitHub: the creator downloads it from there
+   (`--ref <name>` takes another branch or a tag; both work with git and with the tarball).
 2. Set the version in `packages/create-cerebro-web/package.json` (the same as the template).
 3. Try it against your local copy, without publishing anything:
 

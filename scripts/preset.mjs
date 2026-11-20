@@ -145,6 +145,13 @@ if (!keepTheme && preset.palette) {
   writeFileSync(file, source);
 }
 
+// The example images and files ship with the template, but a store may have deleted them: what
+// this preset shows and is not there is drawn again (placeholders made from scratch, no photos).
+const missingImage = preset.products.some((p) => (p.images ?? []).some((i) => i.placeholder && !existsSync(join(root, "public", i.src))));
+if (missingImage) spawnSync(process.execPath, [join(root, "scripts/generate-images.mjs")], { stdio: "ignore" });
+const missingFile = preset.products.some((p) => p.digital?.file && !existsSync(join(root, "content/downloads", p.digital.file)));
+if (missingFile) spawnSync(process.execPath, [join(root, "scripts/generate-samples.mjs")], { stdio: "ignore" });
+
 // The same catalogue as SQL, for the database adapters.
 spawnSync(process.execPath, [join(root, "scripts/generate-seed.mjs")], { stdio: "inherit" });
 
@@ -168,6 +175,7 @@ console.log(`  · content/products.json   ${preset.products.length} products in 
 console.log("  · content/site.json       home texts (hero, benefits, questions)");
 console.log(keepTheme ? "  · config/brand.ts         colours left as they were (--keep-theme)" : `  · config/brand.ts         ${themed} colours of the suggested palette`);
 console.log("  · db/seed.sql             the same catalogue as SQL");
+if (missingImage || missingFile) console.log(`  · ${[missingImage ? "public/products/" : "", missingFile ? "content/downloads/" : ""].filter(Boolean).join(" and ")}   the example ${missingImage ? "images" : "files"}${missingImage && missingFile ? " and files" : ""} that were missing, drawn again`);
 if (setAside.length > 0) console.log(`  · ${dataDir}: ${setAside.join(" and ")} set aside (…before-preset-${stamp}.json): local edits would hide the new catalogue, and old orders point at products that are gone`);
 console.log(`  · a copy of what was replaced is in ${backupDir.slice(root.length + 1)}/`);
 if (reasons.length > 0) console.log(`  · --force: applied over ${reasons.length} warning(s)`);

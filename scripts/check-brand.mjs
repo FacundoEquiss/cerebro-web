@@ -2,14 +2,20 @@
 // NO TRACE OF A PRIVATE BRAND. This template is generic, and a site derived from a real store
 // must not leak that store into something public: its name, its owner, its products, its
 // domains, its account ids, a phone or a real e-mail address. This script reads EVERY text file
-// of the repository and fails on a hit. It runs in `npm run check` and before every build.
+// of the repository and fails on a hit.
 //
-//  · GENERIC PATTERNS are always checked: long numbers (account ids, phones), measurement and
+// IT PROTECTS THE TEMPLATE, NOT YOUR STORE. A real store carries a real e-mail, a real phone and
+// a bank account in its config, and that is correct. So the scan runs only:
+//   · on a machine that has a `.brand-blocklist` (the maintainers of the template), and
+//   · in the CI of the template's own repository (GITHUB_REPOSITORY).
+// Anywhere else `npm run check` says so and moves on. It is not part of the build.
+//
+//  · GENERIC PATTERNS are checked whenever the scan runs: long numbers (account ids, phones), measurement and
 //    project ids, e-mail addresses that are not example.com, database hosts.
 //  · YOUR OWN TERMS are optional and NEVER live in the repository — not encoded, not hashed
 //    (both can be reversed). Put them in a local file ignored by git, `.brand-blocklist` at the
 //    root (or the file named by BRAND_BLOCKLIST_FILE): one term per line, `=word` to match a
-//    whole word only, `#` for comments. Without the file only the patterns run, with a notice.
+//    whole word only, `#` for comments. In the template's CI only the patterns run.
 //  · The names of hosted e-commerce platforms are allowed only where the project explains
 //    itself (the READMEs, docs/ and the brain) — never in code, UI texts or config.
 //
@@ -46,7 +52,7 @@ const PATTERNS = [
 const REPOSITORY = ["Fac", "undoEquiss/cerebro-web"].join("");
 const ALLOWED = [new RegExp(REPOSITORY.replace("/", "\\/"), "gi")];
 
-const SKIP_DIRS = new Set(["node_modules", ".next", ".git", ".vercel", ".data", "out", "coverage", "test-results", "playwright-report", ".preset-backups"]);
+const SKIP_DIRS = new Set(["node_modules", ".next", ".next-fixtures", ".git", ".vercel", ".data", "out", "coverage", "test-results", "playwright-report", ".preset-backups"]);
 const SKIP_FILES = new Set([".brand-blocklist", "package-lock.json", "tsconfig.tsbuildinfo", "next-env.d.ts"]); // generated: hashes and third-party metadata
 const BINARY = /\.(png|jpe?g|webp|avif|gif|ico|woff2?|ttf|otf|pdf|zip|gz|mp4|webm)$/i;
 const DOCS = (file) => /^README(\.[a-z]{2})?\.md$/.test(file) || file.startsWith(`docs${sep}`) || file.startsWith(`cerebro${sep}`);
@@ -81,6 +87,11 @@ function* walk(dir) {
   }
 }
 
+/** True where the scan applies: a machine with a blocklist, or the CI of the template itself. */
+export function scanApplies(env = process.env) {
+  return Boolean(blocklist.file) || String(env.GITHUB_REPOSITORY ?? "").toLowerCase() === REPOSITORY.toLowerCase();
+}
+
 const notice = () => {
   if (!blocklist.file) console.warn("• check-brand: no local blocklist (.brand-blocklist) — only the generic patterns are checked.");
 };
@@ -100,6 +111,10 @@ if (process.argv.includes("--stdin")) {
   }
   console.log(`✓ check-brand: ${lines.length} lines${blocklist.file ? `, ${FORBIDDEN.length + FORBIDDEN_WHOLE.length} local terms` : ""}, clean`);
 } else if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  if (!scanApplies()) {
+    console.log("• check-brand: skipped — this scan protects the template's repository; a store keeps its real contact data.");
+    process.exit(0);
+  }
   notice();
   let files = 0;
   const errors = [];
