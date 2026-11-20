@@ -60,3 +60,9 @@
   .thumbs button { width: 72px; }
   .buy { gap: 18px; padding-top: 6px; }
 }
+
+.kind { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; font-size: 0.93rem; color: var(--muted); }
+.kind .badge { flex: none; }
+.lineTotal { font-weight: 500; opacity: 0.9; white-space: nowrap; }
+.note { font-size: 0.84rem; }
+.quantity output { padding-inline: 4px; white-space: nowrap; }

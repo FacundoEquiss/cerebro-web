@@ -68,3 +68,7 @@
   .body { padding: 4px 24px 32px; }
 }
 @media (prefers-reduced-motion: reduce) { .panel, .backdrop { animation: none; } }
+.status[data-status="quote"] { background: #6a4fb3; }
+.quoteLine { display: grid; gap: 8px; padding: 12px; border-radius: var(--r-md); background: var(--surface-2); }
+.quoteTotal { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 1.05rem; }
+.quoteTotal strong { font-size: 1.25rem; font-variant-numeric: tabular-nums; }

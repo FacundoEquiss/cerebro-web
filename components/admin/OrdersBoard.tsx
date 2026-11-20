@@ -9,10 +9,10 @@
 //  · Every move goes to the server, which checks it and writes it to the order's timeline.
 
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
-import { Bell, BellOff, Search, Volume2, VolumeX } from "lucide-react";
+import { Bell, BellOff, Search, Volume2, VolumeX, CalendarClock } from "lucide-react";
 import { fill, t } from "@/i18n";
 import type { AdminOrder, OrderStatus, PaymentMethod } from "@/lib/data/types";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatSlot } from "@/lib/format";
 import { allowedMoves, canMove, neighbour, ORDER_FLOW } from "@/lib/orders/status";
 import { adminFetch } from "./api";
 import { paymentLabel, shippingLabel, statusLabel, timeAgo } from "./format";
@@ -203,6 +203,13 @@ export function OrdersBoard({ initial, initialVersion, serverNow, canWrite }: { 
     void move(order, to);
   }
 
+  // /admin?order=<id> opens that order (the Agenda links here).
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("order");
+    if (id && initial.some((o) => o.id === id)) setSelected(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function open(id: string, from?: HTMLElement | null) {
     lastFocus.current = from ?? (document.activeElement as HTMLElement | null);
     setSelected(id);
@@ -278,7 +285,11 @@ export function OrdersBoard({ initial, initialVersion, serverNow, canWrite }: { 
   }
 
   const card = (order: AdminOrder) => {
-    const items = order.lines.reduce((n, l) => n + l.quantity, 0);
+    // 0.75 kg of something is ONE item, three mugs are three.
+    const items = order.lines.reduce((n, l) => n + (Number.isInteger(l.quantity) ? l.quantity : 1), 0);
+    const enquiry = order.status === "quote";
+    const slots = order.lines.filter((l) => l.slot);
+    const ships = order.lines.some((l) => l.type === "physical");
     const moves = allowedMoves(order.status);
     const dragging = drag?.id === order.id;
     return (
@@ -314,14 +325,23 @@ export function OrdersBoard({ initial, initialVersion, serverNow, canWrite }: { 
           </header>
           <p className={styles.customer}>{order.customer.name}</p>
           <p className={styles.line}>
-            <strong className={styles.total}>{formatPrice(order.total)}</strong>
-            <span>{items === 1 ? a.itemOne : fill(a.items, { n: items })}</span>
+            <strong className={styles.total}>{enquiry && order.total === 0 ? t.types.toQuote : formatPrice(order.total)}</strong>
+            <span>{enquiry ? order.lines[0]?.name : items === 1 ? a.itemOne : fill(a.items, { n: items })}</span>
           </p>
+          {slots.map((l, i) => (
+            <p key={i} className={styles.slot} data-testid="card-slot"><CalendarClock aria-hidden size={15} /> {formatSlot(l.slot!.start, { short: true })}</p>
+          ))}
           <p className={styles.tags}>
-            <span className={styles.tag} data-paid={order.paidAt ? "yes" : "no"}>
-              {paymentLabel(order.paymentMethod)} · {order.paidAt ? a.paid : a.unpaid}
-            </span>
-            <span className={styles.tag}>{shippingLabel(order.shipping.methodId)}</span>
+            {enquiry ? (
+              <span className={styles.tag} data-quote={order.quote?.sentAt ? "sent" : "open"} data-testid="card-quote">
+                {order.quote?.sentAt ? t.admin.quote.badgeSent : t.admin.quote.badge}
+              </span>
+            ) : (
+              <span className={styles.tag} data-paid={order.paidAt ? "yes" : "no"}>
+                {paymentLabel(order.paymentMethod)} · {order.paidAt ? a.paid : a.unpaid}
+              </span>
+            )}
+            {ships ? <span className={styles.tag}>{shippingLabel(order.shipping.methodId)}</span> : null}
           </p>
           {paidWhileCancelled(order) ? <p className={styles.alert} data-testid="paid-while-cancelled">{a.paidWhileCancelled}</p> : null}
           {moves.length > 0 ? (

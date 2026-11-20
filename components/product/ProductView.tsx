@@ -10,13 +10,25 @@ import { brand } from "@/config/brand";
 import { commerce } from "@/config/commerce";
 import { fill, paths, t } from "@/i18n";
 import { track } from "@/lib/analytics/client";
-import { availabilityOf, findVariant, missingOptions, productAvailability, unitPrice, unitsAvailable } from "@/lib/data/availability";
+import { availabilityOf, byPiece, findVariant, maxQuantityOf, missingOptions, productAvailability, roundQuantity, unitPrice, unitsAvailable } from "@/lib/data/availability";
 import type { Product } from "@/lib/data/types";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatQuantity, formatUnitPrice } from "@/lib/format";
 import { useCart } from "@/stores/cart";
+import { QuoteForm } from "./QuoteForm";
+import { SlotPicker } from "./SlotPicker";
 import styles from "./ProductView.module.css";
 
-export function ProductView({ product }: { product: Product }) {
+export interface BookingInfo {
+  /** Days with slots, `YYYY-MM-DD` (computed on the server from the opening hours). */
+  dates: string[];
+  timeZone: string;
+  durationMinutes: number;
+}
+
+export function ProductView({ product, booking, antibot = "none" }: { product: Product; booking?: BookingInfo; antibot?: string }) {
+  const isQuote = product.type === "quote";
+  const isService = product.type === "service";
+  const [slot, setSlot] = useState("");
   const [selection, setSelection] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(product.minQuantity);
   const [imageIndex, setImageIndex] = useState(0);
@@ -33,7 +45,10 @@ export function ProductView({ product }: { product: Product }) {
   const availability = unavailable ? "out_of_stock" : complete ? availabilityOf(product, variant) : productAvailability(product);
   const price = unitPrice(product, variant);
   const onSale = product.compareAtPrice !== null && product.compareAtPrice > price;
-  const max = Math.min(commerce.maxQuantityPerLine, complete && !unavailable ? unitsAvailable(product, variant) : commerce.maxQuantityPerLine);
+  const limit = maxQuantityOf(product, commerce.maxQuantityPerLine);
+  const max = Math.min(limit, complete && !unavailable ? unitsAvailable(product, variant) : limit);
+  const step = product.step > 0 ? product.step : 1;
+  const piece = byPiece(product);
   const lead = { min: commerce.leadTime.minDays, max: commerce.leadTime.maxDays };
   const units = complete && variant?.stock != null ? variant.stock : product.options.length === 0 ? product.stock : null;
 
@@ -66,7 +81,11 @@ export function ProductView({ product }: { product: Product }) {
       return;
     }
     if (availability === "out_of_stock") return;
-    add({ productId: product.id, variantId: variant?.id ?? null, selection, quantity }, product.options.map((o) => o.id), max);
+    if (isService && !slot) {
+      setError(t.types.chooseSlotFirst);
+      return;
+    }
+    add({ productId: product.id, variantId: variant?.id ?? null, selection, quantity, ...(isService ? { slot } : {}) }, product.options.map((o) => o.id), max);
     track("add_to_cart", [{ productId: product.id, variantId: variant?.id, name: product.name, price, quantity }], brand.currency);
     setAdded(true);
   }
@@ -97,15 +116,26 @@ export function ProductView({ product }: { product: Product }) {
       <div className={styles.buy}>
         <h1 className={styles.name} data-testid="product-name">{product.name}</h1>
         <p className={styles.price} data-testid="product-price">
-          <span className={`price ${onSale ? "price-sale" : ""}`}>{formatPrice(price)}</span>
-          {onSale ? (
+          {isQuote ? <span className="price">{t.types.consult}</span> : <span className={`price ${onSale ? "price-sale" : ""}`}>{formatUnitPrice(price, product.unit)}</span>}
+          {onSale && !isQuote ? (
             <>
               <span className="sr-only">{t.product.listPrice}: </span>
               <span className="price-compare">{formatPrice(product.compareAtPrice!)}</span>
             </>
           ) : null}
         </p>
-        {commerce.installments.enabled ? (
+        {product.type !== "physical" || !piece ? (
+          <p className={styles.kind} data-testid="product-kind">
+            {product.type !== "physical" ? <span className="badge badge-soft">{t.types.badge[product.type]}</span> : null}
+            <span>
+              {isQuote ? t.types.quoteDetail
+                : isService ? fill(t.types.serviceDetail, { minutes: booking?.durationMinutes ?? product.service?.durationMinutes ?? 60 })
+                : product.type === "digital" ? t.types.digitalDetail
+                : fill(t.types.unitDetail, { unit: product.unit, min: formatQuantity(product.minQuantity, product.unit), step: formatQuantity(step, product.unit) })}
+            </span>
+          </p>
+        ) : null}
+        {commerce.installments.enabled && !isQuote ? (
           <p className="muted">
             {commerce.installments.interestFree
               ? fill(t.product.installments, { n: commerce.installments.count, price: formatPrice(price / commerce.installments.count) })
@@ -147,6 +177,13 @@ export function ProductView({ product }: { product: Product }) {
           })}
         </div>
 
+        {isService && booking ? (
+          <SlotPicker productId={product.id} dates={booking.dates} timeZone={booking.timeZone} seats={quantity} value={slot} onChange={(v) => { setSlot(v); setError(""); setAdded(false); }} />
+        ) : null}
+
+        {isQuote ? <QuoteForm product={product} antibot={antibot} /> : null}
+
+        {isQuote || isService || product.type === "digital" ? null : (
         <p className={styles.stock} data-state={availability} data-testid="stock-status">
           <span className={styles.dot} aria-hidden />
           {availability === "out_of_stock" ? (complete ? t.product.soldOutDetail : t.product.soldOut)
@@ -154,17 +191,21 @@ export function ProductView({ product }: { product: Product }) {
             : units !== null && units <= 5 ? `${fill(t.product.lowStock, { n: units })} · ${fill(t.product.inStockDetail, lead)}`
             : fill(t.product.inStockDetail, lead)}
         </p>
+        )}
 
+        {isQuote ? null : (
         <div className={styles.actions}>
-          <div className={styles.quantity}>
-            <button type="button" onClick={() => setQuantity((q) => Math.max(product.minQuantity, q - 1))} aria-label={t.product.decrease} disabled={quantity <= product.minQuantity}>
+          {product.type === "digital" ? null : (
+          <div className={styles.quantity} title={isService ? t.types.seats : undefined}>
+            <button type="button" onClick={() => setQuantity((q) => roundQuantity(Math.max(product.minQuantity, q - step)))} aria-label={t.product.decrease} disabled={quantity <= product.minQuantity}>
               <Minus aria-hidden size={16} />
             </button>
-            <output aria-label={t.product.quantity} data-testid="quantity">{quantity}</output>
-            <button type="button" onClick={() => setQuantity((q) => Math.min(max, q + 1))} aria-label={t.product.increase} disabled={quantity >= max}>
+            <output aria-label={isService ? t.types.seats : t.product.quantity} data-testid="quantity">{formatQuantity(quantity, product.unit)}</output>
+            <button type="button" onClick={() => setQuantity((q) => roundQuantity(Math.min(max, q + step)))} aria-label={t.product.increase} disabled={quantity + step > max + 1e-9}>
               <Plus aria-hidden size={16} />
             </button>
           </div>
+          )}
           <button
             type="button"
             className={`btn btn-lg ${styles.add}`}
@@ -172,15 +213,18 @@ export function ProductView({ product }: { product: Product }) {
             aria-disabled={availability === "out_of_stock" && complete ? "true" : undefined}
             data-testid="add-to-cart"
           >
-            {availability === "out_of_stock" && complete ? t.product.unavailable : t.product.addToCart}
+            {availability === "out_of_stock" && complete ? t.product.unavailable : isService ? t.types.book : t.product.addToCart}
+            {!piece && !(availability === "out_of_stock" && complete) ? <span className={styles.lineTotal}> · {formatPrice(Math.round(price * quantity * 100) / 100)}</span> : null}
           </button>
         </div>
+        )}
+        {!piece && !isQuote ? <p className={`muted ${styles.note}`}>{t.types.weightNote}</p> : null}
 
         <div aria-live="polite" className={styles.feedback}>
           {error ? <p className="field-error" data-testid="option-error">{error}</p> : null}
           {added ? (
             <p className={styles.added} data-testid="added-notice">
-              <Check aria-hidden size={18} /> {t.product.added}
+              <Check aria-hidden size={18} /> {isService ? t.types.booked : t.product.added}
               <Link href={paths.cart()} className="link" data-testid="view-cart">{t.product.viewCart}</Link>
             </p>
           ) : null}

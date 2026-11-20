@@ -1,8 +1,9 @@
 /* Status colours: one accent per column, used for the dot, the count and the drop highlight. */
 .board {
-  --s-new: #b4532a; --s-paid: #23764a; --s-preparing: #b0790f; --s-shipped: #2b63b5; --s-delivered: #5d6269; --s-cancelled: #8a8f96;
+  --s-quote: #6a4fb3; --s-new: #b4532a; --s-paid: #23764a; --s-preparing: #b0790f; --s-shipped: #2b63b5; --s-delivered: #5d6269; --s-cancelled: #8a8f96;
   display: grid; gap: 14px; min-width: 0;
 }
+.board [data-status="quote"] { --accent: var(--s-quote); }
 .board [data-status="new"] { --accent: var(--s-new); }
 .board [data-status="paid"] { --accent: var(--s-paid); }
 .board [data-status="preparing"] { --accent: var(--s-preparing); }
@@ -121,3 +122,6 @@
   .card:hover .move, .move:focus-visible { opacity: 1; }
   .toast { bottom: 28px; }
 }
+.slot { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; color: var(--s-shipped); }
+.tag[data-quote] { background: color-mix(in srgb, var(--s-quote) 13%, var(--surface)); color: var(--s-quote); }
+.tag[data-quote="sent"] { background: var(--s-quote); color: #fff; }

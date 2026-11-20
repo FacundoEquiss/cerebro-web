@@ -1,0 +1,7 @@
+.form { display: grid; gap: 14px; padding: 20px; }
+.form h2 { font-size: 1.2rem; }
+.form p { font-size: 0.88rem; }
+.two { display: grid; gap: 14px; }
+@media (min-width: 768px) {
+  .two { grid-template-columns: 1fr 1fr; }
+}

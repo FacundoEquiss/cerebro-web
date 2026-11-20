@@ -8,12 +8,13 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { brand } from "@/config/brand";
-import { fill, paths, t } from "@/i18n";
+import { fill, languageTag, paths, t } from "@/i18n";
 import { readAttribution } from "@/lib/analytics/attribution";
 import { browserIds, track } from "@/lib/analytics/client";
-import { resolveLine, type CartProduct } from "@/lib/cart-catalog";
+import { resolveLine, slotLabel, type CartProduct } from "@/lib/cart-catalog";
+import { needsShipping } from "@/lib/data/availability";
 import type { PaymentMethod } from "@/lib/data/types";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatQuantity, lineTotal } from "@/lib/format";
 import { idempotencyKey } from "@/lib/orders/idempotency";
 import { customerSchema, type CustomerField } from "@/lib/orders/schema";
 import { checkoutSeed, clearCheckoutSeed } from "@/stores/checkout-attempt";
@@ -61,8 +62,11 @@ export function CheckoutForm({
   const needsToken = antibot !== "none";
 
   const items = useMemo(() => lines.flatMap((l) => resolveLine(l, catalog) ?? []), [lines, catalog]);
-  const method = shipping.find((m) => m.id === shippingId) ?? shipping[0];
-  const subtotal = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
+  // THE CHECKOUT ADAPTS TO THE CART: delivery is asked only if something in it is shipped.
+  const ships = needsShipping(items);
+  const mixed = ships && items.some((i) => i.type !== "physical");
+  const method = ships ? (shipping.find((m) => m.id === shippingId) ?? shipping[0]) : undefined;
+  const subtotal = items.reduce((sum, i) => sum + lineTotal(i), 0);
   const shippingPrice = method ? (method.freeFrom !== null && subtotal >= method.freeFrom ? 0 : method.price) : 0;
 
   useEffect(() => {
@@ -93,13 +97,13 @@ export function CheckoutForm({
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (sending || !method) return;
+    if (sending || (ships && !method)) return;
     const form = new FormData(e.currentTarget);
     const raw = Object.fromEntries(["name", "email", "phone", "address", "city", "postalCode", "notes"].map((k) => [k, String(form.get(k) ?? "").trim() || undefined]));
     const parsed = customerSchema.safeParse(raw);
     const next: Errors = {};
     if (!parsed.success) for (const issue of parsed.error.issues) next[issue.path[0] as CustomerField] ??= ERRORS[String(issue.path[0])] ?? ERRORS.generic;
-    if (method.requiresAddress) {
+    if (method?.requiresAddress) {
       for (const k of ["address", "city", "postalCode"] as const) if (!raw[k]) next[k] = ERRORS[k];
     }
     setErrors(next);
@@ -115,9 +119,10 @@ export function CheckoutForm({
     }
 
     setSending(true);
-    const orderLines = items.map((i) => ({ productId: i.productId, variantId: i.variantId, selection: i.selection, quantity: i.quantity }));
+    const orderLines = items.map((i) => ({ productId: i.productId, variantId: i.variantId, selection: i.selection, quantity: i.quantity, ...(i.slot ? { slot: i.slot } : {}) }));
+    const methodId = method?.id ?? "none";
     try {
-      const key = await idempotencyKey({ seed: checkoutSeed(), lines: orderLines, customer: parsed.data!, shippingMethodId: method.id, paymentMethod: payment });
+      const key = await idempotencyKey({ seed: checkoutSeed(), lines: orderLines, customer: parsed.data!, shippingMethodId: methodId, paymentMethod: payment });
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -125,7 +130,7 @@ export function CheckoutForm({
           idempotencyKey: key,
           lines: orderLines,
           customer: parsed.data,
-          shippingMethodId: method.id,
+          shippingMethodId: methodId,
           paymentMethod: payment,
           antibotToken: token ?? undefined,
           attribution: { ...readAttribution(), ...browserIds() },
@@ -192,6 +197,9 @@ export function CheckoutForm({
 
         <section className={`card ${styles.block}`} aria-labelledby="checkout-delivery">
           <h2 id="checkout-delivery">{t.checkout.delivery}</h2>
+          {!ships ? <p className="muted" data-testid="no-shipping">{t.checkout.noShippingDetail}</p> : null}
+          {mixed ? <p className="muted" data-testid="mixed-note">{t.checkout.mixedNote}</p> : null}
+          {ships ? (
           <div className={styles.choices} role="radiogroup" aria-labelledby="checkout-delivery">
             {shipping.map((m) => {
               const price = m.freeFrom !== null && subtotal >= m.freeFrom ? 0 : m.price;
@@ -207,6 +215,7 @@ export function CheckoutForm({
               );
             })}
           </div>
+          ) : null}
           {method?.requiresAddress ? (
             <>
               {field("address", t.checkout.address, { autoComplete: "street-address" })}
@@ -247,15 +256,15 @@ export function CheckoutForm({
               {i.image ? <img src={i.image.src} alt="" width={52} height={65} /> : null}
               <span>
                 <strong>{i.name}</strong>
-                <span className="muted">{[i.label, fill(t.common.units, { n: i.quantity })].filter(Boolean).join(" · ")}</span>
+                <span className="muted">{[i.label, i.unit === "u" ? fill(t.common.units, { n: i.quantity }) : formatQuantity(i.quantity, i.unit), i.slot ? slotLabel(i.slot, languageTag) : ""].filter(Boolean).join(" · ")}</span>
               </span>
-              <span className="price">{formatPrice(i.unitPrice * i.quantity)}</span>
+              <span className="price">{formatPrice(lineTotal(i))}</span>
             </li>
           ))}
         </ul>
         <dl className={styles.totals}>
           <div><dt>{t.cart.subtotal}</dt><dd>{formatPrice(subtotal)}</dd></div>
-          <div><dt>{t.cart.shipping}</dt><dd>{shippingPrice === 0 ? t.common.free : formatPrice(shippingPrice)}</dd></div>
+          <div><dt>{t.cart.shipping}</dt><dd data-testid="checkout-shipping">{!ships ? t.checkout.noShipping : shippingPrice === 0 ? t.common.free : formatPrice(shippingPrice)}</dd></div>
           <div className={styles.total}><dt>{t.cart.estimated}</dt><dd data-testid="checkout-total">{formatPrice(subtotal + shippingPrice)}</dd></div>
         </dl>
         <AntibotWidget provider={antibot} onToken={setToken} resetSignal={resetSignal} />

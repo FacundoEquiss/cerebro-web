@@ -4,19 +4,21 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CheckCircle2, Clock, MessageCircle, XCircle } from "lucide-react";
+import { CalendarClock, CheckCircle2, Clock, Download, FileText, MessageCircle, XCircle } from "lucide-react";
 import { brand } from "@/config/brand";
 import { commerce } from "@/config/commerce";
 import { fill, paths, t, tr } from "@/i18n";
 import { data } from "@/lib/data";
 import type { Order } from "@/lib/data/types";
 import { env } from "@/lib/env";
-import { formatDate, formatPrice } from "@/lib/format";
+import { needsShipping } from "@/lib/data/availability";
+import { formatDate, formatPrice, formatQuantity, formatSlot, formatUnitPrice, lineTotal } from "@/lib/format";
+import { canDownload, downloadPath } from "@/lib/orders/download";
 import { verifyReceipt } from "@/lib/orders/receipt";
 import { payments } from "@/lib/payments";
 import styles from "./order.module.css";
 
-type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ t?: string | string[]; pay?: string | string[] }> };
+type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ t?: string | string[]; pay?: string | string[]; quote?: string | string[] }> };
 
 export const dynamic = "force-dynamic";
 
@@ -66,9 +68,24 @@ export default async function OrderPage({ params, searchParams }: Props) {
 
   const paid = order.paidAt !== null;
   const cancelled = order.status === "cancelled";
+  // An enquiry: no price until the owner SENDS the quote; then the customer can accept it here.
+  const enquiry = order.status === "quote";
+  const quoteSent = enquiry && Boolean(order.quote?.sentAt);
+  const quoteFlag = Array.isArray(query.quote) ? query.quote[0] : query.quote;
+  const quoteProblem = !enquiry ? null
+    : quoteFlag === "changed" ? t.types.quoteChanged
+    : quoteFlag === "not_sent" ? t.types.quoteNotSent
+    : quoteFlag ? t.types.quoteUnavailable : null;
+  const ships = needsShipping(order.lines);
+  const slots = order.lines.filter((l) => l.slot);
+  // The files of a digital line are handed over ONLY when the stored order is paid. Each link is
+  // signed and expires; this page makes fresh ones every time it is opened.
+  const digital = order.lines.map((l, i) => ({ l, i })).filter(({ l }) => l.type === "digital");
+  const downloads = canDownload(order) && adapter.storesOrders;
+  const payMethods = payments().methods();
   // An online order nobody paid yet: the gateway failed, or the buyer closed its page. They can
   // open it again from here as many times as needed — it never creates a second order.
-  const canPay = !paid && !cancelled && !confirming && order.paymentMethod === "online" && payments().id !== "manual";
+  const canPay = !paid && !cancelled && !enquiry && !confirming && order.paymentMethod === "online" && payments().id !== "manual";
   const payFailed = canPay && (Array.isArray(query.pay) ? query.pay[0] : query.pay) === "failed";
   const orderUrl = `${e.siteUrl}${paths.order(order.id, token)}`;
   const message = fill(t.order.whatsappMessage, { id: order.id, total: formatPrice(order.total), url: orderUrl });
@@ -79,13 +96,15 @@ export default async function OrderPage({ params, searchParams }: Props) {
   return (
     <div className={`container page ${styles.page}`} data-testid="order-page">
       <header className={styles.head}>
-        <span className={styles.icon} data-state={cancelled ? "cancelled" : paid ? "paid" : "pending"} aria-hidden>
-          {cancelled ? <XCircle /> : paid ? <CheckCircle2 /> : <Clock />}
+        <span className={styles.icon} data-state={cancelled ? "cancelled" : paid || quoteSent ? "paid" : "pending"} aria-hidden>
+          {cancelled ? <XCircle /> : enquiry ? <FileText /> : paid ? <CheckCircle2 /> : <Clock />}
         </span>
         <p className="eyebrow">{fill(t.order.title, { id: order.id })}</p>
-        <h1>{cancelled ? t.order.statusCancelled : paid ? t.order.statusPaid : canPay ? t.order.payTitle : t.order.thanks}</h1>
+        <h1>{cancelled ? t.order.statusCancelled : quoteSent ? t.types.quoteReadyTitle : enquiry ? t.types.quoteReceivedTitle : paid ? t.order.statusPaid : canPay ? t.order.payTitle : t.order.thanks}</h1>
         <p className="muted">
           {cancelled ? t.order.cancelledDetail
+            : quoteSent ? t.types.quoteReadyText
+            : enquiry ? t.types.quoteReceivedText
             : confirming ? t.order.confirmingDetail
             : paid ? t.order.paidDetail
             : order.paymentMethod === "bank_transfer" ? t.order.nextStepsTransfer
@@ -107,7 +126,66 @@ export default async function OrderPage({ params, searchParams }: Props) {
         </form>
       ) : null}
 
-      {!paid && !cancelled && order.paymentMethod === "bank_transfer" ? (
+      {quoteProblem ? <p className="notice" role="alert" data-testid="quote-problem">{quoteProblem}</p> : null}
+
+      {quoteSent ? (
+        // A plain form: it works without JavaScript and without cookies. `total` is what THIS page
+        // shows — the server only accepts if it still equals the stored one.
+        <form method="post" action="/api/quotes/accept" className={`card ${styles.block}`} data-testid="quote-accept-form">
+          <input type="hidden" name="id" value={order.id} />
+          <input type="hidden" name="t" value={token ?? ""} />
+          <input type="hidden" name="total" value={order.total} />
+          <p><strong>{t.cart.total}: <span data-testid="quote-total">{formatPrice(order.total)}</span></strong></p>
+          <fieldset className={styles.pay}>
+            <legend>{t.types.quoteHowToPay}</legend>
+            {payMethods.map((m, i) => (
+              <label key={m}>
+                <input type="radio" name="payment" value={m} defaultChecked={i === 0} data-testid={`quote-payment-${m}`} />
+                {m === "online" ? t.checkout.payOnline : m === "whatsapp" ? t.checkout.payWhatsapp : t.checkout.payTransfer}
+              </label>
+            ))}
+          </fieldset>
+          <button type="submit" className="btn btn-lg btn-block" data-testid="quote-accept">{payMethods[0] === "online" ? t.types.quoteAcceptAndPay : t.types.quoteAccept}</button>
+        </form>
+      ) : null}
+
+      {digital.length > 0 && !cancelled ? (
+        <section className={`card ${styles.block}`} aria-labelledby="order-downloads" data-testid="order-downloads">
+          <h2 id="order-downloads">{t.types.downloadsTitle}</h2>
+          {downloads ? (
+            <>
+              <ul className={styles.downloads}>
+                {digital.map(({ l, i }) => (
+                  <li key={i}>
+                    <span>{l.name}</span>
+                    <a href={downloadPath(order.id, i, e.orderSecret, commerce.digital.linkHours)} className="btn btn-secondary" rel="nofollow" data-testid="download-link">
+                      <Download aria-hidden size={18} /> {t.types.download}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+              <p className="muted">{fill(t.types.downloadsNote, { hours: commerce.digital.linkHours })}</p>
+            </>
+          ) : <p className="muted" data-testid="downloads-pending">{t.types.downloadsAfterPayment}</p>}
+        </section>
+      ) : null}
+
+      {slots.length > 0 && !cancelled ? (
+        <section className={`card ${styles.block}`} aria-labelledby="order-slots" data-testid="order-slots">
+          <h2 id="order-slots">{t.types.appointmentsTitle}</h2>
+          <ul className={styles.slots}>
+            {slots.map((l, i) => (
+              <li key={i}>
+                <CalendarClock aria-hidden size={20} />
+                <span><strong data-testid="order-slot">{formatSlot(l.slot!.start)}</strong><span className="muted">{l.name}</span></span>
+              </li>
+            ))}
+          </ul>
+          <p className="muted">{t.types.appointmentsNote}</p>
+        </section>
+      ) : null}
+
+      {!paid && !cancelled && !enquiry && order.paymentMethod === "bank_transfer" ? (
         <section className={`card ${styles.block}`} aria-labelledby="order-transfer">
           <h2 id="order-transfer">{t.order.transferData}</h2>
           <ul className={styles.transfer}>
@@ -122,7 +200,7 @@ export default async function OrderPage({ params, searchParams }: Props) {
         </section>
       ) : null}
 
-      {!paid && !cancelled && order.paymentMethod === "whatsapp" && whatsapp ? (
+      {!paid && !cancelled && !enquiry && order.paymentMethod === "whatsapp" && whatsapp ? (
         <a href={whatsapp} className="btn btn-lg btn-block" rel="noopener noreferrer" target="_blank" data-testid="order-whatsapp">
           <MessageCircle aria-hidden size={18} /> {t.order.sendWhatsapp}
         </a>
@@ -142,18 +220,29 @@ export default async function OrderPage({ params, searchParams }: Props) {
               {l.image ? <img src={l.image} alt="" width={56} height={70} loading="lazy" /> : <span />}
               <span>
                 <strong>{l.name}</strong>
-                <span className="muted">{[l.variantLabel, fill(t.common.units, { n: l.quantity })].filter(Boolean).join(" · ")}</span>
+                <span className="muted">
+                  {[
+                    l.variantLabel,
+                    l.unit === "u" ? fill(t.common.units, { n: l.quantity }) : `${formatQuantity(l.quantity, l.unit)} × ${formatUnitPrice(l.unitPrice, l.unit)}`,
+                    l.slot ? formatSlot(l.slot.start, { short: true }) : "",
+                  ].filter(Boolean).join(" · ")}
+                </span>
+                {l.note ? <span className={styles.request}><span className="muted">{t.types.requestDetail}:</span> {l.note}</span> : null}
               </span>
-              <span className="price">{formatPrice(l.unitPrice * l.quantity)}</span>
+              <span className="price">{enquiry && !quoteSent ? t.types.toQuote : formatPrice(lineTotal(l))}</span>
             </li>
           ))}
         </ul>
-        <dl className={styles.totals}>
-          <div><dt>{t.cart.subtotal}</dt><dd>{formatPrice(order.subtotal)}</dd></div>
-          <div><dt>{t.cart.shipping}{shipping ? ` · ${tr(shipping.label)}` : ""}</dt><dd>{order.shipping.price === 0 ? t.common.free : formatPrice(order.shipping.price)}</dd></div>
-          <div className={styles.total}><dt>{t.cart.total}</dt><dd data-testid="order-total">{formatPrice(order.total)}</dd></div>
-        </dl>
-        <p className="muted">{fill(t.order.leadTime, { min: commerce.leadTime.minDays, max: commerce.leadTime.maxDays })}</p>
+        {enquiry && !quoteSent ? null : (
+          <dl className={styles.totals}>
+            <div><dt>{t.cart.subtotal}</dt><dd>{formatPrice(order.subtotal)}</dd></div>
+            {ships || order.shipping.price > 0 ? (
+              <div><dt>{t.cart.shipping}{shipping ? ` · ${tr(shipping.label)}` : ""}</dt><dd>{order.shipping.price === 0 ? t.common.free : formatPrice(order.shipping.price)}</dd></div>
+            ) : null}
+            <div className={styles.total}><dt>{t.cart.total}</dt><dd data-testid="order-total">{formatPrice(order.total)}</dd></div>
+          </dl>
+        )}
+        {ships ? <p className="muted">{fill(t.order.leadTime, { min: commerce.leadTime.minDays, max: commerce.leadTime.maxDays })}</p> : null}
       </section>
 
       <p className={`muted ${styles.keep}`}>{t.order.keepLink}</p>

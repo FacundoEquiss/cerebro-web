@@ -2,7 +2,7 @@ import Link from "next/link";
 import { paths, t } from "@/i18n";
 import { productAvailability } from "@/lib/data/availability";
 import type { Product } from "@/lib/data/types";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatUnitPrice } from "@/lib/format";
 import styles from "./ProductCard.module.css";
 
 export function ProductCard({ product, priority = false }: { product: Product; priority?: boolean }) {
@@ -28,15 +28,21 @@ export function ProductCard({ product, priority = false }: { product: Product; p
           <div className={styles.badges}>
             {availability === "out_of_stock" ? <span className="badge badge-out">{t.product.soldOut}</span> : null}
             {onSale && availability !== "out_of_stock" ? <span className="badge badge-sale">{t.product.sale}</span> : null}
-            {availability === "made_to_order" ? <span className="badge">{t.product.madeToOrder}</span> : null}
+            {availability === "made_to_order" && product.type === "physical" ? <span className="badge">{t.product.madeToOrder}</span> : null}
+            {product.type !== "physical" ? <span className="badge">{t.types.badge[product.type]}</span> : null}
           </div>
         </div>
         <h3 className={styles.name}>{product.name}</h3>
-        <p className={styles.price}>
-          {hasRange ? <span className={styles.from}>{t.product.from} </span> : null}
-          <span className={`price ${onSale ? "price-sale" : ""}`}>{formatPrice(lowest)}</span>
-          {onSale ? <span className="price-compare">{formatPrice(product.compareAtPrice!)}</span> : null}
-        </p>
+        {product.type === "quote" ? (
+          // No public price: never a number here.
+          <p className={styles.price}><span className="price">{t.types.consult}</span></p>
+        ) : (
+          <p className={styles.price}>
+            {hasRange ? <span className={styles.from}>{t.product.from} </span> : null}
+            <span className={`price ${onSale ? "price-sale" : ""}`}>{formatUnitPrice(lowest, product.unit)}</span>
+            {onSale ? <span className="price-compare">{formatPrice(product.compareAtPrice!)}</span> : null}
+          </p>
+        )}
       </Link>
     </article>
   );

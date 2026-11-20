@@ -1,0 +1,33 @@
+.agenda { display: grid; gap: 14px; min-width: 0; }
+.switch { display: inline-flex; padding: 3px; border-radius: var(--r-pill); background: var(--surface); box-shadow: var(--shadow-sm); }
+.switch a { display: grid; place-items: center; min-height: 36px; padding: 0 16px; border-radius: var(--r-pill); text-decoration: none; font-size: 0.88rem; font-weight: 600; color: var(--muted); }
+.switch a[aria-current="page"] { background: var(--ink); color: var(--surface); }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.arrow { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: var(--surface); box-shadow: var(--shadow-sm); color: var(--ink); }
+.range { flex: 1 1 auto; min-width: 0; text-align: center; font-size: 1rem; text-transform: capitalize; }
+.count { flex: 1 0 100%; color: var(--muted); font-size: 0.86rem; }
+.days { display: grid; gap: 10px; min-width: 0; }
+.day { display: grid; gap: 8px; align-content: start; padding: 12px; border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow-sm); min-width: 0; }
+.day[data-today] { box-shadow: inset 0 0 0 2px var(--action), var(--shadow-sm); }
+.day h2 { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-family: var(--font-body), system-ui, sans-serif; font-size: 0.86rem; font-weight: 700; text-transform: capitalize; }
+.day h2 a { text-decoration: none; color: var(--ink); }
+.free { font-size: 0.72rem; font-weight: 600; color: #23764a; text-transform: none; white-space: nowrap; }
+.empty { color: var(--muted); font-size: 0.84rem; }
+.bookings { display: grid; gap: 6px; }
+.booking {
+  display: grid; gap: 2px; padding: 9px 10px; border-radius: var(--r-md); text-decoration: none; color: var(--ink);
+  background: color-mix(in srgb, #b4532a 9%, var(--surface)); box-shadow: inset 3px 0 0 #b4532a; font-size: 0.86rem; min-width: 0;
+}
+.booking[data-paid="yes"] { background: color-mix(in srgb, #23764a 9%, var(--surface)); box-shadow: inset 3px 0 0 #23764a; }
+.booking:hover { filter: brightness(0.97); }
+.booking strong { overflow-wrap: anywhere; }
+.time { display: flex; align-items: center; gap: 5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.who { color: var(--muted); overflow-wrap: anywhere; }
+.tag { font-size: 0.72rem; font-weight: 600; color: var(--muted); }
+@media (min-width: 768px) {
+  .count { flex: 0 0 auto; margin-left: auto; }
+  .range { flex: 0 1 auto; min-width: 230px; }
+  .days[data-view="week"] { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; align-items: start; }
+  .days[data-view="week"] .day { min-height: 220px; padding: 10px; }
+  .days[data-view="day"] .bookings { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+}

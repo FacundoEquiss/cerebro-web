@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { commerce } from "@/config/commerce";
 import { fill, paths, t, tr } from "@/i18n";
 import { getCategory, getProduct, getProducts } from "@/lib/data";
-import { formatPrice } from "@/lib/format";
+import { openDates, serviceRules } from "@/lib/booking/slots";
+import { env } from "@/lib/env";
+import { formatPrice, formatUnitPrice } from "@/lib/format";
 import { breadcrumbJsonLd, pageMetadata, productJsonLd } from "@/lib/seo";
 import { TrackView } from "@/components/analytics/TrackView";
 import { ProductGrid } from "@/components/catalog/ProductCard";
@@ -26,7 +28,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!product) return { title: t.notFound.title, robots: { index: false, follow: false } };
   return pageMetadata({
     title: product.name,
-    description: `${product.description.slice(0, 150).trim()} ${formatPrice(product.price)}.`,
+    // A product that is priced on request never shows an amount, here either.
+    description: product.type === "quote" ? product.description.slice(0, 158).trim() : `${product.description.slice(0, 150).trim()} ${formatUnitPrice(product.price, product.unit)}.`,
     path: paths.product(slug),
   });
 }
@@ -44,6 +47,9 @@ export default async function ProductPage({ params }: Props) {
     { name: product.name, path: paths.product(product.slug) },
   ];
   const shipping = commerce.shipping.methods.filter((m) => m.enabled);
+  // The days a service can be booked are worked out on the server, from the opening hours.
+  const rules = product.type === "service" ? serviceRules(product) : null;
+  const booking = rules ? { dates: openDates(product, Date.now()), timeZone: rules.timeZone, durationMinutes: rules.durationMinutes } : undefined;
 
   return (
     <div className="container page">
@@ -57,13 +63,14 @@ export default async function ProductPage({ params }: Props) {
         </ol>
       </nav>
 
-      <ProductView product={product} />
+      <ProductView product={product} booking={booking} antibot={product.type === "quote" ? env().ANTIBOT_PROVIDER : "none"} />
 
       <div className={styles.details}>
         <section aria-labelledby="product-description">
           <h2 id="product-description">{t.product.description}</h2>
           <p>{product.description}</p>
         </section>
+        {product.type !== "physical" ? null : (
         <section aria-labelledby="product-shipping">
           <h2 id="product-shipping">{t.product.shippingAndPickup}</h2>
           <ul>
@@ -77,6 +84,7 @@ export default async function ProductPage({ params }: Props) {
             ))}
           </ul>
         </section>
+        )}
       </div>
 
       {related.length > 0 ? (
@@ -86,7 +94,7 @@ export default async function ProductPage({ params }: Props) {
         </section>
       ) : null}
 
-      <TrackView name="view_item" items={[{ productId: product.id, name: product.name, price: product.price, quantity: 1 }]} />
+      {product.type === "quote" ? null : <TrackView name="view_item" items={[{ productId: product.id, name: product.name, price: product.price, quantity: 1 }]} />}
       <JsonLd data={productJsonLd(product, category)} />
       <JsonLd data={breadcrumbJsonLd(trail)} />
     </div>

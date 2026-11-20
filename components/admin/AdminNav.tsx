@@ -1,12 +1,13 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, ClipboardList, LogOut, Package, Settings, Store, Users } from "lucide-react";
+import { BarChart3, CalendarDays, ClipboardList, LogOut, Package, Settings, Store, Users } from "lucide-react";
 import { paths, t } from "@/i18n";
 import { adminFetch } from "./api";
 
 const ITEMS = [
   { href: "/admin", label: t.admin.nav.orders, Icon: ClipboardList, exact: true },
+  { href: "/admin/agenda", label: t.admin.nav.agenda, Icon: CalendarDays },
   { href: "/admin/summary", label: t.admin.nav.summary, Icon: BarChart3 },
   { href: "/admin/products", label: t.admin.nav.products, Icon: Package },
   { href: "/admin/customers", label: t.admin.nav.customers, Icon: Users },

@@ -2,9 +2,10 @@
 import Link from "next/link";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { commerce } from "@/config/commerce";
-import { fill, paths, t } from "@/i18n";
-import { resolveLine, type CartProduct } from "@/lib/cart-catalog";
-import { formatPrice } from "@/lib/format";
+import { fill, languageTag, paths, t } from "@/i18n";
+import { resolveLine, slotLabel, type CartProduct } from "@/lib/cart-catalog";
+import { needsShipping } from "@/lib/data/availability";
+import { formatPrice, formatQuantity, formatUnitPrice, lineTotal } from "@/lib/format";
 import { useCart } from "@/stores/cart";
 import styles from "./CartView.module.css";
 
@@ -23,7 +24,8 @@ export function CartView({ catalog }: { catalog: CartProduct[] }) {
 
   const resolved = lines.map((line) => ({ line, item: resolveLine(line, catalog) }));
   const valid = resolved.flatMap((r) => (r.item ? [r.item] : []));
-  const subtotal = valid.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
+  const subtotal = valid.reduce((sum, i) => sum + lineTotal(i), 0);
+  const ships = needsShipping(valid);
   const belowMinimum = commerce.minimumOrder > 0 && subtotal < commerce.minimumOrder;
   const canCheckout = valid.length > 0 && !belowMinimum;
 
@@ -39,14 +41,15 @@ export function CartView({ catalog }: { catalog: CartProduct[] }) {
               <div className={styles.info}>
                 <Link href={paths.product(item.slug)} className={styles.name}>{item.name}</Link>
                 {item.label ? <p className="muted" data-testid="cart-line-variant">{item.label}</p> : null}
-                <p className="muted">{fill(t.cart.unitPrice, { price: formatPrice(item.unitPrice) })}</p>
+                {item.slot ? <p className="muted" data-testid="cart-line-slot">{t.types.appointment}: {slotLabel(item.slot, languageTag)}</p> : null}
+                <p className="muted">{fill(t.cart.unitPrice, { price: formatUnitPrice(item.unitPrice, item.unit) })}</p>
                 <div className={styles.row}>
                   <div className={styles.quantity}>
-                    <button type="button" aria-label={t.product.decrease} onClick={() => setQuantity(line.key, Math.max(item.min, item.quantity - 1))} disabled={item.quantity <= item.min}>
+                    <button type="button" aria-label={t.product.decrease} onClick={() => setQuantity(line.key, Math.max(item.min, item.quantity - item.step))} disabled={item.quantity <= item.min || item.type === "digital"}>
                       <Minus aria-hidden size={15} />
                     </button>
-                    <output aria-label={t.product.quantity}>{item.quantity}</output>
-                    <button type="button" aria-label={t.product.increase} onClick={() => setQuantity(line.key, Math.min(item.max, item.quantity + 1))} disabled={item.quantity >= item.max}>
+                    <output aria-label={t.product.quantity} data-testid="cart-line-quantity">{formatQuantity(item.quantity, item.unit)}</output>
+                    <button type="button" aria-label={t.product.increase} onClick={() => setQuantity(line.key, Math.min(item.max, item.quantity + item.step))} disabled={item.quantity + item.step > item.max + 1e-9 || item.type === "digital" || item.type === "service"}>
                       <Plus aria-hidden size={15} />
                     </button>
                   </div>
@@ -55,7 +58,7 @@ export function CartView({ catalog }: { catalog: CartProduct[] }) {
                   </button>
                 </div>
               </div>
-              <p className={`price ${styles.lineTotal}`}>{formatPrice(item.unitPrice * item.quantity)}</p>
+              <p className={`price ${styles.lineTotal}`}>{formatPrice(lineTotal(item))}</p>
             </li>
           ) : (
             <li key={line.key} className={`${styles.line} ${styles.gone}`}>
@@ -71,7 +74,7 @@ export function CartView({ catalog }: { catalog: CartProduct[] }) {
       <aside className={`card ${styles.summary}`} aria-label={t.checkout.summary}>
         <dl>
           <div><dt>{t.cart.subtotal}</dt><dd className="price" data-testid="cart-subtotal">{formatPrice(subtotal)}</dd></div>
-          <div><dt>{t.cart.shipping}</dt><dd className="muted">{t.cart.shippingAtCheckout}</dd></div>
+          <div><dt>{t.cart.shipping}</dt><dd className="muted" data-testid="cart-shipping">{ships ? t.cart.shippingAtCheckout : t.types.noShipping}</dd></div>
         </dl>
         {belowMinimum ? <p className="notice">{fill(t.cart.minimum, { price: formatPrice(commerce.minimumOrder) })}</p> : null}
         <Link

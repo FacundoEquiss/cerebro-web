@@ -2,11 +2,11 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ImagePlus, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ImagePlus, Plus, Trash2, FileUp } from "lucide-react";
 import { fill, paths, t } from "@/i18n";
 import { generateVariants, productInputSchema, slugify } from "@/lib/admin/products";
 import { selectionLabel } from "@/lib/data/availability";
-import type { Category, Product, ProductImage, ProductOption, Variant } from "@/lib/data/types";
+import { PRODUCT_TYPES, type Category, type Product, type ProductImage, type ProductOption, type ProductType, type Variant } from "@/lib/data/types";
 import { adminFetch } from "./api";
 import { shrinkImage } from "./image";
 import styles from "./ProductEditor.module.css";
@@ -103,6 +103,30 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
   const patchOption = (i: number, patch: Partial<OptionDraft>) => setOptions((list) => list.map((o, n) => (n === i ? { ...o, ...patch } : o)));
   const patchVariant = (id: string, patch: Partial<Variant>) => setVariants((list) => list.map((v) => (v.id === id ? { ...v, ...patch } : v)));
 
+  const [type, setType] = useState<ProductType>(product.type);
+  const [unit, setUnit] = useState(product.unit);
+  const [step, setStep] = useState(String(product.step));
+  const [minQuantity, setMinQuantity] = useState(String(product.minQuantity));
+  const [maxQuantity, setMaxQuantity] = useState(product.maxQuantity === null ? "" : String(product.maxQuantity));
+  const [duration, setDuration] = useState(String(product.service?.durationMinutes ?? 60));
+  const [capacity, setCapacity] = useState(String(product.service?.capacity ?? 1));
+  const [digital, setDigital] = useState(product.digital ?? { name: "", file: "" });
+  const [fileBusy, setFileBusy] = useState(false);
+  const pt = t.admin.productType;
+
+  async function uploadFile(file: File | undefined) {
+    if (!file) return;
+    setFileBusy(true);
+    setError("");
+    const body = new FormData();
+    body.set("file", file);
+    body.set("name", file.name);
+    const result = await adminFetch<{ file?: string; name?: string }>("/api/admin/upload-file", { method: "POST", body });
+    setFileBusy(false);
+    if (result.ok && result.data.file) setDigital({ file: result.data.file, name: digital.name || result.data.name || file.name });
+    else setError(pt.fileError);
+  }
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (saving) return;
@@ -124,7 +148,14 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
       stock: parsedOptions.length > 0 ? null : numberOrNull(stock),
       featured,
       active,
-      minQuantity: product.minQuantity,
+      minQuantity: Number(minQuantity) || 1,
+      type,
+      unit: unit.trim() || "u",
+      step: Number(step) || 1,
+      maxQuantity: numberOrNull(maxQuantity),
+      // Opening hours of its own (set in the catalogue file or by an agent) are kept as they are.
+      service: type === "service" ? { ...(product.service ?? {}), durationMinutes: Number(duration) || 60, capacity: Number(capacity) || 1 } : null,
+      digital: type === "digital" ? { name: digital.name.trim() || "download", ...(digital.file ? { file: digital.file } : {}) } : null,
       attributes: product.attributes,
       images: images.map((img) => ({ ...img, alt: img.alt.trim() })),
       options: parsedOptions,
@@ -195,6 +226,66 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
           <label><input type="checkbox" checked={active} onChange={(ev) => setActive(ev.target.checked)} data-testid="p-active" /> {e.active}</label>
           <label><input type="checkbox" checked={featured} onChange={(ev) => setFeatured(ev.target.checked)} /> {e.featured}</label>
         </div>
+      </section>
+
+      <section className={`admin-card ${styles.block}`} aria-labelledby="editor-type" data-testid="editor-type">
+        <h2 id="editor-type">{pt.section}</h2>
+        <div className="field">
+          <label htmlFor="p-type">{pt.label}</label>
+          <select id="p-type" className="input" value={type} onChange={(ev) => setType(ev.target.value as ProductType)} data-testid="p-type">
+            {PRODUCT_TYPES.map((k) => <option key={k} value={k}>{pt[k]}</option>)}
+          </select>
+        </div>
+        {type === "physical" || type === "quote" ? (
+          <div className={styles.grid3}>
+            <div className="field">
+              <label htmlFor="p-unit">{pt.unit}</label>
+              <input id="p-unit" className="input" value={unit} onChange={(ev) => setUnit(ev.target.value)} maxLength={12} list="p-units" data-testid="p-unit" />
+              <datalist id="p-units">{["u", "kg", "g", "l", "ml", "m", "cm", "m²"].map((u) => <option key={u} value={u} />)}</datalist>
+            </div>
+            <div className="field">
+              <label htmlFor="p-step">{pt.step}</label>
+              <input id="p-step" className="input" type="number" inputMode="decimal" min={0.001} step="any" value={step} onChange={(ev) => setStep(ev.target.value)} data-testid="p-step" />
+            </div>
+            <div className="field">
+              <label htmlFor="p-min">{pt.min}</label>
+              <input id="p-min" className="input" type="number" inputMode="decimal" min={0.001} step="any" value={minQuantity} onChange={(ev) => setMinQuantity(ev.target.value)} data-testid="p-min" />
+            </div>
+            <div className="field">
+              <label htmlFor="p-max">{pt.max}</label>
+              <input id="p-max" className="input" type="number" inputMode="decimal" min={0} step="any" value={maxQuantity} onChange={(ev) => setMaxQuantity(ev.target.value)} placeholder="—" />
+            </div>
+          </div>
+        ) : null}
+        {type === "physical" || type === "quote" ? <p className="admin-note">{type === "quote" ? pt.quoteHint : `${pt.unitHint} ${pt.maxHint}`}</p> : null}
+        {type === "service" ? (
+          <>
+            <div className={styles.grid3}>
+              <div className="field">
+                <label htmlFor="p-duration">{pt.duration}</label>
+                <input id="p-duration" className="input" type="number" inputMode="numeric" min={5} step={5} value={duration} onChange={(ev) => setDuration(ev.target.value)} data-testid="p-duration" />
+              </div>
+              <div className="field">
+                <label htmlFor="p-capacity">{pt.capacity}</label>
+                <input id="p-capacity" className="input" type="number" inputMode="numeric" min={1} step={1} value={capacity} onChange={(ev) => setCapacity(ev.target.value)} data-testid="p-capacity" />
+              </div>
+            </div>
+            <p className="admin-note">{pt.serviceHint}</p>
+          </>
+        ) : null}
+        {type === "digital" ? (
+          <>
+            <div className="field">
+              <label htmlFor="p-file-name">{pt.fileName}</label>
+              <input id="p-file-name" className="input" value={digital.name} onChange={(ev) => setDigital({ ...digital, name: ev.target.value })} maxLength={200} placeholder="guia.pdf" data-testid="p-file-name" />
+            </div>
+            <p className="admin-note" data-testid="p-file-state">{digital.file ? pt.fileCurrent : pt.fileMissing} {pt.digitalHint}</p>
+            <label className={`btn btn-secondary ${styles.upload}`} aria-disabled={fileBusy || !canWrite || undefined}>
+              <FileUp aria-hidden size={18} /> {fileBusy ? pt.fileUploading : pt.fileUpload}
+              <input type="file" className="sr-only" disabled={fileBusy || !canWrite} onChange={(ev) => { void uploadFile(ev.target.files?.[0]); ev.target.value = ""; }} data-testid="p-file" />
+            </label>
+          </>
+        ) : null}
       </section>
 
       <section className={`admin-card ${styles.block}`} aria-labelledby="editor-photos">
@@ -293,7 +384,7 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
                     <tr key={v.id}>
                       <td><strong>{label}</strong></td>
                       <td data-label={e.stock}>
-                        <input className={styles.small} type="number" min={0} step={1} inputMode="numeric" value={v.stock ?? ""} placeholder={t.admin.products.madeToOrder} aria-label={`${e.stock} ${label}`} onChange={(ev) => patchVariant(v.id, { stock: ev.target.value === "" ? null : Math.max(0, Math.trunc(Number(ev.target.value))) })} />
+                        <input className={styles.small} type="number" min={0} step={1} inputMode="numeric" value={v.stock ?? ""} placeholder={t.admin.products.madeToOrder} aria-label={`${e.stock} ${label}`} onChange={(ev) => patchVariant(v.id, { stock: ev.target.value === "" ? null : Math.max(0, Number(ev.target.value)) })} />
                       </td>
                       <td data-label={e.variantPrice}>
                         <input className={styles.small} type="number" min={0} step="any" inputMode="decimal" value={v.price ?? ""} placeholder={price} aria-label={`${e.variantPrice} ${label}`} onChange={(ev) => patchVariant(v.id, { price: ev.target.value === "" ? null : Number(ev.target.value) })} />

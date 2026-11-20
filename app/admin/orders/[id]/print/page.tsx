@@ -8,7 +8,7 @@ import { t, tr } from "@/i18n";
 import { commerce } from "@/config/commerce";
 import { getSession } from "@/lib/admin/auth";
 import { data } from "@/lib/data";
-import { formatDate, formatPrice } from "@/lib/format";
+import { formatDate, formatPrice, formatQuantity, lineTotal } from "@/lib/format";
 import { PrintButton } from "@/components/admin/PrintButton";
 import styles from "./print.module.css";
 
@@ -70,9 +70,9 @@ export default async function PrintPage({ params, searchParams }: Props) {
           <tbody>
             {order.lines.map((l, i) => (
               <tr key={i}>
-                <td>{l.quantity}</td>
+                <td>{formatQuantity(l.quantity, l.unit)}</td>
                 <td>{l.name}{l.variantLabel ? ` — ${l.variantLabel}` : ""}</td>
-                <td className={styles.right}>{formatPrice(l.quantity * l.unitPrice)}</td>
+                <td className={styles.right}>{formatPrice(lineTotal(l))}</td>
               </tr>
             ))}
           </tbody>

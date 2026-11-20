@@ -4,11 +4,12 @@
 // sheet that scrolls, that gesture fights the scroll.
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Check, Copy, Mail, MessageCircle, Phone, Printer, X } from "lucide-react";
+import { CalendarClock, Check, Copy, Mail, MessageCircle, Phone, Printer, Send, X } from "lucide-react";
 import { brand } from "@/config/brand";
 import { fill, t } from "@/i18n";
 import type { AdminOrder, OrderEvent, OrderStatus } from "@/lib/data/types";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatQuantity, formatSlot, formatUnitPrice, lineTotal } from "@/lib/format";
+import { quoteTotals } from "@/lib/orders/quote-totals";
 import { allowedMoves, ORDER_FLOW } from "@/lib/orders/status";
 import { adminFetch } from "./api";
 import { formatDateTime, paymentLabel, shippingLabel, statusLabel, timeAgo } from "./format";
@@ -22,6 +23,10 @@ function eventText(e: OrderEvent): string {
     case "status": return fill(d.events.status, { from: e.from ? statusLabel(e.from) : "—", to: e.to ? statusLabel(e.to) : "—" }) + (e.text ? ` — ${e.text}` : "");
     case "payment": return fill(d.events.payment, { text: e.text });
     case "tracking": return fill(d.events.tracking, { text: e.text || "—" });
+    case "quote": {
+      const [what = "", amount = ""] = e.text.split(":");
+      return fill(d.events.quote, { text: `${what === "sent" ? t.admin.quote.badgeSent : t.admin.quote.save} — ${formatPrice(Number(amount) || 0)}` });
+    }
     default: return e.text;
   }
 }
@@ -56,6 +61,23 @@ export function OrderDetail({
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const enquiry = order.status === "quote";
+  const ships = order.lines.some((l) => l.type === "physical");
+  const [prices, setPrices] = useState<string[]>(order.lines.map((l) => (l.unitPrice > 0 ? String(l.unitPrice) : "")));
+  const [quoteShipping, setQuoteShipping] = useState(order.shipping.price > 0 ? String(order.shipping.price) : "");
+  const [quoteNote, setQuoteNote] = useState("");
+  const numbers = prices.map((p) => Number(p.replace(",", ".")) || 0);
+  const shippingNumber = Number(quoteShipping.replace(",", ".")) || 0;
+  const preview = quoteTotals(order.lines, numbers, shippingNumber);
+
+  async function submitQuote(send: boolean) {
+    setQuoteNote("");
+    if (send && numbers.some((n) => n <= 0)) {
+      setError(t.admin.quote.incomplete);
+      return;
+    }
+    if (await act({ action: send ? "send_quote" : "quote", prices: numbers, shipping: shippingNumber })) setQuoteNote(send ? t.admin.quote.sent : t.admin.quote.saved);
+  }
 
   useEffect(() => {
     closeButton.current?.focus();
@@ -185,6 +207,48 @@ export function OrderDetail({
             {source ? <p className={styles.meta}>{d.source}: {source}</p> : null}
           </section>
 
+          {enquiry ? (
+            <section className={styles.section} aria-labelledby="detail-quote" data-testid="quote-editor">
+              <h3 id="detail-quote">{t.admin.quote.title}</h3>
+              <p className={styles.meta} data-testid="quote-state">
+                {order.quote?.sentAt ? fill(t.admin.quote.sentAt, { date: formatDateTime(order.quote.sentAt) }) : t.admin.quote.notSent}
+              </p>
+              {order.lines.map((l, i) => (
+                <div key={i} className={styles.quoteLine}>
+                  <p className={styles.strong}>{formatQuantity(l.quantity, l.unit)} × {l.name}</p>
+                  {l.note ? <p className={styles.quote}><span>{t.admin.quote.request}:</span> {l.note}</p> : null}
+                  <div className="field">
+                    <label htmlFor={`quote-price-${i}`}>{fill(t.admin.quote.unitPrice, { unit: l.unit })}</label>
+                    <input id={`quote-price-${i}`} className="input" type="number" inputMode="decimal" min={0} step="0.01" value={prices[i] ?? ""} disabled={!canWrite}
+                      onChange={(e) => setPrices((all) => all.map((p, j) => (j === i ? e.target.value : p)))} data-testid="quote-price" />
+                  </div>
+                </div>
+              ))}
+              <div className="field">
+                <label htmlFor="quote-shipping">{t.admin.quote.shipping}</label>
+                <input id="quote-shipping" className="input" type="number" inputMode="decimal" min={0} step="0.01" value={quoteShipping} disabled={!canWrite} onChange={(e) => setQuoteShipping(e.target.value)} data-testid="quote-shipping" />
+              </div>
+              <p className={styles.quoteTotal}><span>{t.admin.quote.total}</span><strong data-testid="quote-preview">{formatPrice(preview.total)}</strong></p>
+              <div className={styles.inline}>
+                <button type="button" className="btn btn-secondary" disabled={busy || !canWrite} onClick={() => void submitQuote(false)} data-testid="quote-save">{t.admin.quote.save}</button>
+                <button type="button" className="btn" disabled={busy || !canWrite} onClick={() => void submitQuote(true)} data-testid="quote-send">
+                  <Send aria-hidden size={17} /> {order.quote?.sentAt ? t.admin.quote.resend : t.admin.quote.send}
+                </button>
+              </div>
+              <p className={styles.meta} role="status" data-testid="quote-note">{quoteNote || t.admin.quote.help}</p>
+            </section>
+          ) : null}
+
+          {order.lines.some((l) => l.slot) ? (
+            <section className={styles.section} aria-labelledby="detail-slots">
+              <h3 id="detail-slots">{t.types.appointment}</h3>
+              {order.lines.filter((l) => l.slot).map((l, i) => (
+                <p key={i} className={styles.strong} data-testid="detail-slot"><CalendarClock aria-hidden size={16} /> {formatSlot(l.slot!.start)} <span className={styles.meta}>· {l.name}</span></p>
+              ))}
+            </section>
+          ) : null}
+
+          {!ships ? null : (
           <section className={styles.section} aria-labelledby="detail-shipping">
             <h3 id="detail-shipping">{d.shipping}</h3>
             <p className={styles.strong}>{shippingLabel(order.shipping.methodId)}</p>
@@ -211,7 +275,9 @@ export function OrderDetail({
               <a href={`/admin/orders/${encodeURIComponent(order.id)}/print?doc=label`} target="_blank" rel="noopener"><Printer aria-hidden size={15} /> {d.printLabel}</a>
             </p>
           </section>
+          )}
 
+          {enquiry ? null : (
           <section className={styles.section} aria-labelledby="detail-payment">
             <h3 id="detail-payment">{d.payment}</h3>
             <p className={styles.strong}>{paymentLabel(order.paymentMethod)} <span className={styles.meta}>· {order.paymentProvider}</span></p>
@@ -220,6 +286,7 @@ export function OrderDetail({
             </p>
             {order.purchaseSentAt ? <p className={styles.meta}>{d.purchaseSent}</p> : null}
           </section>
+          )}
 
           <section className={styles.section} aria-labelledby="detail-items">
             <h3 id="detail-items">{d.items}</h3>
@@ -229,9 +296,9 @@ export function OrderDetail({
                   {l.image ? <img src={l.image} alt="" width={44} height={55} loading="lazy" /> : <span />}
                   <span>
                     <strong>{l.name}</strong>
-                    <span className={styles.meta}>{[l.variantLabel, `${l.quantity} × ${formatPrice(l.unitPrice)}`].filter(Boolean).join(" · ")}</span>
+                    <span className={styles.meta}>{[l.variantLabel, `${formatQuantity(l.quantity, l.unit)} × ${formatUnitPrice(l.unitPrice, l.unit)}`, l.slot ? formatSlot(l.slot.start, { short: true }) : ""].filter(Boolean).join(" · ")}</span>
                   </span>
-                  <span className={styles.amount}>{formatPrice(l.quantity * l.unitPrice)}</span>
+                  <span className={styles.amount}>{formatPrice(lineTotal(l))}</span>
                 </li>
               ))}
             </ul>

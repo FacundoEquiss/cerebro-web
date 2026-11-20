@@ -31,3 +31,7 @@
   .option .remove { grid-column: 3; }
   .footer { bottom: 16px; }
 }
+.grid3 { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 768px) {
+  .grid3 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
