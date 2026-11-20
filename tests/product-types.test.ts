@@ -22,7 +22,7 @@ import { buildOrder, buildQuote, NO_SHIPPING, priceOrder, quoteTotals, requestNe
 import { signReceipt, verifyReceipt } from "@/lib/orders/receipt";
 import { orderRequestSchema, quoteRequestSchema } from "@/lib/orders/schema";
 import { productJsonLd } from "@/lib/seo";
-import { KEY, product, request } from "./helpers";
+import { HAS_PRESETS, KEY, pristineProject, product, request } from "./helpers";
 
 const coffee = product({ id: "coffee", slug: "coffee", name: "Coffee", price: 28000, unit: "kg", step: 0.25, minQuantity: 0.25, maxQuantity: 5, stock: 2 });
 const tea = product({ id: "tea", slug: "tea", name: "Tea", price: 9.99, unit: "g", step: 1, minQuantity: 1, maxQuantity: 1000, stock: null });
@@ -494,8 +494,8 @@ describe("feeds and structured data per product type", () => {
   });
 });
 
-describe("presets: a starting catalogue per line of business", () => {
-  const names = readdirSync("content/presets").filter((f) => f.endsWith(".json")).map((f) => f.replace(".json", ""));
+describe.skipIf(!HAS_PRESETS)("presets: a starting catalogue per line of business", () => {
+  const names = !HAS_PRESETS ? [] : readdirSync("content/presets").filter((f) => f.endsWith(".json")).map((f) => f.replace(".json", ""));
   const read = (name: string) => JSON.parse(readFileSync(`content/presets/${name}.json`, "utf8"));
   const THEME = ["background", "surface", "ink", "muted", "line", "action", "onAction", "highlight"];
 
@@ -528,24 +528,18 @@ describe("presets: a starting catalogue per line of business", () => {
     }
   });
 
-  it("the demo is the mixed preset: every type and several lines of business", () => {
+  it("the mixed preset shows every type and several lines of business", () => {
     const mixto = read("mixto");
-    const demo = JSON.parse(readFileSync("content/products.json", "utf8"));
-    expect(demo.products).toEqual(mixto.products);
-    expect(JSON.parse(readFileSync("content/site.json", "utf8"))).toMatchObject({ preset: "mixto", home: mixto.home });
     expect(new Set(mixto.products.map((p: Product) => p.type))).toEqual(new Set(["physical", "digital", "service", "quote"]));
     expect(mixto.categories.length).toBeGreaterThanOrEqual(6);
-    // The first screen mixes lines of business: the featured products come from many categories.
+    // The first screen is not a clothing store: the featured products come from many categories.
     const featured = mixto.products.filter((p: Product) => p.featured);
     expect(new Set(featured.map((p: Product) => p.category)).size).toBeGreaterThanOrEqual(6);
   });
 
   it("`npm run preset` lists them, and applying one rewrites the catalogue, the home and the palette", () => {
-    const root = mkdtempSync(join(tmpdir(), "preset-"));
+    const root = pristineProject("preset-");
     try {
-      for (const dir of ["scripts", "content/presets", "config", "db"]) mkdirSync(join(root, dir), { recursive: true });
-      for (const file of ["scripts/preset.mjs", "scripts/generate-seed.mjs", "config/brand.ts", "content/products.json", "content/site.json"]) cpSync(file, join(root, file));
-      cpSync("content/presets", join(root, "content/presets"), { recursive: true });
       const run = (...args: string[]) => execFileSync(process.execPath, [join(root, "scripts/preset.mjs"), ...args], { encoding: "utf8", env: { ...process.env, DATA_DIR: ".data" } });
 
       const list = run();
@@ -561,7 +555,7 @@ describe("presets: a starting catalogue per line of business", () => {
       for (const [key, value] of Object.entries(read("servicios").palette)) expect(brand).toMatch(new RegExp(`${key}: "${value}"`));
       // Nothing but the eight colours changed in the brand file.
       const strip = (s: string) => s.replace(/#[0-9a-fA-F]{6}/g, "#");
-      expect(strip(brand)).toBe(strip(readFileSync("config/brand.ts", "utf8")));
+      expect(strip(brand)).toBe(strip(readFileSync("tests/fixtures/config/brand.ts", "utf8")));
       expect(readFileSync(join(root, "db/seed.sql"), "utf8")).toContain("'corte-de-pelo'");
 
       // --keep-theme leaves the colours alone.

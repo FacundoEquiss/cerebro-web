@@ -1,1 +1,1 @@
-export function seedSql(): string;
+export function seedSql(file?: string): string;

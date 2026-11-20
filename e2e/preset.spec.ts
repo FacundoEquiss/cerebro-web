@@ -15,7 +15,9 @@ test("after `npm run preset servicios` the store is a different store", async ({
   // …and its catalogue: services, not the mixed demo.
   await page.getByTestId("hero-cta").click();
   const cards = page.getByTestId("product-card");
-  await expect(cards).toHaveCount(6);
+  await expect(cards).toHaveCount(7);
+  // …one of them an event with fixed dates.
+  await expect(cards.filter({ hasText: "Taller intensivo" })).toContainText("Con fecha");
   await expect(cards.filter({ hasText: "Corte de pelo" })).toBeVisible();
   await expect(cards.filter({ hasText: "Clase grupal de yoga" })).toBeVisible();
   await expect(cards.filter({ hasText: "Camiseta" })).toHaveCount(0);

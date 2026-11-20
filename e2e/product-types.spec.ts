@@ -314,3 +314,105 @@ test("feeds list physical products only; each type has its own structured data",
   expect(quote).not.toHaveProperty("offers");
   expect(await ld("cafe-en-grano")).toMatchObject({ offers: { priceSpecification: { "@type": "UnitPriceSpecification", referenceQuantity: { unitText: "kg" } } } });
 });
+
+test("an event: the admin loads fixed dates and places, people sign up, and it shows in the Agenda", async ({ page, isMobile }) => {
+  const errors = watchConsole(page);
+  const name = `Taller de prueba ${who(isMobile)}`;
+  const slug = `taller-de-prueba-${who(isMobile).toLowerCase()}`;
+  const day = (days: number) => new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+
+  // The owner creates it in the panel: a service WITH DATES is an event.
+  await login(page);
+  await page.goto("/admin/products");
+  await page.getByTestId("new-product").click();
+  await page.getByTestId("p-name").fill(name);
+  await page.getByTestId("p-description").fill("Un taller presencial con cupo limitado. Creado por la prueba automática.");
+  await page.getByTestId("p-category").selectOption("servicios");
+  await page.getByTestId("p-price").fill("32000");
+  await page.getByTestId("p-type").selectOption("service");
+  await page.getByTestId("p-duration").fill("120");
+  await page.getByTestId("p-capacity").fill("2");
+  await page.getByTestId("p-sessions").fill(`${day(20)} 10:00\n${day(48)} 18:30`);
+  await page.getByTestId("p-save").click();
+  await expect(page).toHaveURL(new RegExp(`/admin/products/${slug}$`));
+
+  // In the store it is joined, not "booked": a list of dates with the places left.
+  await page.goto(`/producto/${slug}`);
+  await expect(page.getByTestId("product-kind")).toContainText("Con fecha");
+  await expect(page.getByTestId("product-kind")).toContainText("lugares limitados");
+  const picker = page.getByTestId("slot-picker");
+  await expect(picker).toHaveAttribute("data-event", /.*/);
+  await expect(picker.getByTestId("session")).toHaveCount(2);
+  await expect(picker.getByTestId("session-left").first()).toHaveText("Quedan 2 lugares");
+  await expect(page.getByTestId("slot-date")).toHaveCount(0); // no weekly calendar
+  await expect(page.getByTestId("add-to-cart")).toHaveText("Inscribirme");
+  await page.getByTestId("add-to-cart").click();
+  await expect(page.getByTestId("option-error")).toHaveText("Elegí una fecha para inscribirte.");
+  await picker.locator("label").first().click();
+  await page.getByTestId("add-to-cart").click();
+  await expect(page.getByTestId("added-notice")).toContainText("Inscripción agregada");
+  await toCheckout(page);
+  await page.getByTestId("go-to-checkout").click();
+  await fillCheckout(page, name);
+  await expect(page.getByTestId("no-shipping")).toBeVisible();
+  await page.getByTestId("confirm-order").click();
+  await expect(page.getByTestId("order-slot")).toContainText("10:00");
+
+  // One place less on that date, the other date untouched.
+  await page.goto(`/producto/${slug}`);
+  await expect(picker.getByTestId("session-left").first()).toHaveText("Queda 1 lugar");
+  await expect(picker.getByTestId("session-left").nth(1)).toHaveText("Quedan 2 lugares");
+  // Three people cannot take the place that is left.
+  const full = await page.request.post("/api/orders", { data: { idempotencyKey: key(isMobile ? "e5" : "f6"), lines: [{ productId: slug, quantity: 2, slot: `${day(20)}T10:00` }], customer: { name: "Otra Persona", email: "otra.evento@example.com", phone: "+00 000 000 1001" }, paymentMethod: "bank_transfer" } });
+  expect(await full.json()).toMatchObject({ error: "slot_taken" });
+  // Search engines get an Event per date.
+  const html = await (await page.request.get(`/producto/${slug}`)).text();
+  expect(html).toContain('"@type":"Event"');
+  expect(html).toContain(`"startDate":"${day(20)}T`);
+
+  await page.goto(`/admin/agenda?view=day&date=${day(20)}`);
+  const booking = page.getByTestId("agenda-booking").filter({ hasText: name });
+  await expect(booking).toHaveCount(1);
+  await expect(booking).toContainText("10:00");
+  expect(errors).toEqual([]);
+});
+
+test("a draft: a product without a price is in the panel as «Falta el precio» and nowhere in the store", async ({ page, isMobile }) => {
+  const errors = watchConsole(page);
+  const name = `Aceite de prueba ${who(isMobile)}`;
+  const slug = `aceite-de-prueba-${who(isMobile).toLowerCase()}`;
+  await login(page);
+  await page.goto("/admin/products");
+  await page.getByTestId("new-product").click();
+  await page.getByTestId("p-name").fill(name);
+  await page.getByTestId("p-description").fill("Aceite de oliva. Todavía no sabemos el precio.");
+  await page.getByTestId("p-category").selectOption("almacen");
+  // No price is typed and none is invented: it is saved as a draft.
+  await page.getByTestId("p-draft").check();
+  await page.getByTestId("p-save").click();
+  await expect(page).toHaveURL(new RegExp(`/admin/products/${slug}$`));
+
+  await page.goto("/admin/products");
+  await page.getByTestId("products-search").fill(name);
+  await expect(page.getByTestId("product-row").getByTestId("draft-pill")).toHaveText("Falta el precio");
+
+  // For the store it does not exist: no page, no card, no search result, no feed row, no order.
+  expect((await page.request.get(`/producto/${slug}`)).status()).toBe(404);
+  await page.goto("/tienda/almacen");
+  await expect(page.getByTestId("product-card").filter({ hasText: name })).toHaveCount(0);
+  expect(await (await page.request.get(`/buscar?q=${encodeURIComponent(name)}`)).text()).not.toContain(slug);
+  for (const path of ["/feeds/google.xml", "/sitemap.xml", "/llms.txt"]) expect(await (await page.request.get(path)).text()).not.toContain(slug);
+  const order = await page.request.post("/api/orders", { data: { idempotencyKey: key(isMobile ? "a7" : "b8"), lines: [{ productId: slug, quantity: 1 }], customer: { name: "Ana Ejemplo", email: emailOf(name), phone: "+00 000 000 1000" }, shippingMethodId: "pickup", paymentMethod: "bank_transfer" } });
+  expect(order.status()).toBe(409);
+  expect(await order.json()).toMatchObject({ error: "unknown_product" });
+
+  // The owner gives the price: the draft mark comes off and it is on sale.
+  await page.goto(`/admin/products/${slug}`);
+  await page.getByTestId("p-price").fill("9800");
+  await page.getByTestId("p-draft").uncheck();
+  await page.getByTestId("p-save").click();
+  await expect(page.getByTestId("p-saved")).toBeVisible();
+  await page.goto(`/producto/${slug}`);
+  await expect(page.getByTestId("product-price")).toContainText("9.800");
+  expect(errors).toEqual([]);
+});

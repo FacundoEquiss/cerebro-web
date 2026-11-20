@@ -11,7 +11,10 @@ vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown) => fn, revalidateTa
 import { postgresGateway } from "@/lib/data/postgres";
 import { sqlAdapter } from "@/lib/data/sql";
 import type { DataAdapter } from "@/lib/data/types";
-import { seedSql } from "../scripts/generate-seed.mjs";
+import { seedSql as seedOf } from "../scripts/generate-seed.mjs";
+
+// The tests seed THEIR catalogue (tests/fixtures), never the owner's content/products.json.
+const seedSql = () => seedOf("tests/fixtures/products.json");
 import { request } from "./helpers";
 
 const seedProducts = (seedSql().match(/insert into products /g) ?? []).length;
@@ -178,7 +181,7 @@ describe("admin panel functions", () => {
       images: [{ src: "/media/x.webp", alt: "Taza", width: 800, height: 1000 }],
       options: [{ id: "color", name: "Color", values: [{ id: "red", label: "Rojo" }, { id: "blue", label: "Azul" }] }],
       variants: [{ id: "nueva-taza-red", options: { color: "red" }, stock: 3, price: null }, { id: "nueva-taza-blue", options: { color: "blue" }, stock: null, price: 5500 }],
-      stock: null, featured: false, active: true, minQuantity: 1, attributes: {},
+      stock: null, featured: false, active: true, draft: false, minQuantity: 1, attributes: {},
       type: "physical" as const, unit: "u", step: 1, maxQuantity: null, service: null, digital: null,
     };
     const created = await adapter.saveProduct(base);
@@ -551,7 +554,7 @@ describe("product types in the database", () => {
   it("saves a product of each type from the admin panel", async () => {
     const base = {
       slug: "x", name: "X", description: "", category: "servicios", price: 5000, compareAtPrice: null, images: [], options: [], variants: [],
-      stock: null, featured: false, active: true, minQuantity: 1, attributes: {}, unit: "u", step: 1, maxQuantity: null, service: null, digital: null,
+      stock: null, featured: false, active: true, draft: false, minQuantity: 1, attributes: {}, unit: "u", step: 1, maxQuantity: null, service: null, digital: null,
     };
     const service = await adapter.saveProduct({ ...base, id: "new-class", slug: "new-class", type: "service", service: { durationMinutes: 45, capacity: 4 } });
     expect(service).toMatchObject({ type: "service", service: { durationMinutes: 45, capacity: 4 }, digital: null });
@@ -676,7 +679,7 @@ describe("review of 0.2.0, in the database", () => {
   it("capacity counts what OVERLAPS: a change of duration cannot double-book", async () => {
     const base = {
       slug: "dur", name: "Duration test", description: "", category: "servicios", price: 1000, compareAtPrice: null, images: [], options: [], variants: [],
-      stock: null, featured: false, active: true, minQuantity: 1, attributes: {}, unit: "u", step: 1, maxQuantity: null, digital: null, type: "service" as const,
+      stock: null, featured: false, active: true, draft: false, minQuantity: 1, attributes: {}, unit: "u", step: 1, maxQuantity: null, digital: null, type: "service" as const,
     };
     const half = await adapter.saveProduct({ ...base, id: "dur", service: { durationMinutes: 30, capacity: 1 } });
     // Booked while it lasted 30 minutes: the second slot of the morning (09:30–10:00).
@@ -750,6 +753,87 @@ describe("migration 0002 on its own leaves a working catalogue", () => {
     // The store keeps selling with the 0.1.0 functions until schema.sql replaces them.
     const order = (await old.query(`select create_order('${JSON.stringify({ idempotency_key: "z".repeat(64), currency: "ARS", lines: [{ product_id: "mug", quantity: 2 }], shipping: { method: "pickup", price: 0, free_from: null }, payment_provider: "manual", payment_method: "bank_transfer", customer: {} })}'::jsonb) as r`)).rows[0] as { r: { total: number } };
     expect(Number(order.r.total)).toBe(2000);
+    await old.close();
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// 0.3.0 — drafts and events, in the real SQL.
+// ---------------------------------------------------------------------------------------------
+describe("0.3.0 in the database", () => {
+  let n = 0;
+  const nextKey = () => `v030-${String(++n).padStart(59, "0")}`;
+  const buyer = () => ({ ...request().customer, email: `v${++n}@example.com` });
+  const free = { price: 0, freeFrom: null };
+  const base = {
+    slug: "x", name: "X", description: "", category: "servicios", price: 5000, compareAtPrice: null, images: [], options: [], variants: [],
+    stock: null, featured: false, active: true, draft: false, minQuantity: 1, attributes: {}, unit: "u", step: 1, maxQuantity: null, service: null, digital: null,
+  };
+
+  it("a draft is not in the public catalogue and cannot be ordered; the panel still has it", async () => {
+    const saved = await adapter.saveProduct({ ...base, id: "no-price", slug: "no-price", type: "physical", price: 0, draft: true, stock: 5 });
+    expect(saved).toMatchObject({ draft: true, active: true });
+    expect((await adapter.listProducts()).some((p) => p.id === "no-price")).toBe(false);
+    expect((await db.query("select count(*)::int as n from public_catalog where id = 'no-price'")).rows).toEqual([{ n: 0 }]);
+    expect((await adapter.listAllProducts()).find((p) => p.id === "no-price")).toMatchObject({ draft: true });
+    await expect(adapter.createOrder(request({ idempotencyKey: nextKey(), lines: [{ productId: "no-price", quantity: 1 }] }), free)).rejects.toMatchObject({ code: "unknown_product" });
+    expect(await stock("products", "no-price")).toBe(5);
+    // A product saved without a price at all is a draft too — never a product that costs nothing.
+    await db.query(`select save_product('{"id":"null-price","slug":"null-price","name":"N","category":"hogar"}'::jsonb)`);
+    expect((await db.query("select draft, price::float as price from products where id = 'null-price'")).rows).toEqual([{ draft: true, price: 0 }]);
+    // The owner gives the price.
+    await adapter.saveProduct({ ...base, id: "no-price", slug: "no-price", type: "physical", price: 4200, draft: false, stock: 5 });
+    expect((await adapter.createOrder(request({ idempotencyKey: nextKey(), lines: [{ productId: "no-price", quantity: 1 }] }), free)).total).toBe(4200);
+    // A draft quote product cannot be asked for either.
+    await adapter.saveProduct({ ...base, id: "draft-quote", slug: "draft-quote", type: "quote", price: 0, draft: true });
+    await expect(adapter.createQuote({ idempotencyKey: nextKey(), productId: "draft-quote", quantity: 1, detail: "Something", customer: buyer() })).rejects.toMatchObject({ code: "unknown_product" });
+  });
+
+  it("an event sells the places of each date, and not one more", async () => {
+    const day = (days: number) => new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+    const first = `${day(20)}T10:00`;
+    const second = `${day(48)}T10:00`;
+    const event = await adapter.saveProduct({ ...base, id: "workshop", slug: "workshop", type: "service", price: 32000, service: { durationMinutes: 180, capacity: 4, sessions: [{ start: first }, { start: second }, { start: "2020-01-04T10:00" }] } });
+    expect(event.service?.sessions).toHaveLength(3);
+    const listed = (await adapter.listProducts()).find((p) => p.id === "workshop")!;
+    expect(openDates(listed, Date.now())).toEqual([day(20), day(48)]);
+    const sign = (slot: string, quantity: number) => adapter.createOrder(request({ idempotencyKey: nextKey(), customer: buyer(), lines: [{ productId: "workshop", quantity, slot }], shippingMethodId: "delivery" }), terms);
+
+    // Six people at once for four places: four get in.
+    const rush = await Promise.allSettled(Array.from({ length: 6 }, () => sign(first, 1)));
+    expect(rush.filter((r) => r.status === "fulfilled")).toHaveLength(4);
+    for (const r of rush) if (r.status === "rejected") expect(r.reason).toMatchObject({ code: "slot_taken" });
+    // The other date has its own four places — two together, and no shipping for a place in a workshop.
+    const pair = await sign(second, 2);
+    expect(pair).toMatchObject({ subtotal: 64000, total: 64000, shipping: { methodId: "none", price: 0 } });
+    await expect(sign(second, 3)).rejects.toMatchObject({ code: "slot_taken" });
+    // Only its dates exist: not a past one, not a slot of the weekly agenda.
+    await expect(sign("2020-01-04T10:00", 1)).rejects.toMatchObject({ code: "slot_invalid" });
+    await expect(sign(`${day(21)}T10:00`, 1)).rejects.toMatchObject({ code: "slot_invalid" });
+    // The Agenda sees them, and cancelling frees the places.
+    const { start, end } = resolveSlot(listed, second, Date.now());
+    expect((await adapter.listBookings(start, end)).map((b) => [b.orderId, b.seats])).toEqual([[pair.id, 2]]);
+    await adapter.setOrderStatus(pair.id, "new", "cancelled", "owner@example.com", "x");
+    expect((await sign(second, 4)).lines[0]).toMatchObject({ quantity: 4, slot: { start, end } });
+  });
+});
+
+describe("migration 0003 on a 0.2.0 database", () => {
+  it("adds drafts without touching what is there, before db/schema.sql is run again", async () => {
+    const old = new PGlite();
+    await old.exec(readFileSync("db/migrations/0001_initial.sql", "utf8"));
+    await old.exec(readFileSync("db/migrations/0002_product_types.sql", "utf8"));
+    await old.exec(`insert into categories (slug, name) values ('hogar', 'Hogar');
+                    insert into products (id, slug, name, category, price) values ('mug', 'mug', 'Mug', 'hogar', 1000);`);
+    await old.exec(readFileSync("db/migrations/0003_drafts.sql", "utf8"));
+    await old.exec(readFileSync("db/migrations/0003_drafts.sql", "utf8")); // twice is safe
+    expect((await old.query("select id from public_catalog")).rows).toEqual([{ id: "mug" }]);
+    await old.exec("update products set draft = true where id = 'mug'");
+    expect((await old.query("select id from public_catalog")).rows).toEqual([]);
+    await old.exec(readFileSync("db/schema.sql", "utf8"));
+    const upgraded = sqlAdapter("postgres", postgresGateway((sql, params) => old.query(sql, params) as Promise<{ rows: Record<string, unknown>[] }>));
+    expect((await upgraded.listAllProducts()).map((p) => [p.id, p.draft])).toEqual([["mug", true]]);
+    await expect(upgraded.createOrder(request({ idempotencyKey: "d".repeat(64), lines: [{ productId: "mug", quantity: 1 }] }), terms)).rejects.toMatchObject({ code: "unknown_product" });
     await old.close();
   });
 });

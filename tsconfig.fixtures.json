@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@/config/brand": [
+        "./tests/fixtures/config/brand.ts"
+      ],
+      "@/config/commerce": [
+        "./tests/fixtures/config/commerce.ts"
+      ],
+      "@/content/products.json": [
+        "./tests/fixtures/products.json"
+      ],
+      "@/content/site.json": [
+        "./tests/fixtures/site.json"
+      ],
+      "@/*": [
+        "./*"
+      ]
+    }
+  }
+}

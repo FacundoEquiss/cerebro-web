@@ -17,7 +17,7 @@ import { priceOrder, quoteTotals } from "@/lib/orders/pricing";
 import { MAX_LENGTH, signReceipt, verifyReceipt } from "@/lib/orders/receipt";
 import { needsStore } from "@/lib/store-mode";
 import { privateBucketIsPrivate, resetBucketCheck } from "@/lib/storage";
-import { product, request } from "./helpers";
+import { HAS_PRESETS, pristineProject, product, request } from "./helpers";
 
 // Outside a request there is nothing to wait "after": the deferred work simply runs.
 vi.mock("next/server", async (original) => ({ ...(await original<typeof import("next/server")>()), after: (work: () => unknown) => void work() }));
@@ -198,7 +198,9 @@ describe("the json adapter: holds, limits per buyer, and the admin rules", () =>
     const s = slot(0, 4);
     const { start, end } = resolveSlot(haircut, s, Date.now());
     const held = await book("late", s);
-    const paid = await book("payer", slot(1, 4));
+    const paidSlot = slot(1, 4);
+    const { start: paidStart, end: paidEnd } = resolveSlot(haircut, paidSlot, Date.now());
+    const paid = await book("payer", paidSlot);
     await adapter.setOrderStatus(paid.id, "new", "paid", "owner@example.com");
     await expect(book("other", s)).rejects.toMatchObject({ code: "slot_taken" });
     expect(await adapter.listBookings(start, end)).toHaveLength(1);
@@ -207,7 +209,6 @@ describe("the json adapter: holds, limits per buyer, and the admin rules", () =>
     try {
       // Nothing ran. The read itself stops counting the lapsed hold…
       expect(await adapter.listBookings(start, end)).toEqual([]);
-      const { start: paidStart, end: paidEnd } = resolveSlot(haircut, slot(1, 4), Date.now() - (commerce.booking.holdHours + 1) * 3_600_000);
       expect(await adapter.listBookings(paidStart, paidEnd)).toHaveLength(1); // a paid booking never lapses
       // …and the clean-up cancels the order, even with "orders never expire by age".
       expect(await adapter.expireOrders(0, "Expired")).toBeGreaterThanOrEqual(1);
@@ -262,14 +263,11 @@ describe("the json adapter: holds, limits per buyer, and the admin rules", () =>
   });
 });
 
-describe("`npm run preset` does not overwrite work without being told to", () => {
+describe.skipIf(!HAS_PRESETS)("`npm run preset` does not overwrite work without being told to", () => {
   it("refuses over a catalogue that is not a preset's, keeps backups, and sets local data aside", () => {
-    const root = mkdtempSync(join(tmpdir(), "preset-safe-"));
+    const root = pristineProject("preset-safe-");
     const data = mkdtempSync(join(tmpdir(), "preset-data-")); // an ABSOLUTE data folder
     try {
-      for (const dir of ["scripts", "content/presets", "config", "db"]) mkdirSync(join(root, dir), { recursive: true });
-      for (const file of ["scripts/preset.mjs", "scripts/generate-seed.mjs", "config/brand.ts", "content/products.json", "content/site.json", "db/seed.sql"]) cpSync(file, join(root, file));
-      cpSync("content/presets", join(root, "content/presets"), { recursive: true });
       const run = (...args: string[]) => spawnSync(process.execPath, [join(root, "scripts/preset.mjs"), ...args], { encoding: "utf8", env: { ...process.env, DATA_DIR: data } });
       const catalogue = () => readFileSync(join(root, "content/products.json"), "utf8");
 
@@ -322,11 +320,8 @@ describe("`npm run preset` does not overwrite work without being told to", () =>
   });
 
   it("refuses over uncommitted changes in a git repository", () => {
-    const root = mkdtempSync(join(tmpdir(), "preset-git-"));
+    const root = pristineProject("preset-git-");
     try {
-      for (const dir of ["scripts", "content/presets", "config", "db"]) mkdirSync(join(root, dir), { recursive: true });
-      for (const file of ["scripts/preset.mjs", "scripts/generate-seed.mjs", "config/brand.ts", "content/products.json", "content/site.json", "db/seed.sql"]) cpSync(file, join(root, file));
-      cpSync("content/presets", join(root, "content/presets"), { recursive: true });
       const git = (...args: string[]) => execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@example.com", ...args], { cwd: root, stdio: "ignore" });
       git("init", "-q");
       git("add", "-A");

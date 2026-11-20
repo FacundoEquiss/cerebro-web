@@ -26,10 +26,11 @@ try {
 }
 
 const next = join(copy, "node_modules/next/dist/bin/next");
-const env = { ...process.env, DATA_DIR: join(copy, ".data"), DATA_SOURCE: "json", PAYMENT_PROVIDER: "manual", DEMO_MODE: "false", NEXT_PUBLIC_SITE_URL: `http://localhost:${port}`, PORT: port };
+const env = { ...process.env, DATA_DIR: join(copy, ".data"), DATA_SOURCE: "json", PAYMENT_PROVIDER: "manual", DEMO_MODE: "false", NEXT_PUBLIC_SITE_URL: `http://localhost:${port}`, PORT: port, CEREBRO_FIXTURES: "" };
 const run = (args) => execFileSync(process.execPath, args, { cwd: copy, stdio: "inherit", env });
 
-run([join(copy, "scripts/preset.mjs"), preset]);
+// --force: the store this runs in may already have a catalogue of its own (the copy is thrown away).
+run([join(copy, "scripts/preset.mjs"), preset, "--force"]);
 run([next, "build"]);
 if (!existsSync(join(copy, ".next"))) throw new Error("the copy did not build");
 

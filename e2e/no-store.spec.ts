@@ -1,4 +1,4 @@
-import { emailOf, expect, fillCheckout, test, watchConsole } from "./helpers";
+import { E2E_ADMIN, emailOf, expect, fillCheckout, test, watchConsole } from "./helpers";
 
 // Two more servers run on the same build with a `json` adapter that stores NOTHING (what `json`
 // is in production): one in demo mode — what the published demo is — and one as a real store.
@@ -79,6 +79,20 @@ test("a real store without a database: no booking, no quote form, no download �
   expect(await quote.json()).toMatchObject({ error: "needs_store" });
   // What it CAN do, it still does: a physical product, with the signed receipt as the only copy.
   expect((await order([{ productId: "vela-aromatica-de-soja", quantity: 1 }], "5e")).status()).toBe(200);
+
+  // EXAMPLE ORDERS ARE FOR DEMOS: with DEMO_MODE=false the panel starts empty…
+  await page.goto(`${REAL}/admin/login`);
+  await page.getByTestId("login-email").fill(E2E_ADMIN.email);
+  await page.getByTestId("login-password").fill(E2E_ADMIN.password);
+  await page.getByTestId("login-submit").click();
+  await expect(page.getByTestId("kanban")).toBeVisible();
+  await expect(page.getByTestId("order-card")).toHaveCount(0);
+  await page.goto(`${REAL}/admin/agenda`);
+  await expect(page.getByTestId("agenda-booking")).toHaveCount(0);
+  // …while the demo shows its example orders.
+  // (Same host, same session cookie: the three test servers share the admin user.)
+  await page.goto(`${DEMO}/admin`);
+  await expect(page.getByTestId("order-card").first()).toBeVisible();
 
   // A physical product page is untouched.
   // (A category the admin tests do not add products to: the three servers share one page cache.)

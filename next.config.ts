@@ -1,8 +1,15 @@
 import type { NextConfig } from "next";
-import { brand } from "./config/brand";
+import { brand as ownBrand } from "./config/brand";
+import { brand as fixtureBrand } from "./tests/fixtures/config/brand";
 import { redirects as customRedirects } from "./config/redirects";
 import { INTERNAL_ROUTES, LOCALIZED_ROUTES, ROUTES_WITH_CHILDREN, type RouteKey } from "./i18n/routes";
 
+// THE TESTS RUN AGAINST THEIR OWN STORE. With CEREBRO_FIXTURES=1 (set only by the end-to-end
+// test server) the build reads the catalogue, the home texts, the brand and the commercial rules
+// from tests/fixtures/ instead of the owner's files — through the path aliases of
+// tsconfig.fixtures.json — so a store with any catalogue keeps a green test suite.
+const fixtures = process.env.CEREBRO_FIXTURES === "1";
+const brand = fixtures ? fixtureBrand : ownBrand;
 const localized = LOCALIZED_ROUTES[brand.locale];
 const keys = Object.keys(INTERNAL_ROUTES) as RouteKey[];
 const translated = keys.filter((k) => localized[k] !== INTERNAL_ROUTES[k]);
@@ -24,6 +31,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  ...(fixtures ? { typescript: { tsconfigPath: "tsconfig.fixtures.json" } } : {}),
   // `output: "standalone"` makes `next build` emit a self-contained server (used by the Dockerfile).
   output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   env: { NEXT_PUBLIC_APP_ENV: appEnv },

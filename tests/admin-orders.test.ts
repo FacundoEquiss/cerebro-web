@@ -248,6 +248,9 @@ describe("json adapter with a local data folder", () => {
   it("is read-only in production: nothing is stored and the panel shows example orders", async () => {
     process.env.JSON_READ_ONLY = "1";
     try {
+      // Example orders belong to DEMOS: this suite switched them off, a real store never has them.
+      expect(await adapter.listOrders()).toEqual([]);
+      process.env.DEMO_ORDERS = "true";
       expect(adapter.writable).toBe(false);
       expect(adapter.storesOrders).toBe(false);
       await expect(adapter.setOrderStatus(id, "cancelled", "new", "x")).rejects.toThrow("READ_ONLY");
@@ -259,6 +262,7 @@ describe("json adapter with a local data folder", () => {
       expect(await adapter.getOrder(order.id)).toBeNull();
     } finally {
       delete process.env.JSON_READ_ONLY;
+      process.env.DEMO_ORDERS = "false";
     }
   });
 });
