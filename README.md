@@ -50,6 +50,7 @@ gives each line of business, without promising what is not built
 | **Pantry, health food, sale by weight** | Preset `almacen`: price per kg, g, l…, decimal quantities with a minimum and a step the server validates, decimal stock, totals rounded on the server | The policy for the real weight differing from the order (text); ingredients and allergens | Charging the difference of the real weight; shipping by weight |
 | **Food and delivery** | Preset `gastronomia`: dishes with sizes, made-to-order sale by the kilo, catering on a quote, live order reception with sound, pickup and flat-rate delivery | Area, hours and allergens (texts); closing the checkout outside opening hours (code, small) | Delivery zones by distance; extras and modifiers per dish; opening-hours switch |
 | **Services by appointment** (hairdresser, practice, classes) | Preset `servicios`: day and time picker, duration, seats per slot, weekly hours, closed days, time zone; **with a database**, the slot is reserved when the order is created (simultaneous orders cannot oversell it), an unpaid one is held for a limited time, and the panel has an **Agenda** (day and week) | Hours per service (catalogue file); cancellation policy (text); charging a deposit instead of the full price (code) | Reminders; rescheduling by the customer; one calendar per member of staff or room (today it is one per service); calendar sync |
+| **Workshops, one-off classes, events with tickets** | A service with **fixed dates** and places per date: a list of dates with "N places left", "Sign up", holds and limits like any booking, the Agenda, `Event` structured data (**needs a database**). Examples in the presets `gastronomia`, `servicios` and `mixto` | The dates (panel or catalogue file); cancellation policy (text) | Waiting list; tickets with a code to show at the door; different prices per date |
 | **Digital products** (courses, e-books, templates) | Preset `digital`: private file, signed download link that expires, delivered on the order page and by e-mail once the order is paid (**needs a database**); no shipping | Licence and refund policy (texts); several files per product (code, small) | Course player / streaming; licence keys; download limits |
 | **Made-to-measure work, events, B2B** | Preset `a-medida`: no public price, "Ask for a quote" form, enquiries in their own kanban column, price per line plus shipping, signed link to accept and pay (**needs a database**) | Extra questions in the form (code, small); validity and deposit (texts) | Quotes built from scratch in the panel; quote as PDF; expiry date |
 | **Subscriptions** | — | Sell the first period as a product and renew by hand, saying so clearly | Recurring billing |
@@ -105,7 +106,7 @@ without JavaScript).
 - Sign-in without any external provider: scrypt password hashes in an environment variable and a
   signed session cookie.
 
-**3. The brain (`cerebro/`)** — a mind map with 331 actionable nodes on how to build, launch and
+**3. The brain (`cerebro/`)** — a mind map with 334 actionable nodes on how to build, launch and
 grow a business website: strategy, store, checkout, SEO, AI search, measurement, ads, security,
 quality, working with agents. It is published on its own at
 <https://cerebro-web-negocios.vercel.app> and this project follows it. (The brain is in Spanish;
@@ -124,9 +125,9 @@ its translation is on the roadmap.)
 The store and the panel read and write **only through the adapters**, so an external CRM can
 replace the panel.
 
-## Run it locally
+## Start a store
 
-Needs Node 22.
+Needs Node 22. Today, the working path is to clone the repository:
 
 ```bash
 git clone https://github.com/FacundoEquiss/cerebro-web my-store
@@ -157,7 +158,21 @@ docker run -p 3000:3000 --env-file .env -v store-data:/data my-store
 
 More ways to host it (a VPS with a process manager, Vercel): [`docs/deploy.md`](docs/deploy.md).
 
+**In one command, once the creator is published to npm** (it is in
+[`packages/create-cerebro-web`](packages/create-cerebro-web), not on npm yet — until then use
+`git clone`):
+
+```bash
+npm create cerebro-web@latest my-store        # asks the line of business, installs, starts git
+npm create cerebro-web@latest my-store -- --preset almacen --no-install   # no questions (for agents)
+```
+
 ## From demo to selling for real
+
+**[`docs/go-live.md`](docs/go-live.md) is the step-by-step guide for an owner who does not
+program**, written so an AI agent can lead them: database, variables, admin user, payments,
+e-mail, domain, turning the demo off. `npm run doctor` says what is ready and which single step
+comes next.
 
 The full, ordered checklist — what the agent does and what only the owner can do — is in
 [`GETTING-STARTED.md`](GETTING-STARTED.md). The short version:
@@ -190,6 +205,8 @@ The **Settings** screen of the panel lists what is still missing.
 | `npm run admin:hash` | Create an admin user line for `ADMIN_USERS` |
 | `npm run brain` | Rebuild the static brain site into `cerebro/dist/` |
 | `npm run preset` / `npm run preset <name>` | List the starting catalogues / apply one (products, home texts, palette) |
+| `npm run check:catalog` | Validate YOUR catalogue: broken references, drafts without a price, EXAMPLE texts left (part of `npm run check`) |
+| `npm run doctor` | What is ready on the way to selling, and the single next step |
 | `npm run images` / `npm run samples` / `npm run db:seed` | Redraw the placeholders / the example downloads / regenerate `db/seed.sql` |
 | `npm run data:export` | Copy products edited locally (json mode) back to `content/products.json` |
 | `npm run screenshots` | Screenshot every key screen and fail on console errors |
@@ -198,6 +215,7 @@ The **Settings** screen of the panel lists what is still missing.
 
 - [`AGENTS.md`](AGENTS.md) — instructions for AI agents (and people) working on a site made with this.
 - [`GETTING-STARTED.md`](GETTING-STARTED.md) — from template to a real business website.
+- [`docs/go-live.md`](docs/go-live.md) — from zero to selling, step by step, for an owner who does not program.
 - [`docs/product-types.md`](docs/product-types.md) — physical, digital, services, quotes, sale by weight, presets.
 - [`docs/adapters.md`](docs/adapters.md) — the adapter contracts and how to add one.
 - [`docs/admin.md`](docs/admin.md) — the admin panel: access, kanban, live reception.

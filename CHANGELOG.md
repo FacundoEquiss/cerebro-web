@@ -6,6 +6,58 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-20
+
+**From a template that works to a store someone can start alone.**
+
+### Added
+
+- **The tests have their own store** (`tests/fixtures/`: catalogue, home texts, brand and
+  commercial rules). `npm test` and `npm run test:e2e` no longer read `content/` or `config/`, so
+  they stay green after `npm run preset <name>` and with any catalogue made by hand. The
+  end-to-end build switches to the fixtures with `CEREBRO_FIXTURES=1` (`tsconfig.fixtures.json`).
+- **`npm run check:catalog`** (part of `npm run check`): validates YOUR catalogue — slugs,
+  categories, types, images, variants, quantity rules, dates — and lists drafts and texts still
+  marked EXAMPLE. A CI job applies every preset and runs the checks and the unit tests.
+- **`docs/go-live.md`** (es/en): from zero to selling for an owner who does not program, written
+  for an agent to lead them — database, schema, private bucket, variables, admin user, payments,
+  e-mail, domain, demo off — with links to each provider's official documentation.
+  **`npm run doctor`** says what is ready and the single next step.
+- **`packages/create-cerebro-web`**: `npm create cerebro-web@latest my-store` (clone or tarball,
+  preset, install, fresh git, next steps; `--preset`, `--no-install`, `--no-git`, `--yes`). **Not
+  published to npm yet** — `PUBLISHING.md` has the steps for the owner; until then, `git clone`.
+- **Events with fixed dates**: a service with `service.sessions` is sold by sign-up to those
+  dates, each with its places — a list of dates with "N places left" and "Sign up" instead of the
+  weekly calendar — on the same booking engine (holds, limits, overlap, Agenda). `Event`
+  structured data; "Fixed dates" in the product editor; examples in three presets.
+- **Drafts**: a product without a price (`"price": null`, or "Draft" in the panel) is hidden from
+  the store, the search, the sitemap, the feeds, `llms.txt` and the structured data, and cannot be
+  ordered. The panel shows "Price missing"; `check:catalog` and `doctor` list them.
+- The published brain links to the code and the demo (`enlaces` in `cerebro/datos.json`), and has
+  new nodes: events, drafts, and "from zero to selling" (334 nodes).
+
+### Changed
+
+- **Example orders load only in demo mode.** A real store (`DEMO_MODE=false`) starts with an empty
+  panel — they used to hold seats of real appointments. `DEMO_ORDERS=true|false` overrides it.
+- The words of a booking are neutral where a line may be an appointment or an event ("Date and
+  time", "Your booking").
+- The admin product page offers "view in store" only for products that are on sale.
+
+### Migrating from 0.2.0
+
+1. **Database**: run `db/migrations/0003_drafts.sql` and then `db/schema.sql` again (or only
+   `db/schema.sql`). It adds `products.draft` and hides drafts from the public key. Back up and
+   ask the owner first. Nothing is deleted; no existing product becomes a draft.
+2. **Your own data adapter**: `Product` has a new field, `draft`; `listProducts` must leave drafts
+   out and `createOrder` must refuse them.
+3. **Tests you wrote against the demo catalogue** now run against `tests/fixtures/products.json`
+   (the same products as the 0.2.0 demo). Tests that read `content/products.json` on purpose keep
+   doing so.
+4. **Demo orders**: if you relied on the example orders outside demo mode, set `DEMO_ORDERS=true`.
+5. Nothing else changes for a store without events or drafts.
+
+
 ## [0.2.0] - 2026-11-20
 
 **A base for any line of business, not only for clothes.** Products now have a type, can be sold
@@ -176,6 +228,7 @@ First public release.
 - **Tests**: Vitest unit tests (including the real SQL on an in-process PostgreSQL) and
   Playwright end-to-end tests on phone and computer sizes.
 
-[Unreleased]: https://github.com/FacundoEquiss/cerebro-web/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/FacundoEquiss/cerebro-web/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/FacundoEquiss/cerebro-web/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/FacundoEquiss/cerebro-web/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/FacundoEquiss/cerebro-web/releases/tag/v0.1.0

@@ -10,7 +10,7 @@ configura y qué garantiza el servidor.
 |---|---|---|---|---|
 | `physical` | Algo que se envía o se retira (el valor por defecto) | Opciones y cantidad | Sí | Se prepara el pedido |
 | `digital` | Un archivo | Nada (uno por línea) | No | Un enlace de descarga firmado, con vencimiento |
-| `service` | Un turno | Día y hora (y lugares) | No | El turno ya está reservado |
+| `service` | Un turno, o un **evento** con fechas fijas | Día y hora, o una de las fechas (y lugares) | No | El turno ya está reservado |
 | `quote` | Algo sin precio público | Cantidad y una descripción | Lo define el dueño | — se paga después de aceptar el presupuesto |
 
 Tres reglas valen para todos, y son las mismas en `lib/orders/pricing.ts` (adaptador `json`) y en
@@ -153,6 +153,50 @@ Un servicio tiene `service: { "durationMinutes": 30, "capacity": 1 }`.
 - **Lo que no está hecho**: recordatorios, que el cliente reprograme, una agenda por profesional,
   sincronizar calendarios, señas. Ver [`ROADMAP.md`](../ROADMAP.md).
 
+## Eventos: fechas fijas y lugares limitados
+
+Un taller, una clase suelta, una charla, una entrada: no pasa «todos los lunes a las 10», pasa en
+**estas fechas**. Es un servicio con una lista de sesiones:
+
+```jsonc
+{
+  "id": "taller-de-cocina", "type": "service", "price": 32000,
+  "service": {
+    "durationMinutes": 180,
+    "capacity": 12,                                   // lugares de CADA fecha
+    "sessions": [{ "start": "2027-03-06T10:00" }, { "start": "2027-04-03T10:00", "durationMinutes": 240 }]
+  }
+}
+```
+
+En el panel: **Tipo → Servicio**, y una fecha por línea en **Fechas fijas**.
+
+- Cuando hay `sessions`, **sólo existen esas fechas**: la agenda semanal, los días cerrados, la
+  anticipación y la ventana del calendario no se aplican. `start` es hora de `booking.timeZone`.
+- La tienda muestra una **lista de fechas** con «Quedan N lugares» y el botón **Inscribirme**; la
+  cantidad es la cantidad de lugares. Una fecha que ya pasó deja de ofrecerse sola.
+- Todo lo demás es el motor de reservas de la sección anterior: los lugares se reservan al crear
+  el pedido (sin sobreventa), las retenciones vencen, los topes por pedido y por comprador, la
+  Agenda, y la necesidad de un adaptador que guarde pedidos.
+- Datos estructurados: un `Event` por cada fecha próxima (inicio, fin y precio). `location` sólo
+  se declara si `brand.contact.address` está cargado: nunca se inventa.
+- `npm run check:catalog` avisa cuando a un evento no le quedan fechas. Las fechas de los presets
+  son ejemplos a futuro: cargá las reales.
+- **Lo que no está hecho**: lista de espera, entradas con código para controlar en la puerta, y
+  precio o cupo distinto por fecha. Ver [`ROADMAP.md`](../ROADMAP.md).
+
+## Borradores: un producto sin precio
+
+Cuando el dueño todavía no dio el precio, **no lo inventes**. Cargá el producto como borrador:
+`"price": null` en el archivo del catálogo, o la casilla **Borrador** en el panel.
+
+- Un borrador **no se vende**: no aparece en la tienda, el buscador, el sitemap, los feeds,
+  `llms.txt` ni los datos estructurados, y el servidor rechaza cualquier pedido que lo incluya.
+- El panel lo lista con **Falta el precio**. `npm run check:catalog` y `npm run doctor` listan
+  todos los borradores: esa es la lista de preguntas para el dueño.
+- Cuando llega el precio, cargalo y destildá la casilla. (Un producto que se cotiza caso por caso
+  no es un borrador: es el tipo `quote`.)
+
 ## Presupuestos
 
 Un producto `quote` no tiene precio público: la tienda muestra **«Consultar»** y un formulario.
@@ -246,6 +290,10 @@ Un preset es un JSON en `content/presets/` con productos, categorías, los texto
 `content/site.json`, los ocho colores de `theme` en `config/brand.ts` y `db/seed.sql`.
 **Todo lo que trae un preset es de ejemplo** —nombres, precios, textos— y sus imágenes son
 placeholders dibujados por `npm run images`. Reemplazá todo por los datos reales del negocio.
+
+**Las pruebas no dependen del catálogo.** Corren contra `tests/fixtures/`, así que `npm test` y
+`npm run test:e2e` siguen en verde después de cualquier preset y con cualquier catálogo propio.
+Lo que revisa TU catálogo es `npm run check:catalog` (parte de `npm run check`).
 
 Para sumar un preset: copiá uno, cambialo, corré `npm run images` (las formas nuevas van en
 `scripts/generate-images.mjs`) y `npm test` (cada preset se valida).

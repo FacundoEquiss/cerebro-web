@@ -1,7 +1,12 @@
 {
  "generado": "2026-11-20",
- "version": "1.1.0",
+ "version": "1.2.0",
  "idioma": "es",
+ "enlaces": {
+  "repositorio": "https://github.com/FacundoEquiss/cerebro-web",
+  "demo": "https://cerebro-web-demo.vercel.app",
+  "crear": "npm create cerebro-web@latest mi-tienda"
+ },
  "raiz": {
   "id": "web",
   "titulo": "Cerebro Web",
@@ -141,7 +146,8 @@
       "como": [
        "Tomar cada dato comercial de la fuente única del negocio o del sistema que lo administra.",
        "Dejar un marcador visible («pendiente de confirmar») cuando falte un dato.",
-       "No prometer resultados de posicionamiento ni de ventas: hablar de plazos orientativos y de aprendizaje."
+       "No prometer resultados de posicionamiento ni de ventas: hablar de plazos orientativos y de aprendizaje.",
+       "Si falta el precio de un producto, cargarlo como borrador (`\"price\": null`) y pedírselo al dueño: nunca un precio de relleno."
       ],
       "herramientas": [
        "Ficha del negocio",
@@ -287,6 +293,7 @@
        "Físico (`physical`): se envía o se retira; puede tener opciones, variantes y stock.",
        "Digital (`digital`): sin envío; el archivo es privado y se entrega con un enlace firmado y con vencimiento cuando el pedido está pagado.",
        "Servicio (`service`): el cliente elige día y hora; el turno se reserva al crear el pedido y se libera si se cancela o vence.",
+       "Evento con fecha: un `service` con `sessions` (fechas fijas y lugares por fecha) en lugar de la agenda semanal.",
        "A presupuesto (`quote`): sin precio público; entra como consulta, el dueño cotiza y envía, y el cliente acepta y paga.",
        "Por peso o medida: `unit` (kg, g, m, l…), `step` y mínimo; el precio es por esa unidad y las cantidades pueden ser decimales."
       ],
@@ -296,6 +303,29 @@
        "`lib/data/types.ts`"
       ],
       "error_comun": "Forzar un servicio o un presupuesto dentro de un producto físico con «precio 0»: el tipo existe para no mentirle al cliente ni al servidor.",
+      "prioridad": "esencial",
+      "fase": "antes",
+      "hijos": []
+     },
+     {
+      "id": "rub-borrador",
+      "titulo": "Sin precio: dejar en borrador",
+      "categoria": "rub",
+      "resumen": "Cuando falta el precio de un producto, se carga como borrador: no se vende ni se muestra hasta que el dueño lo define.",
+      "para_que": "Evita inventar un precio para poder avanzar: un número de relleno termina publicado.",
+      "como": [
+       "En el archivo del catálogo escribir `\"price\": null`; en el panel, marcar «Borrador: falta el precio».",
+       "Un borrador no aparece en la tienda, el buscador, el sitemap, los feeds ni los datos estructurados, y el servidor rechaza cualquier pedido que lo incluya.",
+       "`npm run check:catalog` y `npm run doctor` listan los borradores: llevarle esa lista al dueño.",
+       "Cuando el dueño da el precio, cargarlo y quitar la marca de borrador.",
+       "No confundir con «a presupuesto» (`quote`): ese tipo es para lo que se cotiza caso por caso."
+      ],
+      "herramientas": [
+       "`npm run check:catalog`",
+       "`npm run doctor`",
+       "panel de productos"
+      ],
+      "error_comun": "Poner $ 1 o un precio estimado «por ahora»: es inventar un dato del negocio.",
       "prioridad": "esencial",
       "fase": "antes",
       "hijos": []
@@ -434,6 +464,30 @@
       "error_comun": "Publicar horarios sin fijar la zona horaria ni los días cerrados: aparecen turnos que nadie puede atender.",
       "prioridad": "recomendado",
       "fase": "antes",
+      "hijos": []
+     },
+     {
+      "id": "rub-eventos",
+      "titulo": "Talleres y eventos con fecha",
+      "categoria": "rub",
+      "resumen": "Talleres, clases sueltas, charlas y entradas: fechas fijas y lugares limitados, no una agenda semanal.",
+      "para_que": "Un evento se vende por inscripción a una fecha; si se arma con la agenda semanal aparecen horarios que no existen.",
+      "como": [
+       "Crear un producto de tipo `service` y cargarle las fechas en `service.sessions` (en el panel: «Fechas fijas», una por línea).",
+       "Poner en `capacity` los lugares de cada fecha; la cantidad de la compra es la cantidad de lugares.",
+       "La ficha muestra la lista de fechas con «Quedan N lugares» y el botón «Inscribirme»; cada fecha se reserva, se retiene y se libera como un turno.",
+       "Ver las inscripciones en la Agenda del panel. Las fechas pasadas dejan de ofrecerse solas: cargar las próximas.",
+       "Definir con el dueño la política de cancelación y qué pasa si el evento se suspende.",
+       "Necesita una base de datos, igual que los turnos."
+      ],
+      "herramientas": [
+       "docs/product-types.es.md",
+       "editor de productos (fechas fijas)",
+       "Agenda del panel"
+      ],
+      "error_comun": "Simular un taller mensual con la agenda semanal: ofrece días que no existen y promete lugares que nadie controla.",
+      "prioridad": "recomendado",
+      "fase": "construccion",
       "hijos": []
      },
      {
@@ -6468,6 +6522,29 @@
     "prioridad": "esencial",
     "fase": "lanzamiento",
     "hijos": [
+     {
+      "id": "lan-de-cero",
+      "titulo": "De cero a vender, paso a paso",
+      "categoria": "lan",
+      "resumen": "La guía para llevar de la mano a un dueño que no programa: base de datos, variables, usuario del panel, pagos, correo, dominio y apagar la demo.",
+      "para_que": "Entre «anda en mi máquina» y «cobra de verdad» hay una docena de pasos fuera del código; sin orden, se traban o se saltean.",
+      "como": [
+       "Correr `npm run doctor`: dice qué está listo y cuál es el único paso que sigue.",
+       "Seguir `docs/go-live.es.md` en orden: cada paso dice qué preguntarle al dueño, dónde hacer clic y qué pegar.",
+       "Los nombres de los botones de cada proveedor cambian: guiarse por su documentación oficial, enlazada en cada paso.",
+       "Las claves las crea y las pega el dueño en su hospedaje: nunca van al repositorio ni al chat.",
+       "Cerrar con una compra de prueba de punta a punta y recién entonces permitir la indexación."
+      ],
+      "herramientas": [
+       "docs/go-live.es.md",
+       "`npm run doctor`",
+       "GETTING-STARTED.es.md"
+      ],
+      "error_comun": "Publicar con el modo demo encendido o sin base de datos: los pedidos no se guardan y nadie se entera.",
+      "prioridad": "esencial",
+      "fase": "lanzamiento",
+      "hijos": []
+     },
      {
       "id": "lan-checklist",
       "titulo": "Checklist de lanzamiento",

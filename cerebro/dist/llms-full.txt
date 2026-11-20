@@ -4,7 +4,15 @@
 
 Sirve como guía de trabajo reutilizable: cada nodo dice qué es, para qué sirve, cómo se hace, con qué herramientas, cuál es el error común, su prioridad y su fase. Es genérico: los datos del negocio concreto los aporta su dueño.
 
-Versión 1.1.0 · actualizado el 2026-11-20 · 19 ramas · 331 nodos · Fuente: https://cerebro-web-negocios.vercel.app/
+Versión 1.2.0 · actualizado el 2026-11-20 · 19 ramas · 334 nodos · Fuente: https://cerebro-web-negocios.vercel.app/
+
+## La plantilla que aplica esta guía
+
+Este cerebro es la guía de **Cerebro Web**, una base de tienda de código abierto (Next.js): tienda, panel de gestión y esta guía, en un repositorio que queda en manos del negocio.
+
+- Código (MIT): https://github.com/FacundoEquiss/cerebro-web
+- Demo en vivo: https://cerebro-web-demo.vercel.app
+- Para empezar: clonar el repositorio y seguir su `AGENTS.md` y su `GETTING-STARTED.md`. Cuando el creador esté publicado en npm: `npm create cerebro-web@latest mi-tienda`.
 
 ## Instrucciones para el agente
 
@@ -166,6 +174,7 @@ Precios, plazos, reseñas, direcciones, cuotas, stock y resultados sólo se escr
 1. Tomar cada dato comercial de la fuente única del negocio o del sistema que lo administra.
 2. Dejar un marcador visible («pendiente de confirmar») cuando falte un dato.
 3. No prometer resultados de posicionamiento ni de ventas: hablar de plazos orientativos y de aprendizaje.
+4. Si falta el precio de un producto, cargarlo como borrador (`"price": null`) y pedírselo al dueño: nunca un precio de relleno.
 
 **Herramientas / dónde se hace:** Ficha del negocio · panel de gestión o CRM
 
@@ -296,12 +305,33 @@ Cada producto es físico, digital, servicio con turno o a presupuesto, y además
 1. Físico (`physical`): se envía o se retira; puede tener opciones, variantes y stock.
 2. Digital (`digital`): sin envío; el archivo es privado y se entrega con un enlace firmado y con vencimiento cuando el pedido está pagado.
 3. Servicio (`service`): el cliente elige día y hora; el turno se reserva al crear el pedido y se libera si se cancela o vence.
-4. A presupuesto (`quote`): sin precio público; entra como consulta, el dueño cotiza y envía, y el cliente acepta y paga.
-5. Por peso o medida: `unit` (kg, g, m, l…), `step` y mínimo; el precio es por esa unidad y las cantidades pueden ser decimales.
+4. Evento con fecha: un `service` con `sessions` (fechas fijas y lugares por fecha) en lugar de la agenda semanal.
+5. A presupuesto (`quote`): sin precio público; entra como consulta, el dueño cotiza y envía, y el cliente acepta y paga.
+6. Por peso o medida: `unit` (kg, g, m, l…), `step` y mínimo; el precio es por esa unidad y las cantidades pueden ser decimales.
 
 **Herramientas / dónde se hace:** docs/product-types.es.md · editor de productos del panel · `lib/data/types.ts`
 
 **Error común / regla de oro:** Forzar un servicio o un presupuesto dentro de un producto físico con «precio 0»: el tipo existe para no mentirle al cliente ni al servidor.
+
+### Sin precio: dejar en borrador
+
+`rub-borrador` · Prioridad: esencial · Fase 1: antes de construir
+
+Cuando falta el precio de un producto, se carga como borrador: no se vende ni se muestra hasta que el dueño lo define.
+
+**Para qué sirve:** Evita inventar un precio para poder avanzar: un número de relleno termina publicado.
+
+**Cómo se hace:**
+
+1. En el archivo del catálogo escribir `"price": null`; en el panel, marcar «Borrador: falta el precio».
+2. Un borrador no aparece en la tienda, el buscador, el sitemap, los feeds ni los datos estructurados, y el servidor rechaza cualquier pedido que lo incluya.
+3. `npm run check:catalog` y `npm run doctor` listan los borradores: llevarle esa lista al dueño.
+4. Cuando el dueño da el precio, cargarlo y quitar la marca de borrador.
+5. No confundir con «a presupuesto» (`quote`): ese tipo es para lo que se cotiza caso por caso.
+
+**Herramientas / dónde se hace:** `npm run check:catalog` · `npm run doctor` · panel de productos
+
+**Error común / regla de oro:** Poner $ 1 o un precio estimado «por ahora»: es inventar un dato del negocio.
 
 ### Moda e indumentaria
 
@@ -421,6 +451,27 @@ Peluquerías, consultorios, clases, asesorías: el cliente reserva un día y una
 **Herramientas / dónde se hace:** preset `servicios` · Agenda del panel · `lib/booking/slots.ts`
 
 **Error común / regla de oro:** Publicar horarios sin fijar la zona horaria ni los días cerrados: aparecen turnos que nadie puede atender.
+
+### Talleres y eventos con fecha
+
+`rub-eventos` · Prioridad: recomendado · Fase 2: construcción
+
+Talleres, clases sueltas, charlas y entradas: fechas fijas y lugares limitados, no una agenda semanal.
+
+**Para qué sirve:** Un evento se vende por inscripción a una fecha; si se arma con la agenda semanal aparecen horarios que no existen.
+
+**Cómo se hace:**
+
+1. Crear un producto de tipo `service` y cargarle las fechas en `service.sessions` (en el panel: «Fechas fijas», una por línea).
+2. Poner en `capacity` los lugares de cada fecha; la cantidad de la compra es la cantidad de lugares.
+3. La ficha muestra la lista de fechas con «Quedan N lugares» y el botón «Inscribirme»; cada fecha se reserva, se retiene y se libera como un turno.
+4. Ver las inscripciones en la Agenda del panel. Las fechas pasadas dejan de ofrecerse solas: cargar las próximas.
+5. Definir con el dueño la política de cancelación y qué pasa si el evento se suspende.
+6. Necesita una base de datos, igual que los turnos.
+
+**Herramientas / dónde se hace:** docs/product-types.es.md · editor de productos (fechas fijas) · Agenda del panel
+
+**Error común / regla de oro:** Simular un taller mensual con la agenda semanal: ofrece días que no existen y promete lugares que nadie controla.
 
 ### Productos digitales
 
@@ -5828,6 +5879,26 @@ Checklist para salir a producción y plan de los primeros tres meses.
 **Herramientas / dónde se hace:** Checklist · calendario de 90 días
 
 **Error común / regla de oro:** Lanzar es el comienzo.
+
+### De cero a vender, paso a paso
+
+`lan-de-cero` · Prioridad: esencial · Fase 3: lanzamiento
+
+La guía para llevar de la mano a un dueño que no programa: base de datos, variables, usuario del panel, pagos, correo, dominio y apagar la demo.
+
+**Para qué sirve:** Entre «anda en mi máquina» y «cobra de verdad» hay una docena de pasos fuera del código; sin orden, se traban o se saltean.
+
+**Cómo se hace:**
+
+1. Correr `npm run doctor`: dice qué está listo y cuál es el único paso que sigue.
+2. Seguir `docs/go-live.es.md` en orden: cada paso dice qué preguntarle al dueño, dónde hacer clic y qué pegar.
+3. Los nombres de los botones de cada proveedor cambian: guiarse por su documentación oficial, enlazada en cada paso.
+4. Las claves las crea y las pega el dueño en su hospedaje: nunca van al repositorio ni al chat.
+5. Cerrar con una compra de prueba de punta a punta y recién entonces permitir la indexación.
+
+**Herramientas / dónde se hace:** docs/go-live.es.md · `npm run doctor` · GETTING-STARTED.es.md
+
+**Error común / regla de oro:** Publicar con el modo demo encendido o sin base de datos: los pedidos no se guardan y nadie se entera.
 
 ### Checklist de lanzamiento
 

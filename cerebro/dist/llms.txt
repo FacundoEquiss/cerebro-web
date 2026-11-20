@@ -2,7 +2,15 @@
 
 > Mapa de todo lo necesario para construir, lanzar y hacer crecer la web de un negocio, pensado para agentes de IA y personas.
 
-Es una guía genérica y reutilizable: 19 ramas y 331 nodos, cada uno con qué es, para qué sirve, cómo se hace, herramientas, error común, prioridad y fase. No contiene datos de ningún negocio concreto.
+Es una guía genérica y reutilizable: 19 ramas y 334 nodos, cada uno con qué es, para qué sirve, cómo se hace, herramientas, error común, prioridad y fase. No contiene datos de ningún negocio concreto.
+
+## La plantilla que aplica esta guía
+
+Este cerebro es la guía de **Cerebro Web**, una base de tienda de código abierto (Next.js): tienda, panel de gestión y esta guía, en un repositorio que queda en manos del negocio.
+
+- Código (MIT): https://github.com/FacundoEquiss/cerebro-web
+- Demo en vivo: https://cerebro-web-demo.vercel.app
+- Para empezar: clonar el repositorio y seguir su `AGENTS.md` y su `GETTING-STARTED.md`. Cuando el creador esté publicado en npm: `npm create cerebro-web@latest mi-tienda`.
 
 Instrucciones para agentes:
 

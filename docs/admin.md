@@ -140,6 +140,10 @@ Not built yet: creating an appointment by hand from the panel, moving one, remin
 
 ## Products of every type
 
+A product marked **Draft** (the price is still missing) shows **Price missing** in the list and is
+not in the store until the price is typed and the box unticked. A service with dates in **Fixed
+dates** is an event: it is sold by sign-up to those dates, and its sign-ups are in the Agenda.
+
 The product editor has a **Type and how it is sold** block: physical (unit of measure, step,
 minimum, maximum), digital (the private file and the name the customer sees), service (duration
 and seats per slot) and quote (no public price). The details are in

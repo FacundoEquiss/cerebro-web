@@ -10,7 +10,7 @@ what you configure, and what the server guarantees.
 |---|---|---|---|---|
 | `physical` | A thing that is shipped or picked up (the default) | Options, quantity | Yes | The order is prepared |
 | `digital` | A file | Nothing (one per order line) | No | A signed download link that expires |
-| `service` | An appointment | Day and time (and seats) | No | The slot is already reserved |
+| `service` | An appointment — or an **event** with fixed dates | Day and time, or one of the dates (and places) | No | The slot is already reserved |
 | `quote` | Something without a public price | Quantity and a description | Set by the owner | — it is paid after the quote is accepted |
 
 Three rules hold for all of them, and they are the same in `lib/orders/pricing.ts` (the `json`
@@ -147,6 +147,50 @@ A service has `service: { "durationMinutes": 30, "capacity": 1 }`.
 - **What is not built**: reminders, rescheduling by the customer, one calendar per member of
   staff, calendar sync, deposits. See [`ROADMAP.md`](../ROADMAP.md).
 
+## Events: fixed dates and limited places
+
+A workshop, a one-off class, a talk, a ticket: it does not happen "every Monday at 10", it happens
+on **these dates**. It is a service with a list of sessions:
+
+```jsonc
+{
+  "id": "cooking-workshop", "type": "service", "price": 32000,
+  "service": {
+    "durationMinutes": 180,
+    "capacity": 12,                                   // places of EACH date
+    "sessions": [{ "start": "2027-03-06T10:00" }, { "start": "2027-04-03T10:00", "durationMinutes": 240 }]
+  }
+}
+```
+
+In the admin panel: **Type → Service**, and one date per line in **Fixed dates**.
+
+- When `sessions` is there, **only those dates exist**: the weekly agenda, the closed days, the
+  notice and the calendar window do not apply. `start` is wall time of `booking.timeZone`.
+- The store shows a **list of dates** with "N places left" and the button **Sign up**; the quantity
+  is the number of places. A date that passed stops being offered on its own.
+- Everything else is the booking engine of the section above: places reserved when the order is
+  created (no overselling), holds that lapse, the limits per order and per buyer, the Agenda, and
+  the need for an adapter that stores orders.
+- Structured data: one `Event` per upcoming date (start, end, price). `location` is only stated
+  when `brand.contact.address` is set — it is never made up.
+- `npm run check:catalog` warns when an event has no date left. The dates of the presets are
+  examples in the future: load the real ones.
+- **Not built**: a waiting list, tickets with a code to check at the door, a different price or
+  number of places per date. See [`ROADMAP.md`](../ROADMAP.md).
+
+## Drafts: a product without a price
+
+When the owner has not given a price yet, **do not invent one**. Load the product as a draft:
+`"price": null` in the catalogue file, or the box **Draft** in the admin panel.
+
+- A draft is **not for sale**: it is hidden from the store, the search, the sitemap, the feeds,
+  `llms.txt` and the structured data, and the server refuses any order that includes it.
+- The admin panel lists it with **Price missing**. `npm run check:catalog` and `npm run doctor`
+  list every draft: that is the list of questions for the owner.
+- When the price arrives, type it and untick the box. (A product that is priced case by case is
+  not a draft: that is the type `quote`.)
+
 ## Quotes
 
 A `quote` product has no public price: the store shows **"Ask for the price"** and a form.
@@ -237,6 +281,10 @@ benefits, questions) and a suggested palette. Applying one writes `content/produ
 `content/site.json`, the eight colours of `theme` in `config/brand.ts` and `db/seed.sql`.
 **Everything in a preset is an example** — names, prices, texts — and its images are placeholders
 drawn by `npm run images`. Replace all of it with the real data of the business.
+
+**The tests do not depend on the catalogue.** They run against `tests/fixtures/`, so
+`npm test` and `npm run test:e2e` stay green after any preset and with any catalogue of your own.
+What checks YOUR catalogue is `npm run check:catalog` (part of `npm run check`).
 
 To add a preset: copy one, change it, run `npm run images` (new shapes go in
 `scripts/generate-images.mjs`) and `npm test` (every preset is validated).

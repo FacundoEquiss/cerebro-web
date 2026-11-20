@@ -9,14 +9,16 @@ ask you for outcomes ("adapt this to my business", "add free shipping over X"); 
 
 ## 0. Read the brain first
 
-`cerebro/` holds the guide for building, launching and growing a business website (331 nodes, in
+`cerebro/` holds the guide for building, launching and growing a business website (334 nodes, in
 Spanish). Before your first change:
 
 1. Read `cerebro/dist/llms-full.txt` — at least the branches **«Cómo usar este cerebro»** and
    **«Adaptar a tu rubro»** (which preset and product type fit the business), and the
    **essential** nodes of the phase you are in. (Online: <https://cerebro-web-negocios.vercel.app/llms-full.txt>.)
 2. Read [`GETTING-STARTED.md`](GETTING-STARTED.md): the ordered checklist to turn this template
-   into a real site, split into what you do and what only the owner can do.
+   into a real site, split into what you do and what only the owner can do. To take it live —
+   database, variables, admin user, payments, e-mail, domain — follow
+   [`docs/go-live.md`](docs/go-live.md) and run `npm run doctor` after each step.
 3. Come back here for the rules of this codebase.
 
 When the brain and a habit of yours disagree, the brain wins. When the brain and the **code**
@@ -24,7 +26,9 @@ disagree, check the code: it is what runs.
 
 ## 1. Rules that always apply
 
-1. **Never invent business data.** Prices, stock, addresses, opening hours, shipping costs,
+1. **Never invent business data.** When a PRICE is unknown, load the product as a **draft**
+   (`"price": null`, or the draft box in the panel): it is not sold and not shown, and
+   `npm run check:catalog` lists it for the owner. Never a placeholder amount. Prices, stock, addresses, opening hours, shipping costs,
    return policies, reviews, instalments: if the owner did not give it to you, it is `null`,
    "FILL IN" or a question for them. The template is full of placeholders marked EXAMPLE on purpose.
 2. **The server sets the price.** The browser sends product ids and quantities. Totals are
@@ -74,6 +78,8 @@ disagree, check the code: it is what runs.
 | `proxy.ts` | Guards `/admin` and `/api/admin` |
 | `stores/` | Browser state (the cart) |
 | `scripts/` | `check-brand`, `check-i18n`, `admin-hash`, `preset`, `generate-images`, `generate-samples`, `generate-seed`, `screenshots` |
+| `tests/fixtures/` | The store the tests run against (catalogue, home texts, brand, commercial rules) — never the owner's files |
+| `packages/create-cerebro-web/` | The one-command creator (`npm create cerebro-web`), not published to npm yet |
 | `tests/`, `e2e/` | Vitest unit tests, Playwright end-to-end tests |
 | `cerebro/` | The brain: `datos.json` (source), `armar.mjs` (builder), `dist/` (generated, committed) |
 
@@ -98,12 +104,29 @@ disagree, check the code: it is what runs.
 ## 4. Verify — it is not optional
 
 ```bash
-npm run check       # no private brand, dictionaries in step
+npm run check       # no private brand, dictionaries in step, YOUR catalogue is valid
 npm run typecheck
 npm test
 npm run build
 npm run test:e2e    # the production build, in a real browser, phone and computer
 ```
+
+**The tests have their own store.** The unit tests and the end-to-end tests run against
+`tests/fixtures/` — its own catalogue, home texts, brand and commercial rules — and never against
+`content/products.json`, `content/site.json`, `config/brand.ts` or `config/commerce.ts`. So they
+stay green whatever the business sells: after `npm run preset <name>`, and with a catalogue made
+by hand. If a test fails, the CODE changed, not the catalogue.
+
+**After changing the catalogue** (products, categories, home texts), run:
+
+```bash
+npm run check:catalog   # broken references, drafts without a price, EXAMPLE texts left
+npm run build           # every product page builds
+npm run doctor          # what is still missing before selling
+```
+
+and look at the store. Change `tests/fixtures/` only when you change what the code does — together
+with the tests that name its products.
 
 Then look at it: `npm run screenshots` saves every key screen and fails on console errors. If you
 changed the purchase flow, buy something end to end. Say what you verified and what you could
@@ -125,7 +148,8 @@ model and admin panel are all yours to change. The demo (a mixed catalogue) is o
 1. `npm run preset` lists the starting catalogues; `npm run preset <name>` applies the one closest
    to the business (products, categories, home texts, a suggested palette). Read the node of that
    line of business in the brain, branch **«Adaptar a tu rubro»**.
-2. Give every product its **type** — `physical`, `digital`, `service` or `quote` — and, when it is
+2. Give every product its **type** — `physical`, `digital`, `service` (an appointment, or an
+   **event** when it has fixed dates in `service.sessions`) or `quote` — and, when it is
    sold by weight or measure, its `unit`, `step` and minimum. [`docs/product-types.md`](docs/product-types.md)
    says what each one does and what the server guarantees.
 3. Replace **every** EXAMPLE with what the owner confirmed. A preset's prices, opening hours,

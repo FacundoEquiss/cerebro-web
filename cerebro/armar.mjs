@@ -43,7 +43,11 @@ const PATRONES = [
   [/\b[a-z0-9]{20}\.supabase\.co\b/, 'dirección de un proyecto de base de datos']
 ];
 const llano = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-function prohibidasEn(texto) {
+// LA ÚNICA mención permitida: la dirección pública de este repositorio (igual que en
+// scripts/check-brand.mjs; escrita en dos mitades para no tropezar con su propia regla).
+const REPOSITORIO_PUBLICO = new RegExp(['Fac', 'undoEquiss/cerebro-web'].join('').replace('/', '\\/'), 'gi');
+function prohibidasEn(textoCrudo) {
+  const texto = String(textoCrudo).replace(REPOSITORIO_PUBLICO, '');
   const t = llano(texto), halladas = [];
   for (const [i, p] of PROHIBIDAS.entries()) if (t.includes(llano(p))) halladas.push(`término ${i + 1} de la lista local`);
   for (const p of PROHIBIDAS_ENTERAS) if (new RegExp('(^|[^a-z0-9])' + llano(p).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '([^a-z0-9]|$)').test(t)) halladas.push(`palabra entera ${PROHIBIDAS_ENTERAS.indexOf(p) + 1} de la lista local`);
@@ -121,6 +125,18 @@ function mdNodo(n, prof) {
   for (const h of n.hijos || []) s += mdNodo(h, prof + 1);
   return s;
 }
+// DÓNDE ESTÁ EL CÓDIGO. El cerebro es la guía; la plantilla que la aplica vive en un repositorio y
+// tiene una demo publicada. Un solo lugar para esos enlaces: `enlaces` en datos.json.
+const ENLACES = datos.enlaces || {};
+if (!/^https:\/\//.test(ENLACES.repositorio || '') || !/^https:\/\//.test(ENLACES.demo || '')) fallar('datos.json tiene que traer `enlaces.repositorio` y `enlaces.demo`');
+const PLANTILLA_MD = `## La plantilla que aplica esta guía
+
+Este cerebro es la guía de **Cerebro Web**, una base de tienda de código abierto (Next.js): tienda, panel de gestión y esta guía, en un repositorio que queda en manos del negocio.
+
+- Código (MIT): ${ENLACES.repositorio}
+- Demo en vivo: ${ENLACES.demo}
+- Para empezar: clonar el repositorio y seguir su \`AGENTS.md\` y su \`GETTING-STARTED.md\`.${ENLACES.crear ? ` Cuando el creador esté publicado en npm: \`${ENLACES.crear}\`.` : ''}
+`;
 const llmsFull = `# Cerebro Web
 
 > ${R.resumen}
@@ -129,6 +145,7 @@ ${R.para_que}
 
 Versión ${datos.version || ''} · actualizado el ${datos.generado || ''} · ${ramas.length} ramas · ${todos.length} nodos · Fuente: ${BASE}/
 
+${PLANTILLA_MD}
 ## Instrucciones para el agente
 
 ${INSTRUCCIONES.map((t, i) => `${i + 1}. ${t}`).join('\n')}
@@ -150,6 +167,7 @@ const llms = `# Cerebro Web
 
 Es una guía genérica y reutilizable: ${ramas.length} ramas y ${todos.length} nodos, cada uno con qué es, para qué sirve, cómo se hace, herramientas, error común, prioridad y fase. No contiene datos de ningún negocio concreto.
 
+${PLANTILLA_MD}
 Instrucciones para agentes:
 
 ${INSTRUCCIONES.map(t => `- ${t}`).join('\n')}
@@ -189,6 +207,8 @@ const textoMapa = `<h1>${esc(TITULO)}</h1>
 <p>${esc(R.resumen)}</p>
 <p>${esc(R.para_que)}</p>
 <p>Versión ${esc(datos.version || '')}, actualizado el ${esc(datos.generado || '')}. ${ramas.length} ramas y ${todos.length} nodos. El mismo contenido en otros formatos: ${BASE}/llms-full.txt (Markdown), ${BASE}/guia (documento con índice), ${BASE}/cerebro.json (datos) y ${BASE}/llms.txt (resumen y enlaces).</p>
+<h2>La plantilla que aplica esta guía</h2>
+<p>Este cerebro es la guía de Cerebro Web, una base de tienda de código abierto (Next.js). Código (MIT): <a href="${esc(ENLACES.repositorio)}">${esc(ENLACES.repositorio)}</a>. Demo en vivo: <a href="${esc(ENLACES.demo)}">${esc(ENLACES.demo)}</a>.</p>
 <h2>Instrucciones para el agente</h2>
 ${htmlInstrucciones}
 <h2>Índice de ramas</h2>
@@ -201,7 +221,8 @@ for (const m of ['__CEREBRO_DATOS__', '__CEREBRO_TEXTO__']) if (plantilla.split(
 // Escapado para que el JSON viva sin riesgo adentro de un <script>.
 const json = JSON.stringify(datos).replace(/</g, '\\u003c').replace(/[\u2028\u2029]/g, c => '\\u' + c.charCodeAt(0).toString(16));
 const index = plantilla.replace('__CEREBRO_DATOS__', () => json).replace('__CEREBRO_TEXTO__', () => textoMapa)
-  .split('__TITULO__').join(esc(TITULO)).split('__DESCRIPCION__').join(esc(DESCRIPCION)).split('__BASE_URL__').join(BASE);
+  .split('__TITULO__').join(esc(TITULO)).split('__DESCRIPCION__').join(esc(DESCRIPCION)).split('__BASE_URL__').join(BASE)
+  .split('__REPO_URL__').join(esc(ENLACES.repositorio)).split('__DEMO_URL__').join(esc(ENLACES.demo));
 
 /* ================= guia/index.html ================= */
 const indiceGuia = `<ol>${ramas.map(r => `<li><a href="#${r.id}">${esc(r.titulo)}</a>${(r.hijos || []).length ? `<ul>${r.hijos.map(k => `<li><a href="#${k.id}">${esc(k.titulo)}</a></li>`).join('')}</ul>` : ''}</li>`).join('')}</ol>`;

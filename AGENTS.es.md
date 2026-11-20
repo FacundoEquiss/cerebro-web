@@ -9,14 +9,16 @@ pedir resultados («adaptá esto a mi negocio», «sumá envío gratis desde X»
 
 ## 0. Primero, el cerebro
 
-`cerebro/` tiene la guía para construir, lanzar y hacer crecer la web de un negocio (331 nodos).
+`cerebro/` tiene la guía para construir, lanzar y hacer crecer la web de un negocio (334 nodos).
 Antes de tu primer cambio:
 
 1. Leé `cerebro/dist/llms-full.txt` — como mínimo las ramas **«Cómo usar este cerebro»** y
    **«Adaptar a tu rubro»** (qué preset y qué tipo de producto le corresponden al negocio) y los
    nodos **esenciales** de la fase en la que estás. (En línea: <https://cerebro-web-negocios.vercel.app/llms-full.txt>.)
 2. Leé [`GETTING-STARTED.es.md`](GETTING-STARTED.es.md): el checklist ordenado para convertir esta
-   plantilla en una web real, separando lo que hacés vos de lo que sólo puede hacer el dueño.
+   plantilla en una web real, separando lo que hacés vos de lo que sólo puede hacer el dueño. Para
+   salir a vender —base de datos, variables, usuario del panel, cobros, correo y dominio— seguí
+   [`docs/go-live.es.md`](docs/go-live.es.md) y corré `npm run doctor` después de cada paso.
 3. Volvé acá por las reglas de este código.
 
 Si el cerebro y una costumbre tuya no coinciden, gana el cerebro. Si el cerebro y el **código** no
@@ -24,7 +26,9 @@ coinciden, revisá el código: es lo que corre.
 
 ## 1. Reglas que valen siempre
 
-1. **Nunca inventes datos del negocio.** Precios, stock, direcciones, horarios, costos de envío,
+1. **Nunca inventes datos del negocio.** Si falta el PRECIO de un producto, cargalo como **borrador**
+   (`"price": null`, o la casilla de borrador del panel): no se vende ni se muestra, y
+   `npm run check:catalog` lo lista para llevárselo al dueño. Nunca un importe de relleno. Precios, stock, direcciones, horarios, costos de envío,
    políticas de cambio, reseñas, cuotas: si el dueño no te lo dio, va `null`, «COMPLETAR» o una
    pregunta para él. La plantilla está llena de textos marcados EJEMPLO a propósito.
 2. **El precio lo pone el servidor.** El navegador manda ids de productos y cantidades. Los
@@ -77,6 +81,8 @@ coinciden, revisá el código: es lo que corre.
 | `scripts/` | `check-brand`, `check-i18n`, `admin-hash`, `preset`, `generate-images`, `generate-samples`, `generate-seed`, `screenshots` |
 | `lib/booking/`, `lib/orders/download.ts`, `lib/admin/quotes.ts` | Turnos de un servicio, enlace de descarga firmado y presupuestos |
 | `db/migrations/` | Un archivo por cambio de esquema, para bases que ya existen |
+| `tests/fixtures/` | La tienda contra la que corren las pruebas (catálogo, textos, marca y reglas comerciales): nunca los archivos del dueño |
+| `packages/create-cerebro-web/` | El creador de un comando (`npm create cerebro-web`), todavía sin publicar en npm |
 | `tests/`, `e2e/` | Pruebas unitarias (Vitest) y de punta a punta (Playwright) |
 | `cerebro/` | El cerebro: `datos.json` (fuente), `armar.mjs` (generador), `dist/` (generado y commiteado) |
 
@@ -105,12 +111,30 @@ coinciden, revisá el código: es lo que corre.
 ## 4. Verificar: no es opcional
 
 ```bash
-npm run check       # sin marca privada, diccionarios parejos
+npm run check       # sin marca privada, diccionarios parejos y TU catálogo válido
 npm run typecheck
 npm test
 npm run build
 npm run test:e2e    # el build de producción, en un navegador real, celu y compu
 ```
+
+**Las pruebas tienen su propia tienda.** Las pruebas unitarias y las de punta a punta corren
+contra `tests/fixtures/` —su catálogo, sus textos de portada, su marca y sus reglas comerciales— y
+nunca contra `content/products.json`, `content/site.json`, `config/brand.ts` ni
+`config/commerce.ts`. Por eso siguen en verde venda lo que venda el negocio: después de
+`npm run preset <nombre>` y con un catálogo hecho a mano. Si una prueba falla, cambió el CÓDIGO,
+no el catálogo.
+
+**Después de cambiar el catálogo** (productos, categorías, textos de la portada), corré:
+
+```bash
+npm run check:catalog   # referencias rotas, borradores sin precio, textos de EJEMPLO que quedan
+npm run build           # cada ficha de producto se genera
+npm run doctor          # qué falta todavía para vender
+```
+
+y mirá la tienda. `tests/fixtures/` se toca sólo cuando cambia lo que hace el código, junto con
+las pruebas que nombran sus productos.
 
 Después mirala: `npm run screenshots` guarda cada pantalla clave y falla ante errores de consola.
 Si tocaste el flujo de compra, comprá algo de punta a punta. Decí qué verificaste y qué **no**
@@ -133,7 +157,8 @@ un ejemplo.
 1. `npm run preset` lista los catálogos de arranque; `npm run preset <nombre>` aplica el más
    parecido al negocio (productos, categorías, textos de la portada y una paleta sugerida). Leé
    el nodo de ese rubro en el cerebro, rama **«Adaptar a tu rubro»**.
-2. Dale a cada producto su **tipo** —`physical`, `digital`, `service` o `quote`— y, si se vende
+2. Dale a cada producto su **tipo** —`physical`, `digital`, `service` (un turno, o un **evento**
+   cuando tiene fechas fijas en `service.sessions`) o `quote`— y, si se vende
    por peso o medida, su `unit`, `step` y mínimo. [`docs/product-types.es.md`](docs/product-types.es.md)
    dice qué hace cada uno y qué garantiza el servidor.
 3. Reemplazá **cada** EJEMPLO por lo que confirmó el dueño. Los precios, horarios, políticas y

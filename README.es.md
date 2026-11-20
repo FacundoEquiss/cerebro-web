@@ -48,6 +48,7 @@ le da a cada rubro, sin prometer lo que no está hecho (el detalle, en
 | **Almacén, dietética y venta por peso** | Preset `almacen`: precio por kg, g, l…, cantidades decimales con mínimo y paso que valida el servidor, stock decimal y totales redondeados en el servidor | La política para cuando el peso real difiere del pedido (texto); ingredientes y alérgenos | Cobrar la diferencia del peso real; envío por peso |
 | **Gastronomía y delivery** | Preset `gastronomia`: platos con tamaños, venta por kilo a pedido, catering a presupuesto, recepción de pedidos en vivo con sonido, retiro y envío con tarifa fija | Zona, horarios y alérgenos (textos); cerrar el checkout fuera de horario (código, chico) | Zonas de entrega por distancia; extras por plato; interruptor de abierto/cerrado |
 | **Servicios con turno** (peluquería, consultorio, clases) | Preset `servicios`: selector de día y hora, duración, cupo por turno, horarios semanales, días bloqueados y zona horaria; **con una base de datos**, el turno se reserva al crear el pedido (pedidos simultáneos no pueden sobrevenderlo), uno impago se retiene por tiempo limitado, y el panel tiene una **Agenda** (día y semana) | Horarios propios de un servicio (archivo del catálogo); política de cancelación (texto); cobrar una seña en vez del total (código) | Recordatorios; que el cliente reprograme; una agenda por profesional o sala (hoy es una por servicio); sincronizar calendarios |
+| **Talleres, clases sueltas y eventos con entrada** | Un servicio con **fechas fijas** y lugares por fecha: lista de fechas con «Quedan N lugares», «Inscribirme», retenciones y topes como cualquier reserva, la Agenda y datos estructurados `Event` (**necesita una base de datos**). Hay ejemplos en los presets `gastronomia`, `servicios` y `mixto` | Las fechas (panel o archivo del catálogo); política de cancelación (texto) | Lista de espera; entradas con código para mostrar en la puerta; precios distintos por fecha |
 | **Productos digitales** (cursos, e-books, plantillas) | Preset `digital`: archivo privado, enlace de descarga firmado y con vencimiento, entregado en la página del pedido y por e-mail cuando el pedido está pagado (**necesita una base de datos**); sin envío | Licencia y política de reembolso (textos); varios archivos por producto (código, chico) | Reproductor de cursos / streaming; claves de licencia; límite de descargas |
 | **Trabajos a medida, eventos y B2B** | Preset `a-medida`: sin precio público, formulario «Pedir presupuesto», consultas en su propia columna del kanban, precio por línea más envío, enlace firmado para aceptar y pagar (**necesita una base de datos**) | Preguntas extra en el formulario (código, chico); validez y seña (textos) | Presupuestos armados desde cero en el panel; presupuesto en PDF; fecha de vencimiento |
 | **Suscripciones** | — | Vender el primer período como un producto y renovar a mano, avisándolo con claridad | Cobro recurrente |
@@ -100,7 +101,7 @@ JavaScript).
 - Ingreso sin proveedor externo: contraseñas con hash scrypt en una variable de entorno y cookie
   de sesión firmada.
 
-**3. El cerebro (`cerebro/`)** — un mapa mental con 331 nodos accionables sobre cómo construir,
+**3. El cerebro (`cerebro/`)** — un mapa mental con 334 nodos accionables sobre cómo construir,
 lanzar y hacer crecer la web de un negocio: estrategia, tienda, checkout, SEO, buscadores con IA,
 medición, publicidad, seguridad, calidad y trabajo con agentes. Se publica aparte en
 <https://cerebro-web-negocios.vercel.app> y este proyecto lo cumple.
@@ -118,7 +119,7 @@ medición, publicidad, seguridad, calidad y trabajo con agentes. Se publica apar
 La tienda y el panel leen y escriben **sólo a través de los adaptadores**, así un CRM externo
 puede reemplazar al panel.
 
-## Correrla en tu máquina
+## Empezar una tienda
 
 Necesita Node 22.
 
@@ -154,7 +155,21 @@ docker run -p 3000:3000 --env-file .env -v datos-tienda:/data mi-tienda
 Otras formas de hospedarla (un VPS con un gestor de procesos, Vercel):
 [`docs/deploy.es.md`](docs/deploy.es.md).
 
+**En un comando, cuando el creador esté publicado en npm** (está en
+[`packages/create-cerebro-web`](packages/create-cerebro-web) y todavía no se publicó: hasta
+entonces, el camino que funciona es `git clone`):
+
+```bash
+npm create cerebro-web@latest mi-tienda        # pregunta el rubro, instala y arranca git
+npm create cerebro-web@latest mi-tienda -- --preset almacen --no-install   # sin preguntas (para agentes)
+```
+
 ## De la demo a cobrar de verdad
+
+**[`docs/go-live.es.md`](docs/go-live.es.md) es la guía paso a paso para un dueño que no
+programa**, escrita para que un agente de IA lo lleve de la mano: base de datos, variables,
+usuario del panel, cobros, correo, dominio y apagar la demo. `npm run doctor` dice qué está listo
+y cuál es el único paso que sigue.
 
 El checklist completo y ordenado —qué hace el agente y qué sólo puede hacer el dueño— está en
 [`GETTING-STARTED.es.md`](GETTING-STARTED.es.md). La versión corta:
@@ -187,6 +202,8 @@ La pantalla **Ajustes** del panel lista lo que todavía falta.
 | `npm run admin:hash` | Crea la línea de un usuario para `ADMIN_USERS` |
 | `npm run brain` | Regenera el sitio estático del cerebro en `cerebro/dist/` |
 | `npm run preset` / `npm run preset <nombre>` | Lista los catálogos de arranque / aplica uno (productos, textos de la portada, paleta) |
+| `npm run check:catalog` | Valida TU catálogo: referencias rotas, borradores sin precio y textos de EJEMPLO que quedan (es parte de `npm run check`) |
+| `npm run doctor` | Qué está listo en el camino a vender, y cuál es el único paso que sigue |
 | `npm run images` / `npm run samples` / `npm run db:seed` | Redibuja las imágenes / las descargas de ejemplo / regenera `db/seed.sql` |
 | `npm run data:export` | Copia los productos editados en local (modo json) a `content/products.json` |
 | `npm run screenshots` | Captura cada pantalla clave y falla ante errores de consola |
@@ -195,6 +212,7 @@ La pantalla **Ajustes** del panel lista lo que todavía falta.
 
 - [`AGENTS.es.md`](AGENTS.es.md) — instrucciones para agentes de IA (y personas).
 - [`GETTING-STARTED.es.md`](GETTING-STARTED.es.md) — de la plantilla a la web de un negocio.
+- [`docs/go-live.es.md`](docs/go-live.es.md) — de cero a vender, paso a paso, para un dueño que no programa.
 - [`docs/product-types.es.md`](docs/product-types.es.md) — físicos, digitales, servicios, presupuestos, venta por peso y presets.
 - [`docs/adapters.es.md`](docs/adapters.es.md) — los contratos de los adaptadores y cómo sumar uno.
 - [`docs/admin.es.md`](docs/admin.es.md) — el panel: acceso, kanban y recepción en vivo.

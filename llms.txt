@@ -5,7 +5,7 @@
 If you are an agent asked to "adapt this to my business following the brain", read in this order:
 
 1. `AGENTS.md` — the rules of this codebase and where everything lives (Spanish: `AGENTS.es.md`).
-2. `cerebro/dist/llms-full.txt` — the brain: 331 nodes on strategy, adapting to a line of business, store, checkout, SEO, AI search, measurement, ads, security, quality and working with agents. Read the branches «Cómo usar este cerebro» and «Adaptar a tu rubro» first, then the essential nodes of your phase. (Spanish.)
+2. `cerebro/dist/llms-full.txt` — the brain: 334 nodes on strategy, adapting to a line of business, store, checkout, SEO, AI search, measurement, ads, security, quality and working with agents. Read the branches «Cómo usar este cerebro» and «Adaptar a tu rubro» first, then the essential nodes of your phase. (Spanish.)
 3. `GETTING-STARTED.md` — the ordered checklist (its first step: `npm run preset <name>`, the starting catalogue closest to the business) from template to real site: what the agent does, what only the owner can do.
 4. `docs/adapters.md` — the contracts every data, payment, mail, storage and antibot adapter keeps.
 5. The code you are about to change, and the tests next to it.
@@ -17,6 +17,7 @@ Never invent business data. Never let the browser set a price. Verify before say
 - [AGENTS.md](AGENTS.md): rules that always apply, map of the repository, how to verify
 - [GETTING-STARTED.md](GETTING-STARTED.md): brand, products, photos, database, admin user, payments, shipping, legal pages, domain, search engines, feeds, measurement
 - [README.md](README.md): what the project is, how to run it, from demo to real use
+- [docs/go-live.md](docs/go-live.md): from zero to selling, step by step — database, variables, admin user, payments, e-mail, domain (`npm run doctor` names the next step)
 - [docs/product-types.md](docs/product-types.md): physical, digital, service and quote products; sale by weight; feeds and structured data per type; presets
 - [docs/adapters.md](docs/adapters.md): adapter interfaces and how to add one
 - [docs/admin.md](docs/admin.md): the admin panel — access, kanban, live reception, order detail, quotes, agenda

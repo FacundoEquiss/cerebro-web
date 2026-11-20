@@ -11,7 +11,13 @@ Want one of these sooner? Open a proposal, or a pull request.
 - **Mixed carts**: shipping only when something is shipped.
 - **Starting catalogues per line of business** (`npm run preset`).
 
-## Next (0.3)
+## Done in 0.3
+
+- Tests that survive any catalogue (their own fixtures), `npm run check:catalog`, `npm run doctor`.
+- The "from zero to selling" guide; the one-command creator (to be published to npm).
+- Events with fixed dates and limited places; drafts for products without a price.
+
+## Next (0.4)
 
 - **Editable settings in the panel** — shipping methods, lead times, opening hours and bank
   details from `/admin/settings` instead of `config/commerce.ts` (today it is read-only).
@@ -42,6 +48,8 @@ a promise.
   explored: it changes the data model (vendors, commissions, settlements, permissions).
 - **Multi-currency** — prices in more than one currency, with the rate fixed on the server when
   the order is created.
+- **Events**: a waiting list, tickets with a code to check at the door, a price or a number of
+  places per date.
 - **Services**: reminders by e-mail or message, rescheduling and cancelling by the customer,
   one calendar per member of staff or per room, calendar sync, deposits, appointments created by
   hand in the panel.

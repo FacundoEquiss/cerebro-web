@@ -43,6 +43,8 @@ cerebro, «Preguntar sólo lo necesario») y nunca tapar un hueco con un dato in
 | | Quién | Qué |
 |---|---|---|
 | ☐ | 🧑 | La lista de productos: nombre, descripción, **tipo** (físico, digital, servicio, a presupuesto), precio y unidad (unidad, kg, m…), precio de lista, opciones (talles, colores…) y stock; en un servicio, la duración y el cupo por turno; en un digital, el archivo. Fotos sobre las que tengas derechos (ver el cerebro, «Multimedia»). |
+| ☐ | 🤖 | **Un precio que no tenés no se inventa**: cargá ese producto como borrador (`"price": null` en el archivo, o «Borrador» en el panel). No se muestra ni se vende; `npm run check:catalog` lista los borradores para llevárselos al dueño. |
+| ☐ | 🤖 | Los talleres y las clases sueltas son servicios con **fechas fijas** (`service.sessions`, o «Fechas fijas» en el panel), no la agenda semanal. |
 | ☐ | 🤖 | Cargarlos: editar `content/products.json` o —con una base de datos— crearlos en `/admin/products`. Las fotos que se suben por el panel se achican a WebP (1600 px) y necesitan texto alternativo. |
 | ☐ | 🤖 | Borrar los productos de demo y `public/products/*.svg`. Comprobar que un producto con opciones y sin variantes igual obliga a elegir. |
 
@@ -64,7 +66,9 @@ El modo `json` no guarda nada en producción. Para vender de verdad:
 |---|---|---|
 | ☐ | 🤖 | Generar `ORDER_SECRET` y `ADMIN_SESSION_SECRET` (32 caracteres al azar o más, cada uno). |
 | ☐ | 🧑 | Correr `npm run admin:hash` vos mismo y elegir tu contraseña (el agente no tiene que conocerla). Pegar la línea en `ADMIN_USERS`. |
-| ☐ | 🤖 | Poner `DEMO_MODE=false`. Comprobar que `/admin/login` ya no muestra las credenciales de demo. |
+| ☐ | 🤖 | Poner `DEMO_MODE=false`. Comprobar que `/admin/login` ya no muestra las credenciales de demo y que la portada ya no muestra el bloque «Estás viendo una demo». |
+| ☐ | 🤖 | Dejar `DEMO_ORDERS` sin definir: los pedidos de ejemplo sólo se cargan en modo demo (si no, retendrían lugares reales de turnos reales). `DEMO_ORDERS=true` los fuerza en una compu de prueba y `false` los oculta en una demo. |
+| ☐ | 🤖 | Todo el camino de acá a una tienda que cobra —base de datos, variables, cobros, correo y dominio— está en [`docs/go-live.es.md`](docs/go-live.es.md); `npm run doctor` dice cuál es el próximo paso. |
 
 ## 6. Pagos
 

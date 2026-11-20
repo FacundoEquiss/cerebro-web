@@ -43,6 +43,8 @@ The agent should ask for everything in the 🧑 column **in one batch** at the s
 | | Who | What |
 |---|---|---|
 | ☐ | 🧑 | The product list: name, description, **type** (physical, digital, service, on a quote), price and unit (piece, kg, m…), list price, options (sizes, colours…), stock; for a service, its duration and seats per slot; for a digital product, the file. Photos you own the rights to (see the brain, «Multimedia»). |
+| ☐ | 🤖 | **A price you do not have is not invented**: load that product as a draft (`"price": null` in the file, or "Draft" in the panel). It is not shown or sold; `npm run check:catalog` lists the drafts to take to the owner. |
+| ☐ | 🤖 | Workshops and one-off classes are services with **fixed dates** (`service.sessions`, or "Fixed dates" in the panel), not the weekly agenda. |
 | ☐ | 🤖 | Load them: edit `content/products.json`, or — with a database — create them in `/admin/products`. Photos uploaded in the panel are shrunk to WebP (1600 px) and need alternative text. |
 | ☐ | 🤖 | Upload the file of each digital product from the panel (it goes to the private storage, never to `public/`). Buy one, mark it paid, download it. |
 | ☐ | 🤖 | Delete the example products, `public/products/*.svg`, `content/downloads/` and — once the store is yours — `content/presets/`. Check a product with options but no variants still forces the choice. |
@@ -65,7 +67,9 @@ The agent should ask for everything in the 🧑 column **in one batch** at the s
 |---|---|---|
 | ☐ | 🤖 | Generate `ORDER_SECRET` and `ADMIN_SESSION_SECRET` (32+ random characters each). |
 | ☐ | 🧑 | Run `npm run admin:hash` yourself and choose your password (the agent must not know it). Paste the line in `ADMIN_USERS`. |
-| ☐ | 🤖 | Set `DEMO_MODE=false`. Check `/admin/login` no longer shows demo credentials. |
+| ☐ | 🤖 | Set `DEMO_MODE=false`. Check `/admin/login` no longer shows demo credentials and the home page no longer shows the "you are looking at a demo" block. |
+| ☐ | 🤖 | Leave `DEMO_ORDERS` unset: the example orders only load in demo mode (they would hold real seats of real appointments). `DEMO_ORDERS=true` forces them on a laptop, `false` hides them in a demo. |
+| ☐ | 🤖 | The whole road from here to a store that charges — database, variables, payments, e-mail, domain — is [`docs/go-live.md`](docs/go-live.md); `npm run doctor` names the next step. |
 
 ## 6. Payments
 
