@@ -28,7 +28,8 @@ export interface SalesSummary {
 const isPaid = (o: AdminOrder) => o.paidAt !== null && o.status !== "cancelled";
 
 function period(orders: AdminOrder[], since: number): PeriodSummary {
-  const inRange = orders.filter((o) => Date.parse(o.createdAt) >= since && o.status !== "cancelled");
+  // An enquiry is not an order yet: it has no agreed price, so it is neither a sale nor a debt.
+  const inRange = orders.filter((o) => Date.parse(o.createdAt) >= since && o.status !== "cancelled" && o.status !== "quote");
   const paid = inRange.filter(isPaid);
   const pending = inRange.filter((o) => o.paidAt === null);
   const sales = paid.reduce((sum, o) => sum + o.total, 0);
@@ -63,7 +64,7 @@ export function salesSummary(orders: AdminOrder[], now = Date.now()): SalesSumma
     for (const l of o.lines) {
       const row = products.get(l.productId) ?? { productId: l.productId, name: l.name, units: 0, revenue: 0 };
       row.units += l.quantity;
-      row.revenue += l.quantity * l.unitPrice;
+      row.revenue += Math.round(l.quantity * l.unitPrice * 100) / 100;
       products.set(l.productId, row);
     }
   }

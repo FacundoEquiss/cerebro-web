@@ -48,7 +48,7 @@ export async function creditPayment(payment: PaymentRecord, metadata: Record<str
   }
 
   console.info(`[payment-credited] ${payment.provider} ${payment.paymentId} order ${payment.orderId}`);
-  const order = (await adapter.getOrder(payment.orderId)) ?? { id: payment.orderId, total: payment.amount, currency: payment.currency };
+  const order: Parameters<typeof notifyOrderPaid>[0] = (await adapter.getOrder(payment.orderId)) ?? { id: payment.orderId, total: payment.amount, currency: payment.currency };
   // The purchase is reported ONCE per order, whoever confirms it (this webhook or the admin panel).
   const first = await adapter.claimPurchaseEvent(payment.orderId);
   await notifyOrderPaid(

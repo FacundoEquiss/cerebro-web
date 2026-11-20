@@ -1,4 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Basic cotton tee, lifestyle view">
-<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0efeb"/><stop offset="1" stop-color="#e3e2db"/></linearGradient></defs>
-<rect width="800" height="1000" fill="#d5d2c4"/><rect y="760" width="800" height="240" fill="#c3bfad"/><circle cx="610" cy="250" r="120" fill="#ffffff" opacity=".35"/><ellipse cx="400" cy="800" rx="230" ry="26" fill="#000000" opacity=".12"/><g transform="translate(400 520) scale(.82) translate(-400 -500)"><path d="M300 250C330 285 470 285 500 250L640 310 690 450 600 490 580 430V780Q400 800 220 780V430L200 490 110 450 160 310Z" fill="#6b7353"/><path d="M300 250C330 300 470 300 500 250" fill="none" stroke="#535a41" stroke-width="12" stroke-linecap="round"/><path d="M220 430V780M580 430V780" stroke="#60684b" stroke-width="4"/></g>
-</svg>

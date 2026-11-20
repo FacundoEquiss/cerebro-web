@@ -34,9 +34,11 @@ export function normalizeLines(lines: OrderLineRequest[]): OrderLineRequest[] {
       productId: l.productId,
       variantId: l.variantId ?? null,
       selection: Object.fromEntries(Object.entries(l.selection ?? {}).sort(([a], [b]) => a.localeCompare(b))),
-      quantity: Math.trunc(l.quantity),
+      // Three decimals: quantities may be kilos or metres.
+      quantity: Math.round(l.quantity * 1000) / 1000,
+      ...(l.slot ? { slot: l.slot } : {}),
     }))
-    .sort((a, b) => JSON.stringify([a.productId, a.variantId, a.selection]).localeCompare(JSON.stringify([b.productId, b.variantId, b.selection])));
+    .sort((a, b) => JSON.stringify([a.productId, a.variantId, a.selection, a.slot ?? ""]).localeCompare(JSON.stringify([b.productId, b.variantId, b.selection, b.slot ?? ""])));
 }
 
 export interface KeyInput {

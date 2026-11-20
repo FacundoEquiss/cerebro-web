@@ -15,10 +15,14 @@
 --   3. `create_order()` looks every price up here. Whatever amount a browser sends is ignored.
 --   4. `create_order()` is idempotent (same key → same order) and `record_payment()` credits a
 --      payment exactly once and only if the amount paid equals the official total.
---   5. The admin panel also goes through functions (`admin_*`, `set_order_status`, `save_product`…),
+--   5. A slot of a service is reserved inside `create_order()` with the product row locked: two
+--      buyers cannot take the last seat. Cancelling or expiring the order frees it.
+--   6. A quote can only be accepted after it was SENT and for the exact total that was sent.
+--   7. The admin panel also goes through functions (`admin_*`, `set_order_status`, `save_product`…),
 --      callable only by the web SERVER. Every status change is written to `order_events`.
 --
--- Running it twice is safe.
+-- Running it twice is safe, and running it on a 0.1.0 database upgrades it (the same changes are
+-- in db/migrations/0002_product_types.sql, for those who apply migrations one by one).
 
 create table if not exists categories (
   slug        text primary key,
@@ -38,13 +42,33 @@ create table if not exists products (
   images           jsonb not null default '[]',
   -- Declared axes: [{ "id": "size", "name": "Size", "values": [{ "id": "m", "label": "M" }] }]
   options          jsonb not null default '[]',
-  -- Stock of a product WITHOUT options. null = made to order.
-  stock            int check (stock is null or stock >= 0),
+  -- Stock of a product WITHOUT options, in its unit of measure. null = made to order.
+  stock            numeric(12, 3) check (stock is null or stock >= 0),
   featured         boolean not null default false,
   active           boolean not null default true,
-  min_quantity     int not null default 1 check (min_quantity >= 1),
+  -- Smallest quantity of a line, in the unit of measure (0.25 for a quarter kilo).
+  min_quantity     numeric(12, 3) not null default 1 check (min_quantity > 0),
   attributes       jsonb not null default '{}',
-  created_at       timestamptz not null default now()
+  created_at       timestamptz not null default now(),
+  -- physical | digital | service | quote. See docs/product-types.md.
+  type             text not null default 'physical' check (type in ('physical', 'digital', 'service', 'quote')),
+  -- Unit of measure the price refers to: 'u' (a piece), 'kg', 'g', 'm', 'l'…
+  unit             text not null default 'u',
+  -- Quantities must be multiples of this.
+  step             numeric(12, 3) not null default 1 check (step > 0),
+  -- Largest quantity of a line. null = the store default.
+  max_quantity     numeric(12, 3) check (max_quantity is null or max_quantity > 0),
+  -- type = service: { "durationMinutes": 60, "capacity": 1, "weekly": {…}, "blockedDates": […] }
+  service          jsonb,
+  -- type = digital: { "name": "guide.pdf" }. The storage key is NOT here: see product_files.
+  digital          jsonb
+);
+
+-- The private file of a digital product. Its own table, with no public policy at all: the
+-- catalogue tables can be read with the public key, this one cannot.
+create table if not exists product_files (
+  product_id text primary key references products (id) on delete cascade,
+  file       text not null
 );
 
 create table if not exists variants (
@@ -53,7 +77,7 @@ create table if not exists variants (
   -- One value per option: { "size": "m", "color": "black" }
   options    jsonb not null,
   -- null = made to order.
-  stock      int check (stock is null or stock >= 0),
+  stock      numeric(12, 3) check (stock is null or stock >= 0),
   -- Overrides the product price when set.
   price      numeric(12, 2) check (price is null or price >= 0),
   active     boolean not null default true
@@ -64,8 +88,10 @@ create table if not exists orders (
   id               text primary key,
   idempotency_key  text not null unique,
   -- The kanban columns of the admin panel. The allowed moves live in lib/orders/status.ts.
+  -- 'quote' = an enquiry about a product without a public price: not an order yet.
   status           text not null default 'new'
-                   check (status in ('new', 'paid', 'preparing', 'shipped', 'delivered', 'cancelled')),
+                   constraint orders_status_check
+                   check (status in ('quote', 'new', 'paid', 'preparing', 'shipped', 'delivered', 'cancelled')),
   currency         text not null,
   subtotal         numeric(12, 2) not null,
   shipping_method  text not null,
@@ -81,7 +107,12 @@ create table if not exists orders (
   purchase_sent_at timestamptz,
   cancel_reason    text,
   tracking         text,
-  created_at       timestamptz not null default now()
+  created_at       timestamptz not null default now(),
+  -- Born as an enquiry. quote_sent_at = when the owner sent the price (null = cannot be accepted).
+  is_quote         boolean not null default false,
+  quote_sent_at    timestamptz,
+  -- When the customer accepted the quote: the clock of an unpaid order starts here.
+  accepted_at      timestamptz
 );
 create index if not exists orders_created_idx on orders (created_at desc);
 
@@ -90,7 +121,8 @@ create table if not exists order_events (
   id          bigint generated always as identity primary key,
   order_id    text not null references orders (id) on delete cascade,
   at          timestamptz not null default now(),
-  type        text not null check (type in ('created', 'status', 'payment', 'note', 'tracking')),
+  type        text not null constraint order_events_type_check
+              check (type in ('created', 'status', 'payment', 'note', 'tracking', 'quote')),
   from_status text,
   to_status   text,
   actor       text not null default 'system',
@@ -106,14 +138,67 @@ create table if not exists order_lines (
   name          text not null,
   variant_label text not null default '',
   selection     jsonb not null default '{}',
-  quantity      int not null check (quantity > 0),
+  quantity      numeric(12, 3) not null check (quantity > 0),
   unit_price    numeric(12, 2) not null,
   image         text,
   -- True when this line took units from the stock. Cancelling returns ONLY those.
   stock_taken   boolean not null default false,
+  type          text not null default 'physical',
+  unit          text not null default 'u',
+  -- The reserved appointment of a service line. It holds the seat while the order is not cancelled.
+  slot_start    timestamptz,
+  slot_end      timestamptz,
+  -- What the customer asked for in an enquiry.
+  note          text,
   primary key (order_id, position)
 );
 alter table order_lines add column if not exists stock_taken boolean not null default false;
+
+-- ---------------------------------------------------------------------------------------------
+-- UPGRADE 0.1.0 → 0.2.0 (product types, sale by weight, appointments, quotes).
+-- Every statement is safe on a database that already has it.
+-- ---------------------------------------------------------------------------------------------
+do $$
+begin
+  -- Quantities and stock become decimals (0.25 kg). A column used by a view cannot change its
+  -- type, so the view is dropped first; it is created again right below.
+  if exists (select 1 from information_schema.columns
+             where table_schema = 'public' and table_name = 'products' and column_name = 'min_quantity' and data_type = 'integer') then
+    drop view if exists public_catalog;
+    alter table products alter column min_quantity type numeric(12, 3);
+    alter table products alter column stock type numeric(12, 3);
+    alter table variants alter column stock type numeric(12, 3);
+    alter table order_lines alter column quantity type numeric(12, 3);
+    alter table products drop constraint if exists products_min_quantity_check;
+    alter table products add constraint products_min_quantity_check check (min_quantity > 0);
+  end if;
+end;
+$$;
+drop function if exists set_stock(text, text, int);
+
+alter table products add column if not exists type text not null default 'physical' check (type in ('physical', 'digital', 'service', 'quote'));
+alter table products add column if not exists unit text not null default 'u';
+alter table products add column if not exists step numeric(12, 3) not null default 1 check (step > 0);
+alter table products add column if not exists max_quantity numeric(12, 3) check (max_quantity is null or max_quantity > 0);
+alter table products add column if not exists service jsonb;
+alter table products add column if not exists digital jsonb;
+
+alter table orders add column if not exists is_quote boolean not null default false;
+alter table orders add column if not exists quote_sent_at timestamptz;
+alter table orders add column if not exists accepted_at timestamptz;
+alter table orders drop constraint if exists orders_status_check;
+alter table orders add constraint orders_status_check
+  check (status in ('quote', 'new', 'paid', 'preparing', 'shipped', 'delivered', 'cancelled'));
+alter table order_events drop constraint if exists order_events_type_check;
+alter table order_events add constraint order_events_type_check
+  check (type in ('created', 'status', 'payment', 'note', 'tracking', 'quote'));
+
+alter table order_lines add column if not exists type text not null default 'physical';
+alter table order_lines add column if not exists unit text not null default 'u';
+alter table order_lines add column if not exists slot_start timestamptz;
+alter table order_lines add column if not exists slot_end timestamptz;
+alter table order_lines add column if not exists note text;
+create index if not exists order_lines_slot_idx on order_lines (product_id, slot_start) where slot_start is not null;
 
 create table if not exists payments (
   provider   text not null,
@@ -135,6 +220,7 @@ alter table orders      enable row level security;
 alter table order_lines enable row level security;
 alter table payments    enable row level security;
 alter table order_events enable row level security;
+alter table product_files enable row level security;
 
 -- ---------------------------------------------------------------------------------------------
 -- Public read model: only what a shopper may see.
@@ -161,7 +247,8 @@ select
     (select jsonb_agg(jsonb_build_object('id', v.id, 'options', v.options, 'stock', v.stock, 'price', v.price) order by v.id)
        from variants v where v.product_id = p.id and v.active),
     '[]'::jsonb
-  ) as variants
+  ) as variants,
+  p.type, p.unit, p.step, p.max_quantity, p.service, p.digital
 from products p
 where p.active;
 
@@ -190,10 +277,14 @@ language sql stable security definer set search_path = public as $$
     'paymentProvider', o.payment_provider,
     'paymentMethod', o.payment_method,
     'status', o.status,
+    'quote', case when o.is_quote then jsonb_build_object('sentAt', iso(o.quote_sent_at)) else null end,
     'lines', coalesce((
       select jsonb_agg(jsonb_build_object(
         'productId', l.product_id, 'variantId', l.variant_id, 'name', l.name, 'variantLabel', l.variant_label,
-        'quantity', l.quantity, 'unitPrice', l.unit_price, 'image', l.image) order by l.position)
+        'quantity', l.quantity, 'unitPrice', l.unit_price, 'image', l.image, 'type', l.type, 'unit', l.unit,
+        'slot', case when l.slot_start is null then null
+                     else jsonb_build_object('start', iso(l.slot_start), 'end', iso(l.slot_end)) end,
+        'note', l.note) order by l.position)
       from order_lines l where l.order_id = o.id), '[]'::jsonb)
   )
   from orders o where o.id = p_id;
@@ -204,13 +295,18 @@ $$;
 --
 -- p = {
 --   "idempotency_key": "…", "currency": "ARS",
---   "lines": [{ "product_id": "…", "variant_id": "…" | null, "selection": { "size": "m" }, "quantity": 2 }],
+--   "lines": [{ "product_id": "…", "variant_id": "…" | null, "selection": { "size": "m" }, "quantity": 2,
+--               "slot_start": "…Z", "slot_end": "…Z" }],        ← slot: service lines only
 --   "shipping": { "method": "delivery", "price": 6500, "free_from": 90000 | null },
 --   "payment_provider": "manual", "payment_method": "whatsapp",
 --   "customer": { … }, "attribution": { … }, "minimum_order": 0, "max_quantity": 20
 -- }
 -- Any "price" inside a line is never read. Shipping conditions come from the web server's own
--- configuration (this function is not callable with the public key).
+-- configuration (this function is not callable with the public key), and so does the slot of a
+-- service line: the server checked it against the opening hours (lib/booking/slots.ts); HERE its
+-- capacity is checked, with the product row locked.
+-- Quantities may be decimals (sale by weight): they must be multiples of the product's step.
+-- Shipping is charged only if at least one line is a physical product.
 -- Errors are raised as  ORDER_ERROR:<code>:<detail>  — the same codes as lib/data/types.ts.
 -- ---------------------------------------------------------------------------------------------
 create or replace function create_order(p jsonb) returns jsonb
@@ -220,8 +316,12 @@ declare
   v_id        text;
   v_line      jsonb;
   v_pos       int := 0;
-  v_qty       int;
+  v_qty       numeric(12, 3);
   v_product   products%rowtype;
+  v_physical  boolean := false;
+  v_slot_from timestamptz;
+  v_slot_to   timestamptz;
+  v_booked    numeric;
   v_variant   variants%rowtype;
   v_has_var   boolean;
   v_selection jsonb;
@@ -231,7 +331,7 @@ declare
   v_image     text;
   v_subtotal  numeric(12, 2) := 0;
   v_shipping  numeric(12, 2);
-  v_max       int := coalesce((p ->> 'max_quantity')::int, 20);
+  v_max       numeric := coalesce((p ->> 'max_quantity')::numeric, 20);
   v_taken     boolean;
 begin
   if v_key is null or length(v_key) < 16 then
@@ -259,14 +359,38 @@ begin
 
   for v_line in select * from jsonb_array_elements(p -> 'lines') loop
     v_pos := v_pos + 1;
-    v_qty := (v_line ->> 'quantity')::int;
+    v_qty := round((v_line ->> 'quantity')::numeric, 3);
 
-    select * into v_product from products where id = v_line ->> 'product_id' and active;
+    -- Locked: the stock and the seats of this product are decided by one buyer at a time.
+    select * into v_product from products where id = v_line ->> 'product_id' and active for update;
     if not found then
       raise exception 'ORDER_ERROR:unknown_product:%', v_line ->> 'product_id';
     end if;
-    if v_qty is null or v_qty < v_product.min_quantity or v_qty > v_max then
+    -- A product without a public price is never bought: it is asked for (create_quote).
+    if v_product.type = 'quote' then
+      raise exception 'ORDER_ERROR:quote_only:%', v_product.id;
+    end if;
+    if v_qty is null or v_qty < v_product.min_quantity or v_qty > coalesce(v_product.max_quantity, v_max)
+       or mod(v_qty, v_product.step) <> 0 then
       raise exception 'ORDER_ERROR:quantity:%', v_product.id;
+    end if;
+    v_physical := v_physical or v_product.type = 'physical';
+
+    v_slot_from := null;
+    v_slot_to := null;
+    if v_product.type = 'service' then
+      v_slot_from := (v_line ->> 'slot_start')::timestamptz;
+      v_slot_to := (v_line ->> 'slot_end')::timestamptz;
+      if v_slot_from is null or v_slot_to is null or v_slot_to <= v_slot_from then
+        raise exception 'ORDER_ERROR:slot_required:%', v_product.id;
+      end if;
+      -- Seats already held in this slot by every order that is not cancelled (this one included).
+      select coalesce(sum(l.quantity), 0) into v_booked
+        from order_lines l join orders o on o.id = l.order_id
+        where l.product_id = v_product.id and l.slot_start = v_slot_from and o.status <> 'cancelled';
+      if v_booked + v_qty > greatest(coalesce((v_product.service ->> 'capacity')::int, 1), 1) then
+        raise exception 'ORDER_ERROR:slot_taken:%', v_product.id;
+      end if;
     end if;
 
     v_variant := null;
@@ -322,8 +446,7 @@ begin
       end if;
     else
       if v_product.stock is not null then
-        -- Re-read with a lock: two buyers must not take the last unit.
-        select stock into v_product.stock from products where id = v_product.id for update;
+        -- The row is locked since it was read: two buyers cannot take the last unit.
         if v_product.stock < v_qty then
           raise exception 'ORDER_ERROR:out_of_stock:%', v_product.id;
         end if;
@@ -337,10 +460,13 @@ begin
       order by (case when img ? 'option' and v_selection @> (img -> 'option') then 0 else 1 end), ord
       limit 1;
 
-    insert into order_lines (order_id, position, product_id, variant_id, name, variant_label, selection, quantity, unit_price, image, stock_taken)
-    values (v_id, v_pos, v_product.id, v_variant.id, v_product.name, v_label, v_selection, v_qty, v_price, v_image, v_taken);
+    insert into order_lines (order_id, position, product_id, variant_id, name, variant_label, selection, quantity, unit_price,
+                             image, stock_taken, type, unit, slot_start, slot_end)
+    values (v_id, v_pos, v_product.id, v_variant.id, v_product.name, v_label, v_selection, v_qty, v_price,
+            v_image, v_taken, v_product.type, v_product.unit, v_slot_from, v_slot_to);
 
-    v_subtotal := v_subtotal + v_price * v_qty;
+    -- Each line is rounded to cents on its own; the subtotal adds the rounded lines.
+    v_subtotal := v_subtotal + round(v_price * v_qty, 2);
   end loop;
 
   if v_subtotal < coalesce((p ->> 'minimum_order')::numeric, 0) then
@@ -351,8 +477,14 @@ begin
   if (p #>> '{shipping,free_from}') is not null and v_subtotal >= (p #>> '{shipping,free_from}')::numeric then
     v_shipping := 0;
   end if;
+  -- SHIPPING ONLY IF SOMETHING IS SHIPPED: a booking and a download travel nowhere.
+  if not v_physical then
+    v_shipping := 0;
+  end if;
 
-  update orders set subtotal = v_subtotal, shipping_price = v_shipping, total = v_subtotal + v_shipping where id = v_id;
+  update orders set subtotal = v_subtotal, shipping_price = v_shipping, total = v_subtotal + v_shipping,
+                    shipping_method = case when v_physical then shipping_method else 'none' end
+  where id = v_id;
   return order_json(v_id);
 end;
 $$;
@@ -413,6 +545,159 @@ language sql stable security definer set search_path = public as $$
 $$;
 
 -- ---------------------------------------------------------------------------------------------
+-- QUOTES. A product of type `quote` has no public price: the customer asks (create_quote), the
+-- owner types a price per line and the shipping (set_quote) and sends it (send_quote), and only
+-- then the customer can accept it (accept_quote) — for the exact total that was sent.
+--
+-- p = { "idempotency_key": "…", "currency": "ARS", "product_id": "…", "quantity": 50,
+--       "detail": "…", "customer": { … }, "attribution": { … } }
+-- ---------------------------------------------------------------------------------------------
+create or replace function create_quote(p jsonb) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  v_key     text := p ->> 'idempotency_key';
+  v_id      text;
+  v_qty     numeric(12, 3) := round((p ->> 'quantity')::numeric, 3);
+  v_product products%rowtype;
+begin
+  if v_key is null or length(v_key) < 16 then
+    raise exception 'ORDER_ERROR:empty:idempotency_key';
+  end if;
+  select id into v_id from orders where idempotency_key = v_key;
+  if found then
+    return order_json(v_id);
+  end if;
+
+  select * into v_product from products where id = p ->> 'product_id' and active;
+  if not found then
+    raise exception 'ORDER_ERROR:unknown_product:%', p ->> 'product_id';
+  end if;
+  if v_product.type <> 'quote' then
+    raise exception 'ORDER_ERROR:not_a_quote:%', v_product.id;
+  end if;
+  if v_qty is null or v_qty < v_product.min_quantity or v_qty > coalesce(v_product.max_quantity, 1000000)
+     or mod(v_qty, v_product.step) <> 0 then
+    raise exception 'ORDER_ERROR:quantity:%', v_product.id;
+  end if;
+
+  v_id := 'P-' || upper(substr(md5(v_key), 1, 10));
+  insert into orders (id, idempotency_key, status, currency, subtotal, shipping_method, shipping_price, total,
+                      payment_provider, payment_method, customer, attribution, is_quote)
+  values (v_id, v_key, 'quote', p ->> 'currency', 0, 'none', 0, 0, 'manual', 'bank_transfer',
+          coalesce(p -> 'customer', '{}'::jsonb), coalesce(p -> 'attribution', '{}'::jsonb), true);
+  insert into order_events (order_id, type, to_status, actor) values (v_id, 'created', 'quote', 'store');
+  insert into order_lines (order_id, position, product_id, name, quantity, unit_price, image, type, unit, note)
+  values (v_id, 1, v_product.id, v_product.name, v_qty, 0, v_product.images #>> '{0,src}', 'quote', v_product.unit,
+          nullif(trim(coalesce(p ->> 'detail', '')), ''));
+  return order_json(v_id);
+end;
+$$;
+
+-- p = { "prices": [1200, 800], "shipping": 5000 } — one unit price per line, in order.
+-- Saving a price un-sends the quote: what the customer can accept is always what was last SENT.
+create or replace function set_quote(p_id text, p jsonb, p_actor text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  v_order    orders%rowtype;
+  v_subtotal numeric(12, 2);
+  v_shipping numeric(12, 2) := round(greatest(coalesce((p ->> 'shipping')::numeric, 0), 0), 2);
+begin
+  select * into v_order from orders where id = p_id for update;
+  if not found then
+    raise exception 'ORDER_NOT_FOUND:%', p_id;
+  end if;
+  if v_order.status <> 'quote' then
+    raise exception 'ORDER_CONFLICT:%', v_order.status;
+  end if;
+  update order_lines l set unit_price = round(greatest(coalesce((p -> 'prices' ->> (l.position - 1))::numeric, 0), 0), 2)
+    where l.order_id = p_id;
+  select coalesce(sum(round(unit_price * quantity, 2)), 0) into v_subtotal from order_lines where order_id = p_id;
+  update orders set subtotal = v_subtotal, shipping_price = v_shipping, total = v_subtotal + v_shipping, quote_sent_at = null
+    where id = p_id;
+  insert into order_events (order_id, type, actor, text)
+  values (p_id, 'quote', coalesce(p_actor, 'admin'), 'priced:' || (v_subtotal + v_shipping)::text);
+  return admin_order_json(p_id);
+end;
+$$;
+
+create or replace function send_quote(p_id text, p_actor text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  v_order orders%rowtype;
+begin
+  select * into v_order from orders where id = p_id for update;
+  if not found then
+    raise exception 'ORDER_NOT_FOUND:%', p_id;
+  end if;
+  if v_order.status <> 'quote' then
+    raise exception 'ORDER_CONFLICT:%', v_order.status;
+  end if;
+  -- A quote with a line at 0 is not a quote yet.
+  if v_order.total <= 0 or exists (select 1 from order_lines where order_id = p_id and unit_price <= 0) then
+    raise exception 'QUOTE_INCOMPLETE:%', p_id;
+  end if;
+  update orders set quote_sent_at = now() where id = p_id;
+  insert into order_events (order_id, type, actor, text)
+  values (p_id, 'quote', coalesce(p_actor, 'admin'), 'sent:' || v_order.total::text);
+  return admin_order_json(p_id);
+end;
+$$;
+
+-- The customer accepts. p_total is the total THEY SAW: it must equal the one that was sent.
+create or replace function accept_quote(p_id text, p_total numeric, p_provider text, p_method text) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare
+  v_order orders%rowtype;
+begin
+  select * into v_order from orders where id = p_id for update;
+  if not found or not v_order.is_quote then
+    raise exception 'ORDER_ERROR:not_found:%', p_id;
+  end if;
+  -- Accepting twice is the same as accepting once.
+  if v_order.status <> 'quote' then
+    if v_order.status = 'cancelled' then
+      raise exception 'ORDER_ERROR:not_found:%', p_id;
+    end if;
+    return order_json(p_id);
+  end if;
+  if v_order.quote_sent_at is null then
+    raise exception 'ORDER_ERROR:quote_not_sent:%', p_id;
+  end if;
+  if p_total is null or round(p_total, 2) <> v_order.total then
+    raise exception 'ORDER_ERROR:quote_changed:%', p_id;
+  end if;
+  update orders set status = 'new', accepted_at = now(), payment_provider = p_provider, payment_method = p_method where id = p_id;
+  insert into order_events (order_id, type, from_status, to_status, actor, text)
+  values (p_id, 'status', 'quote', 'new', 'store', '');
+  return order_json(p_id);
+end;
+$$;
+
+-- ---------------------------------------------------------------------------------------------
+-- APPOINTMENTS. A booking is a service line of an order that is not cancelled: there is no second
+-- table to keep in step, so cancelling or expiring the order frees the seat by itself.
+-- ---------------------------------------------------------------------------------------------
+create or replace function bookings_between(p_since timestamptz, p_until timestamptz) returns jsonb
+language sql stable security definer set search_path = public as $$
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'orderId', o.id, 'productId', l.product_id, 'name', l.name, 'variantLabel', l.variant_label,
+    'start', iso(l.slot_start), 'end', iso(l.slot_end), 'seats', l.quantity,
+    'orderStatus', o.status, 'paid', o.paid_at is not null,
+    'customerName', coalesce(o.customer ->> 'name', ''), 'customerPhone', coalesce(o.customer ->> 'phone', '')
+  ) order by l.slot_start, o.created_at), '[]'::jsonb)
+  from order_lines l join orders o on o.id = l.order_id
+  where l.slot_start is not null and l.slot_start >= p_since and l.slot_start < p_until and o.status <> 'cancelled';
+$$;
+
+-- The private file of a digital product: { "name": "guide.pdf", "file": "<storage key>" } or null.
+create or replace function digital_file(p_product_id text) returns jsonb
+language sql stable security definer set search_path = public as $$
+  select jsonb_build_object('name', coalesce(p.digital ->> 'name', f.file), 'file', f.file)
+  from products p join product_files f on f.product_id = p.id
+  where p.id = p_product_id and p.type = 'digital';
+$$;
+
+-- ---------------------------------------------------------------------------------------------
 -- ADMIN PANEL. Everything below is for the web server only (never the public key).
 -- ---------------------------------------------------------------------------------------------
 
@@ -445,6 +730,7 @@ language sql stable security definer set search_path = public as $$
 $$;
 
 -- Returns to the shelf the units an order really took (order_lines.stock_taken), once.
+-- (The slot of a service line needs nothing here: a cancelled order holds no seat.)
 create or replace function release_order_stock(p_id text) returns void
 language plpgsql security definer set search_path = public as $$
 declare
@@ -475,7 +761,9 @@ begin
   end if;
   for v_id in
     select id from orders
-    where status = 'new' and paid_at is null and created_at < now() - make_interval(secs => (p_hours * 3600)::double precision)
+    -- A quote the customer accepted counts from the moment they accepted it. Enquiries never expire here.
+    where status = 'new' and paid_at is null
+      and coalesce(accepted_at, created_at) < now() - make_interval(secs => (p_hours * 3600)::double precision)
     for update skip locked
   loop
     update orders set status = 'cancelled', cancel_reason = p_reason where id = v_id;
@@ -563,6 +851,9 @@ language sql stable security definer set search_path = public as $$
     'price', p.price, 'compare_at_price', p.compare_at_price, 'images', p.images, 'options', p.options,
     'stock', p.stock, 'featured', p.featured, 'active', p.active, 'min_quantity', p.min_quantity,
     'attributes', p.attributes, 'created_at', p.created_at,
+    'type', p.type, 'unit', p.unit, 'step', p.step, 'max_quantity', p.max_quantity, 'service', p.service,
+    'digital', case when p.digital is null then null
+                    else p.digital || jsonb_build_object('file', (select f.file from product_files f where f.product_id = p.id)) end,
     'variants', coalesce(
       (select jsonb_agg(jsonb_build_object('id', v.id, 'options', v.options, 'stock', v.stock, 'price', v.price) order by v.id)
          from variants v where v.product_id = p.id and v.active), '[]'::jsonb)
@@ -589,23 +880,36 @@ begin
   end if;
 
   insert into products (id, slug, name, description, category, price, compare_at_price, images, options,
-                        stock, featured, active, min_quantity, attributes)
+                        stock, featured, active, min_quantity, attributes, type, unit, step, max_quantity, service, digital)
   values (v_id, p ->> 'slug', p ->> 'name', coalesce(p ->> 'description', ''), p ->> 'category',
           (p ->> 'price')::numeric, (p ->> 'compareAtPrice')::numeric,
           coalesce(p -> 'images', '[]'::jsonb), coalesce(p -> 'options', '[]'::jsonb),
-          (p ->> 'stock')::int, coalesce((p ->> 'featured')::boolean, false), coalesce((p ->> 'active')::boolean, true),
-          coalesce((p ->> 'minQuantity')::int, 1), coalesce(p -> 'attributes', '{}'::jsonb))
+          (p ->> 'stock')::numeric, coalesce((p ->> 'featured')::boolean, false), coalesce((p ->> 'active')::boolean, true),
+          coalesce((p ->> 'minQuantity')::numeric, 1), coalesce(p -> 'attributes', '{}'::jsonb),
+          coalesce(p ->> 'type', 'physical'), coalesce(nullif(p ->> 'unit', ''), 'u'), coalesce((p ->> 'step')::numeric, 1),
+          (p ->> 'maxQuantity')::numeric,
+          case when jsonb_typeof(p -> 'service') = 'object' then p -> 'service' else null end,
+          -- Only the visible name is kept with the product; the storage key goes to product_files.
+          case when jsonb_typeof(p -> 'digital') = 'object' then (p -> 'digital') - 'file' else null end)
   on conflict (id) do update set
     slug = excluded.slug, name = excluded.name, description = excluded.description, category = excluded.category,
     price = excluded.price, compare_at_price = excluded.compare_at_price, images = excluded.images,
     options = excluded.options, stock = excluded.stock, featured = excluded.featured, active = excluded.active,
-    min_quantity = excluded.min_quantity, attributes = excluded.attributes;
+    min_quantity = excluded.min_quantity, attributes = excluded.attributes, type = excluded.type, unit = excluded.unit,
+    step = excluded.step, max_quantity = excluded.max_quantity, service = excluded.service, digital = excluded.digital;
+
+  if coalesce(p #>> '{digital,file}', '') <> '' then
+    insert into product_files (product_id, file) values (v_id, p #>> '{digital,file}')
+    on conflict (product_id) do update set file = excluded.file;
+  elsif jsonb_typeof(p -> 'digital') is distinct from 'object' then
+    delete from product_files where product_id = v_id;
+  end if;
 
   delete from variants where product_id = v_id
     and id not in (select x ->> 'id' from jsonb_array_elements(coalesce(p -> 'variants', '[]'::jsonb)) x);
   for v in select * from jsonb_array_elements(coalesce(p -> 'variants', '[]'::jsonb)) loop
     insert into variants (id, product_id, options, stock, price)
-    values (v ->> 'id', v_id, v -> 'options', (v ->> 'stock')::int, (v ->> 'price')::numeric)
+    values (v ->> 'id', v_id, v -> 'options', (v ->> 'stock')::numeric, (v ->> 'price')::numeric)
     on conflict (id) do update set options = excluded.options, stock = excluded.stock, price = excluded.price, active = true;
   end loop;
 
@@ -614,7 +918,7 @@ end;
 $$;
 
 -- Inline stock edit. p_variant_id null = the product's own stock. p_stock null = made to order.
-create or replace function set_stock(p_product_id text, p_variant_id text, p_stock int) returns jsonb
+create or replace function set_stock(p_product_id text, p_variant_id text, p_stock numeric) returns jsonb
 language plpgsql security definer set search_path = public as $$
 begin
   if p_variant_id is not null then
@@ -643,20 +947,24 @@ declare
   r text;
   o text;
   tables text[] := array['categories', 'products', 'variants', 'orders', 'order_lines', 'payments', 'order_events',
-                         'public_catalog', 'public_categories'];
+                         'product_files', 'public_catalog', 'public_categories'];
   fns text[] := array[
     'create_order(jsonb)', 'record_payment(text, text, text, numeric, text, text)', 'get_order(text)',
     'order_json(text)', 'admin_order_json(text)', 'admin_order(text)', 'admin_orders(int)',
     'set_order_status(text, text, text, text, text)', 'add_order_note(text, text, text)',
     'set_order_tracking(text, text, text)', 'claim_purchase_event(text)', 'admin_catalog()',
-    'save_product(jsonb)', 'set_stock(text, text, int)', 'release_order_stock(text)',
-    'expire_orders(numeric, text)', 'iso(timestamptz)'
+    'save_product(jsonb)', 'set_stock(text, text, numeric)', 'release_order_stock(text)',
+    'expire_orders(numeric, text)', 'iso(timestamptz)',
+    'create_quote(jsonb)', 'set_quote(text, jsonb, text)', 'send_quote(text, text)',
+    'accept_quote(text, numeric, text, text)', 'bookings_between(timestamptz, timestamptz)', 'digital_file(text)'
   ];
   server_fns text[] := array[
     'create_order(jsonb)', 'record_payment(text, text, text, numeric, text, text)', 'get_order(text)',
     'admin_order(text)', 'admin_orders(int)', 'set_order_status(text, text, text, text, text)',
     'add_order_note(text, text, text)', 'set_order_tracking(text, text, text)', 'claim_purchase_event(text)',
-    'admin_catalog()', 'save_product(jsonb)', 'set_stock(text, text, int)', 'expire_orders(numeric, text)'
+    'admin_catalog()', 'save_product(jsonb)', 'set_stock(text, text, numeric)', 'expire_orders(numeric, text)',
+    'create_quote(jsonb)', 'set_quote(text, jsonb, text)', 'send_quote(text, text)',
+    'accept_quote(text, numeric, text, text)', 'bookings_between(timestamptz, timestamptz)', 'digital_file(text)'
   ];
 begin
   foreach o in array tables loop

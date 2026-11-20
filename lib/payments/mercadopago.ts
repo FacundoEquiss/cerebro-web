@@ -8,6 +8,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { env } from "@/lib/env";
 import { fill, t } from "@/i18n";
 import type { PaymentRecord } from "@/lib/data/types";
+import { formatQuantity, lineTotal } from "@/lib/format";
 import type { PaymentAdapter, WebhookRequest } from "./types";
 
 const API = "https://api.mercadopago.com";
@@ -72,13 +73,18 @@ export const mercadopagoAdapter: PaymentAdapter = {
   methods: () => ["online"],
 
   async start({ order, customer, returnUrl, webhookUrl, metadata }) {
-    const items = order.lines.map((l) => ({
-      id: l.variantId ?? l.productId,
-      title: l.variantLabel ? `${l.name} (${l.variantLabel})` : l.name,
-      quantity: l.quantity,
-      unit_price: l.unitPrice,
-      currency_id: order.currency,
-    }));
+    // A gateway counts whole units: a line sold by weight (0.75 kg) goes as ONE item worth the line.
+    const items = order.lines.map((l) => {
+      const whole = Number.isInteger(l.quantity);
+      const name = l.variantLabel ? `${l.name} (${l.variantLabel})` : l.name;
+      return {
+        id: l.variantId ?? l.productId,
+        title: whole ? name : `${name} — ${formatQuantity(l.quantity, l.unit)}`,
+        quantity: whole ? l.quantity : 1,
+        unit_price: whole ? l.unitPrice : lineTotal(l),
+        currency_id: order.currency,
+      };
+    });
     if (order.shipping.price > 0) {
       items.push({ id: "shipping", title: t.cart.shipping, quantity: 1, unit_price: order.shipping.price, currency_id: order.currency });
     }

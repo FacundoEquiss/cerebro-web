@@ -27,8 +27,26 @@ function sign(secret: string, body: string): string {
   return createHmac("sha256", secret).update(`order-receipt/${VERSION}.${body}`).digest("base64url");
 }
 
+/** The receipt travels in a URL: the defaults of a line are left out and put back when it is read. */
+function compact(order: Order): Order {
+  const lines = order.lines.map((l) => {
+    const { type, unit, slot, ...rest } = l;
+    return { ...rest, ...(type !== "physical" ? { type } : {}), ...(unit !== "u" ? { unit } : {}), ...(slot ? { slot } : {}) };
+  });
+  const { quote, ...rest } = order;
+  return { ...rest, lines, ...(quote ? { quote } : {}) } as Order;
+}
+
+function expand(order: Order): Order {
+  return {
+    ...order,
+    quote: order.quote ?? null,
+    lines: (order.lines ?? []).map((l) => ({ ...l, type: l.type ?? "physical", unit: l.unit ?? "u", slot: l.slot ?? null })),
+  };
+}
+
 export function signReceipt(order: Order, secret: string, now = Date.now()): string {
-  const payload: Payload = { o: order, exp: now + RECEIPT_TTL_MS };
+  const payload: Payload = { o: compact(order), exp: now + RECEIPT_TTL_MS };
   const body = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
   return `${VERSION}.${body}.${sign(secret, body)}`;
 }
@@ -48,7 +66,7 @@ export function verifyReceipt(token: string | null | undefined, secret: string, 
   }
   if (!payload?.o?.id || typeof payload.exp !== "number") return { ok: false, reason: "invalid" };
   if (payload.exp < now) return { ok: false, reason: "expired" };
-  return { ok: true, order: payload.o, expiresAt: payload.exp };
+  return { ok: true, order: expand(payload.o), expiresAt: payload.exp };
 }
 
 /** Order id derived from the idempotency key: the same key always names the same order. */

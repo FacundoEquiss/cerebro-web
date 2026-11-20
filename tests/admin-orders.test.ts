@@ -13,7 +13,10 @@ import { hoodie, product, request, tee } from "./helpers";
 
 describe("order status transitions", () => {
   it("allows the normal path, one step at a time", () => {
-    for (let i = 0; i < ORDER_FLOW.length - 1; i++) expect(canMove(ORDER_FLOW[i]!, ORDER_FLOW[i + 1]!)).toBe(true);
+    // `quote` (an enquiry) is the first column, but nobody moves it by hand: see the quote tests.
+    const flow = ORDER_FLOW.filter((s) => s !== "quote");
+    expect(ORDER_FLOW[0]).toBe("quote");
+    for (let i = 0; i < flow.length - 1; i++) expect(canMove(flow[i]!, flow[i + 1]!)).toBe(true);
   });
   it("allows stepping back before delivery and cancelling before shipping", () => {
     expect(canMove("preparing", "paid")).toBe(true);
@@ -28,7 +31,11 @@ describe("order status transitions", () => {
     expect(canMove("new", "shipped")).toBe(false);
     expect(canMove("new", "delivered")).toBe(false);
     expect(canMove("paid", "new")).toBe(false); // the purchase was already reported
-    expect(canMove("paid", "delivered")).toBe(false);
+    // An enquiry becomes an order only when the CUSTOMER accepts the quote; the owner can only cancel it.
+    expect(allowedMoves("quote")).toEqual(["cancelled"]);
+    expect(canMove("new", "quote")).toBe(false);
+    // An order with nothing to ship (a service, a download) may be closed straight after the payment.
+    expect(canMove("paid", "delivered")).toBe(true);
     expect(canMove("shipped", "cancelled")).toBe(false);
     expect(canMove("delivered", "cancelled")).toBe(false);
     expect(canMove("delivered", "new")).toBe(false);
@@ -49,7 +56,12 @@ describe("order status transitions", () => {
   });
 });
 
-const catalog = [product(), tee(), hoodie()];
+const catalog = [
+  product(), tee(), hoodie(),
+  product({ id: "haircut", slug: "haircut", name: "Haircut", type: "service", stock: null, service: { durationMinutes: 30, capacity: 1 } }),
+  product({ id: "guide", slug: "guide", name: "Guide", type: "digital", stock: null, digital: { name: "guide.pdf" } }),
+  product({ id: "custom", slug: "custom", name: "Custom work", type: "quote", stock: null, price: 0 }),
+];
 const now = Date.parse("2026-03-10T15:00:00.000Z");
 
 describe("the purchase is sent only once", () => {
@@ -168,7 +180,7 @@ describe("json adapter with a local data folder", () => {
   it("cancelling returns only the stock the order really took", async () => {
     const catalog = await adapter.listAllProducts();
     // A made-to-order product (no stock number): the order takes nothing from the shelf…
-    const made = catalog.find((p) => p.options.length === 0 && p.stock === null) ?? (await adapter.saveProduct({ ...product({ id: "to-order", slug: "to-order", name: "To order", category: catalog[0]!.category, stock: null }) }));
+    const made = catalog.find((p) => p.type === "physical" && p.unit === "u" && p.options.length === 0 && p.stock === null) ?? (await adapter.saveProduct({ ...product({ id: "to-order", slug: "to-order", name: "To order", category: catalog[0]!.category, stock: null }) }));
     const order = await adapter.createOrder(request({ idempotencyKey: "d".repeat(64), lines: [{ productId: made.id, quantity: 2 }] }), { price: 0, freeFrom: null });
     // …the owner then starts counting stock for it…
     await adapter.setStock(made.id, null, 10);
@@ -179,7 +191,8 @@ describe("json adapter with a local data folder", () => {
   });
 
   it("expires unpaid orders after the deadline and releases their stock", async () => {
-    const simple = (await adapter.listProducts()).find((p) => p.options.length === 0 && (p.stock ?? 0) > 5)!;
+    // A product no earlier test bought: every unpaid order expires below, and each returns its own stock.
+    const simple = (await adapter.listProducts()).find((p) => p.id === "vela-aromatica-de-soja")!;
     const before = simple.stock!;
     const order = await adapter.createOrder(request({ idempotencyKey: "f".repeat(64), lines: [{ productId: simple.id, quantity: 3 }] }), { price: 0, freeFrom: null });
     const stockNow = async () => (await adapter.listAllProducts()).find((p) => p.id === simple.id)!.stock;
@@ -251,6 +264,8 @@ describe("reports and helpers", () => {
     for (const o of orders) {
       expect(o.customer.email).toMatch(/@example\.com$/);
       expect(o.total).toBe(o.subtotal + o.shipping.price);
+      // Shipping only where something is shipped.
+      if (!o.lines.some((l) => l.type === "physical")) expect(o.shipping).toEqual({ methodId: "none", price: 0 });
       expect(Date.parse(o.createdAt)).toBeLessThanOrEqual(now);
       expect(o.history[0]).toMatchObject({ type: "created" });
       expect(o.history.at(-1)?.to ?? o.history.findLast((e) => e.to)?.to).toBeDefined();

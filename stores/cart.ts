@@ -12,7 +12,10 @@ export interface CartLine {
   productId: string;
   variantId: string | null;
   selection: Record<string, string>;
+  /** Units, or kilos, metres… A service: seats. */
   quantity: number;
+  /** Service only: the chosen slot, `YYYY-MM-DDTHH:MM` (wall time of the store). */
+  slot?: string | null;
 }
 
 interface CartState {
@@ -31,17 +34,18 @@ export const useCart = create<CartState>()(
       lines: [],
       hydrated: false,
       add(line, optionOrder, max) {
-        const key = lineKey(line.productId, line.variantId, line.selection, optionOrder);
+        const key = lineKey(line.productId, line.variantId, line.selection, optionOrder, line.slot);
         set((s) => {
           const existing = s.lines.find((l) => l.key === key);
           if (existing) {
-            return { lines: s.lines.map((l) => (l.key === key ? { ...l, quantity: Math.min(max, l.quantity + line.quantity) } : l)) };
+            return { lines: s.lines.map((l) => (l.key === key ? { ...l, quantity: Math.min(max, round(l.quantity + line.quantity)) } : l)) };
           }
           return { lines: [...s.lines, { ...line, key, quantity: Math.min(max, line.quantity) }] };
         });
       },
       setQuantity(key, quantity) {
-        set((s) => ({ lines: s.lines.map((l) => (l.key === key ? { ...l, quantity: Math.max(1, Math.trunc(quantity)) } : l)) }));
+        // The limits (minimum, step, maximum) belong to the product: whoever calls already applied them.
+        set((s) => ({ lines: s.lines.map((l) => (l.key === key && quantity > 0 ? { ...l, quantity: round(quantity) } : l)) }));
       },
       remove(key) {
         set((s) => ({ lines: s.lines.filter((l) => l.key !== key) }));
@@ -60,7 +64,10 @@ export const useCart = create<CartState>()(
   ),
 );
 
-export const cartCount = (lines: CartLine[]) => lines.reduce((n, l) => n + l.quantity, 0);
+const round = (q: number) => Math.round(q * 1000) / 1000;
+
+/** How many THINGS are in the cart: 0.75 kg of coffee is one, three mugs are three. */
+export const cartCount = (lines: CartLine[]) => lines.reduce((n, l) => n + (Number.isInteger(l.quantity) ? l.quantity : 1), 0);
 
 /** Call once in the browser, after mount. */
 export async function hydrateCart(): Promise<void> {

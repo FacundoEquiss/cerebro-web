@@ -46,6 +46,8 @@ const schema = z
     DATA_DIR: optional,
     STORAGE_PROVIDER: z.preprocess((v) => v || "local", z.enum(["local", "supabase"])),
     SUPABASE_STORAGE_BUCKET: z.preprocess((v) => v || "products", z.string().trim()),
+    // PRIVATE bucket for the files of the digital products. It must NOT be public.
+    SUPABASE_PRIVATE_BUCKET: z.preprocess((v) => v || "downloads", z.string().trim()),
 
     DEMO_MODE: z.preprocess((v) => (v === "" ? undefined : v), z.enum(["true", "false"]).optional()),
     ADMIN_USERS: optional,

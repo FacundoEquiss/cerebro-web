@@ -4,16 +4,19 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireWriter } from "@/lib/admin/auth";
 import { moveOrder } from "@/lib/admin/orders";
+import { priceQuote, sendQuote } from "@/lib/admin/quotes";
 import { data } from "@/lib/data";
 import { AdminError, ReadOnlyError } from "@/lib/data/types";
 
 const schema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("move"), to: z.enum(["new", "paid", "preparing", "shipped", "delivered", "cancelled"]), reason: z.string().trim().max(300).optional() }),
+  z.object({ action: z.literal("move"), to: z.enum(["quote", "new", "paid", "preparing", "shipped", "delivered", "cancelled"]), reason: z.string().trim().max(300).optional() }),
   z.object({ action: z.literal("note"), text: z.string().trim().min(1).max(1000) }),
   z.object({ action: z.literal("tracking"), tracking: z.string().trim().max(200) }),
+  // An enquiry: save the prices, or save them and send the quote to the customer.
+  z.object({ action: z.enum(["quote", "send_quote"]), prices: z.array(z.number().min(0).max(1_000_000_000)).min(1).max(50), shipping: z.number().min(0).max(1_000_000_000) }),
 ]);
 
-const STATUS: Record<AdminError["code"], number> = { not_found: 404, conflict: 409, invalid_transition: 422, slug_taken: 409, category: 422, invalid: 400 };
+const STATUS: Record<AdminError["code"], number> = { not_found: 404, conflict: 409, invalid_transition: 422, slug_taken: 409, category: 422, invalid: 400, quote_incomplete: 422 };
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const guard = await requireWriter(request);
@@ -32,7 +35,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const order =
       body.action === "move" ? await moveOrder(id, body.to, actor, body.reason)
       : body.action === "note" ? await adapter.addOrderNote(id, body.text, actor)
-      : await adapter.setOrderTracking(id, body.tracking, actor);
+      : body.action === "tracking" ? await adapter.setOrderTracking(id, body.tracking, actor)
+      : body.action === "quote" ? await priceQuote(id, { prices: body.prices, shipping: body.shipping }, actor)
+      : await sendQuote(id, { prices: body.prices, shipping: body.shipping }, actor);
     return NextResponse.json({ order });
   } catch (e) {
     if (e instanceof AdminError) return NextResponse.json({ error: e.code }, { status: STATUS[e.code] });

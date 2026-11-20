@@ -50,3 +50,35 @@ export function selectionLabel(product: Product, selection: Record<string, strin
     .filter(Boolean)
     .join(" · ");
 }
+
+/** Three decimals are enough for grams in a kilo, and keep float noise out of a quantity. */
+export function roundQuantity(q: number): number {
+  return Math.round((q + Number.EPSILON) * 1000) / 1000;
+}
+
+/** Largest quantity of one line (in the product's unit). */
+export function maxQuantityOf(product: Pick<Product, "maxQuantity">, fallback: number): number {
+  return product.maxQuantity ?? fallback;
+}
+
+/**
+ * Is this a quantity the product can be sold in? At least the minimum, at most the maximum, and a
+ * multiple of the step (0.25, 0.5, 0.75… for a quarter kilo). The SERVER decides with this; the
+ * browser only uses it to help.
+ */
+export function validQuantity(product: Pick<Product, "minQuantity" | "step" | "maxQuantity">, quantity: number, fallbackMax: number): boolean {
+  if (!Number.isFinite(quantity) || quantity <= 0) return false;
+  const step = product.step > 0 ? product.step : 1;
+  const steps = quantity / step;
+  return quantity >= product.minQuantity && quantity <= maxQuantityOf(product, fallbackMax) && Math.abs(steps - Math.round(steps)) < 1e-6;
+}
+
+/** Sold by the piece? Anything else (kg, g, m, l…) shows its price "per unit of measure". */
+export function byPiece(product: Pick<Product, "unit">): boolean {
+  return !product.unit || product.unit === "u";
+}
+
+/** Does anything in these lines have to be shipped or picked up? */
+export function needsShipping(lines: { type?: string }[]): boolean {
+  return lines.some((l) => (l.type ?? "physical") === "physical");
+}

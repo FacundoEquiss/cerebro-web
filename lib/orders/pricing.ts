@@ -5,12 +5,18 @@
 
 import { commerce } from "@/config/commerce";
 import { brand } from "@/config/brand";
-import { roundMoney } from "@/lib/format";
-import { findVariant, missingOptions, selectionLabel, unitPrice, unitsAvailable } from "@/lib/data/availability";
-import { OrderError, type Order, type OrderLine, type OrderRequest, type Product, type ShippingTerms } from "@/lib/data/types";
+import { lineTotal, roundMoney } from "@/lib/format";
+import { resolveSlot } from "@/lib/booking/slots";
+import { findVariant, missingOptions, needsShipping, roundQuantity, selectionLabel, unitPrice, unitsAvailable, validQuantity } from "@/lib/data/availability";
+import { OrderError, type Order, type OrderLine, type OrderLineRequest, type OrderRequest, type Product, type QuoteRequest, type ShippingTerms } from "@/lib/data/types";
+
+/** The method of an order with nothing to ship (only services, downloads…). */
+export const NO_SHIPPING = "none";
+const FREE: ShippingTerms = { price: 0, freeFrom: null };
 
 /** Conditions of an enabled shipping method. Throws if it does not exist or is switched off. */
 export function shippingTerms(methodId: string): ShippingTerms {
+  if (methodId === NO_SHIPPING) return FREE;
   const method = shippingMethod(methodId);
   if (!method) throw new OrderError("shipping_method", methodId);
   return { price: method.price, freeFrom: method.freeFrom };
@@ -24,31 +30,53 @@ export function shippingMethod(methodId: string) {
   return commerce.shipping.methods.find((m) => m.id === methodId && m.enabled);
 }
 
+/** Does this request contain something that is shipped? Decided from the CATALOGUE, never from the browser. */
+export function requestNeedsShipping(lines: Pick<OrderLineRequest, "productId">[], products: Pick<Product, "id" | "type">[]): boolean {
+  const types = new Map(products.map((p) => [p.id, p.type]));
+  return needsShipping(lines.map((l) => ({ type: types.get(l.productId) })));
+}
+
 export interface PricedOrder {
   lines: OrderLine[];
   subtotal: number;
+  shippingMethodId: string;
   shippingPrice: number;
   total: number;
+}
+
+export interface PricingContext {
+  /** Seats already taken per `<productId>|<slot start ISO>`, from the stored bookings. */
+  taken?: Map<string, number>;
+  now?: number;
+}
+
+function lineImage(product: Product, selection: Record<string, string>): string | null {
+  const image =
+    product.images.find((i) => i.option && Object.entries(i.option).every(([k, v]) => selection[k] === v)) ?? product.images[0];
+  return image?.src ?? null;
 }
 
 /** Pure: prices a request against a catalogue. */
 export function priceOrder(
   request: Pick<OrderRequest, "lines" | "shippingMethodId">,
   products: Product[],
-  terms: ShippingTerms = shippingTerms(request.shippingMethodId),
+  terms?: ShippingTerms,
+  context: PricingContext = {},
 ): PricedOrder {
   if (request.lines.length === 0) throw new OrderError("empty");
+  const now = context.now ?? Date.now();
   const byId = new Map(products.map((p) => [p.id, p]));
   const wanted = new Map<string, number>(); // units asked per variant/product, across lines
+  const seats = new Map<string, number>(); // seats asked per slot, across lines
   const lines: OrderLine[] = [];
 
   for (const line of request.lines) {
     const product = byId.get(line.productId);
     if (!product) throw new OrderError("unknown_product", line.productId);
-    const quantity = Math.trunc(line.quantity);
-    if (!(quantity >= product.minQuantity && quantity <= commerce.maxQuantityPerLine)) {
-      throw new OrderError("quantity", product.id);
-    }
+    // A product without a public price is never bought from the cart: it is asked for.
+    if (product.type === "quote") throw new OrderError("quote_only", product.id);
+    const quantity = roundQuantity(Number(line.quantity));
+    if (!validQuantity(product, quantity, commerce.maxQuantityPerLine)) throw new OrderError("quantity", product.id);
 
     let variant = null;
     let selection: Record<string, string> = {};
@@ -67,13 +95,21 @@ export function priceOrder(
     }
 
     const stockKey = variant?.id ?? product.id;
-    const asked = (wanted.get(stockKey) ?? 0) + quantity;
+    const asked = roundQuantity((wanted.get(stockKey) ?? 0) + quantity);
     wanted.set(stockKey, asked);
     if (asked > unitsAvailable(product, variant)) throw new OrderError("out_of_stock", product.id);
 
-    const image =
-      product.images.find((i) => i.option && Object.entries(i.option).every(([k, v]) => selection[k] === v)) ??
-      product.images[0];
+    let slot = null;
+    if (product.type === "service") {
+      // The slot must be one this service really offers now, and it must have room.
+      slot = resolveSlot(product, line.slot, now);
+      const key = `${product.id}|${slot.start}`;
+      const booked = (seats.get(key) ?? 0) + quantity;
+      seats.set(key, booked);
+      const capacity = Math.max(1, Math.trunc(product.service?.capacity ?? 1));
+      if ((context.taken?.get(key) ?? 0) + booked > capacity) throw new OrderError("slot_taken", product.id);
+    }
+
     lines.push({
       productId: product.id,
       variantId: variant?.id ?? null,
@@ -81,14 +117,22 @@ export function priceOrder(
       variantLabel: selectionLabel(product, selection),
       quantity,
       unitPrice: unitPrice(product, variant),
-      image: image?.src ?? null,
+      image: lineImage(product, selection),
+      type: product.type,
+      unit: product.unit,
+      slot,
     });
   }
 
-  const subtotal = roundMoney(lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0));
+  // Each line is rounded to cents on its own, and the subtotal adds the rounded lines: that is
+  // what the customer sees line by line, and what create_order() does in SQL.
+  const subtotal = roundMoney(lines.reduce((sum, l) => sum + lineTotal(l), 0));
   if (subtotal < commerce.minimumOrder) throw new OrderError("minimum_order", String(commerce.minimumOrder));
-  const shipping = roundMoney(shippingPrice(terms, subtotal));
-  return { lines, subtotal, shippingPrice: shipping, total: roundMoney(subtotal + shipping) };
+  // SHIPPING ONLY IF SOMETHING IS SHIPPED. A booking and a download travel nowhere.
+  const ships = needsShipping(lines);
+  const methodId = ships ? request.shippingMethodId : NO_SHIPPING;
+  const shipping = ships ? roundMoney(shippingPrice(terms ?? shippingTerms(methodId), subtotal)) : 0;
+  return { lines, subtotal, shippingMethodId: methodId, shippingPrice: shipping, total: roundMoney(subtotal + shipping) };
 }
 
 /** Builds the official `Order` from a priced request. */
@@ -99,12 +143,42 @@ export function buildOrder(id: string, request: OrderRequest, priced: PricedOrde
     currency: brand.currency,
     lines: priced.lines,
     subtotal: priced.subtotal,
-    shipping: { methodId: request.shippingMethodId, price: priced.shippingPrice },
+    shipping: { methodId: priced.shippingMethodId, price: priced.shippingPrice },
     total: priced.total,
     paymentProvider: request.paymentProvider,
     paymentMethod: request.paymentMethod,
     status: "new",
     paidAt: null,
     tracking: null,
+    quote: null,
   };
 }
+
+/** Pure: the enquiry about a `quote` product, as an order with no price yet. */
+export function buildQuote(id: string, request: QuoteRequest, products: Product[], createdAt: string): Order {
+  const product = products.find((p) => p.id === request.productId);
+  if (!product) throw new OrderError("unknown_product", request.productId);
+  if (product.type !== "quote") throw new OrderError("not_a_quote", product.id);
+  const quantity = roundQuantity(Number(request.quantity));
+  if (!validQuantity({ ...product, maxQuantity: product.maxQuantity ?? 1_000_000 }, quantity, 1_000_000)) throw new OrderError("quantity", product.id);
+  return {
+    id,
+    createdAt,
+    currency: brand.currency,
+    lines: [{
+      productId: product.id, variantId: null, name: product.name, variantLabel: "", quantity, unitPrice: 0,
+      image: product.images[0]?.src ?? null, type: "quote", unit: product.unit, slot: null, note: request.detail,
+    }],
+    subtotal: 0,
+    shipping: { methodId: NO_SHIPPING, price: 0 },
+    total: 0,
+    paymentProvider: "manual",
+    paymentMethod: "bank_transfer",
+    status: "quote",
+    paidAt: null,
+    tracking: null,
+    quote: { sentAt: null },
+  };
+}
+
+export { quoteTotals } from "./quote-totals";

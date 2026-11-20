@@ -1,4 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Ceramic mug, lifestyle view">
-<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3f0ea"/><stop offset="1" stop-color="#eae4d9"/></linearGradient></defs>
-<rect width="800" height="1000" fill="#e4d8c1"/><rect y="760" width="800" height="240" fill="#d6c7a9"/><circle cx="610" cy="250" r="120" fill="#ffffff" opacity=".35"/><ellipse cx="400" cy="800" rx="230" ry="26" fill="#000000" opacity=".12"/><g transform="translate(400 520) scale(.82) translate(-400 -500)"><path d="M505 410C625 410 625 600 505 600" fill="none" stroke="#c99a3b" stroke-width="36"/><path d="M250 340H510V640Q510 680 470 680H290Q250 680 250 640Z" fill="#c99a3b"/><ellipse cx="380" cy="342" rx="130" ry="24" fill="#ad8433"/><ellipse cx="380" cy="346" rx="112" ry="16" fill="#795c23"/><rect x="272" y="390" width="18" height="230" rx="9" fill="#ffffff" opacity=".3"/></g>
-</svg>

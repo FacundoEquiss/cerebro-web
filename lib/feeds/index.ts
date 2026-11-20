@@ -9,6 +9,13 @@
 //   (it can always be bought; declare the handling time in the Merchant Center account):
 //   `backorder` would oblige to publish an availability date.
 //
+// WHICH PRODUCTS GO IN — only PHYSICAL products that have a price (`feedable`). Left out on purpose:
+//   services   neither catalogue is for appointments;
+//   digital    downloads are restricted or not accepted as catalogue items;
+//   quote      a feed row needs a real price, and these have none.
+// The reasoning and the policies it rests on are in docs/product-types.md ("Feeds"). Policies
+// change: check them again before adding a type to a feed.
+//
 // Do not reuse one platform's file for the other. Check each current spec before going live.
 
 import { brand } from "@/config/brand";
@@ -39,6 +46,13 @@ export interface FeedRow {
   color: string | null;
   size: string | null;
   attributes: Record<string, string>;
+  /** "u", or the measure the price refers to ("kg"). */
+  unit: string;
+}
+
+/** May this product be listed in a shopping feed? Physical, with a price above zero. */
+export function feedable(product: Pick<Product, "type" | "price">): boolean {
+  return product.type === "physical" && product.price > 0;
 }
 
 /** One row per variant (or per product without variants). Pure. */
@@ -46,13 +60,14 @@ export function feedRows(products: Product[], categories: Category[], siteUrl: s
   const categoryName = new Map(categories.map((c) => [c.slug, c.name]));
   const rows: FeedRow[] = [];
   for (const p of products) {
-    if (p.images.length === 0) continue;
+    if (p.images.length === 0 || !feedable(p)) continue;
     const link = `${siteUrl}${paths.product(p.slug)}`;
     const base = {
       description: p.description,
       link,
       productType: categoryName.get(p.category) ?? p.category,
       attributes: p.attributes,
+      unit: p.unit,
     };
     const prices = (current: number) => {
       const list = p.compareAtPrice && p.compareAtPrice > current ? p.compareAtPrice : null;
@@ -114,7 +129,9 @@ function common(r: FeedRow): string {
     tag("brand", brand.name) + tag("condition", "new") + tag("product_type", r.productType) +
     tag("color", r.color) + tag("size", r.size) + tag("material", r.attributes.material) +
     tag("gender", r.attributes.gender) + tag("age_group", r.attributes.ageGroup) +
-    tag("google_product_category", r.attributes.googleCategory)
+    tag("google_product_category", r.attributes.googleCategory) +
+    // Sold by weight or measure: the price is for ONE of that unit (Google: unit_pricing_measure).
+    (r.unit && r.unit !== "u" ? tag("unit_pricing_measure", `1 ${r.unit}`) : "")
   );
 }
 

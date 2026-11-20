@@ -6,6 +6,8 @@
 import { brand } from "@/config/brand";
 import { commerce } from "@/config/commerce";
 import { tr } from "@/i18n";
+import { slotsOn, openDates } from "@/lib/booking/slots";
+import { lineTotal } from "@/lib/format";
 import { selectionLabel, unitPrice } from "./availability";
 import type { AdminOrder, OrderEvent, OrderLine, OrderStatus, PaymentMethod, Product } from "./types";
 
@@ -16,6 +18,7 @@ const PEOPLE = [
 ] as const;
 
 const PATH: Record<OrderStatus, OrderStatus[]> = {
+  quote: [],
   new: [],
   paid: ["paid"],
   preparing: ["paid", "preparing"],
@@ -33,6 +36,10 @@ interface Spec {
   pay: PaymentMethod;
   ship: "pickup" | "delivery";
   note?: { es: string; en: string };
+  /** Take the products from this type instead of the physical ones. */
+  type?: "digital" | "service" | "quote";
+  /** Quote only: the price was sent to the customer. */
+  quoted?: number;
 }
 
 const ATTRIBUTION: Record<string, string>[] = [
@@ -59,9 +66,24 @@ const SPECS: Spec[] = [
   { minutesAgo: 18 * DAY, status: "delivered", person: 2, items: [[0, 1], [6, 1]], pay: "bank_transfer", ship: "delivery" },
   { minutesAgo: 24 * DAY, status: "delivered", person: 7, items: [[9, 1]], pay: "whatsapp", ship: "pickup" },
   { minutesAgo: 2 * DAY + 9 * HOUR, status: "cancelled", person: 4, items: [[3, 1]], pay: "bank_transfer", ship: "delivery" },
+  // One of each of the other types, so the demo shows the whole board.
+  { minutesAgo: 25 * MIN, status: "quote", person: 6, items: [[0, 40]], pay: "bank_transfer", ship: "pickup", type: "quote", note: { es: "Necesitamos 40 unidades con nuestro logo para un evento en dos meses.", en: "We need 40 units with our logo for an event in two months." } },
+  { minutesAgo: 1 * DAY + 4 * HOUR, status: "quote", person: 8, items: [[1, 1]], pay: "bank_transfer", ship: "pickup", type: "quote", quoted: 185000, note: { es: "Medidas: 1,60 × 0,80 m. ¿Hacen envíos?", en: "Size: 1.60 × 0.80 m. Do you deliver?" } },
+  { minutesAgo: 90 * MIN, status: "new", person: 9, items: [[0, 1]], pay: "bank_transfer", ship: "pickup", type: "service" },
+  { minutesAgo: 7 * HOUR, status: "paid", person: 1, items: [[1, 1]], pay: "whatsapp", ship: "pickup", type: "service" },
+  { minutesAgo: 4 * HOUR, status: "paid", person: 2, items: [[0, 1]], pay: "bank_transfer", ship: "pickup", type: "digital" },
 ];
 
-function line(product: Product, quantity: number): OrderLine {
+function line(product: Product, quantity: number, now: number, n: number): OrderLine {
+  // A service line holds a real slot of the coming days.
+  let slot: OrderLine["slot"] = null;
+  if (product.type === "service") {
+    const days = openDates(product, now);
+    const day = days[Math.min(days.length - 1, 1 + (n % 3))];
+    const slots = day ? slotsOn(product, day, now) : [];
+    const chosen = slots[(n * 2) % Math.max(1, slots.length)];
+    slot = chosen ? { start: chosen.start, end: chosen.end } : null;
+  }
   const variant = product.variants.find((v) => v.stock === null || v.stock > 0) ?? product.variants[0] ?? null;
   const selection = variant ? variant.options : Object.fromEntries(product.options.map((o) => [o.id, o.values[0]?.id ?? ""]));
   const image =
@@ -71,9 +93,12 @@ function line(product: Product, quantity: number): OrderLine {
     variantId: variant?.id ?? null,
     name: product.name,
     variantLabel: selectionLabel(product, selection),
-    quantity,
-    unitPrice: unitPrice(product, variant),
+    quantity: Math.max(quantity * product.step, product.minQuantity),
+    unitPrice: product.type === "quote" ? 0 : unitPrice(product, variant),
     image: image?.src ?? null,
+    type: product.type,
+    unit: product.unit,
+    slot,
   };
 }
 
@@ -83,15 +108,22 @@ export function demoOrders(products: Product[], now: number): AdminOrder[] {
   const at = (minutesAgo: number) => new Date(now - minutesAgo * 60_000).toISOString();
   const actor = "demo@example.com";
 
-  return SPECS.map((spec, n) => {
-    const lines = spec.items.map(([i, q]) => line(active[i % active.length]!, q));
-    const subtotal = lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
+  return SPECS.flatMap((spec, n) => {
+    const pool = active.filter((p) => p.type === (spec.type ?? "physical"));
+    if (pool.length === 0) return [];
+    const lines = spec.items.map(([i, q]) => line(pool[i % pool.length]!, q, now, n));
+    if (spec.type === "quote") {
+      lines[0]!.note = spec.note ? tr(spec.note) : "";
+      if (spec.quoted) lines[0]!.unitPrice = spec.quoted;
+    }
+    const subtotal = lines.reduce((sum, l) => sum + lineTotal(l), 0);
+    const ships = lines.some((l) => l.type === "physical");
     const method = commerce.shipping.methods.find((m) => m.id === spec.ship) ?? commerce.shipping.methods[0]!;
-    const shipping = method.freeFrom !== null && subtotal >= method.freeFrom ? 0 : method.price;
+    const shipping = !ships ? 0 : method.freeFrom !== null && subtotal >= method.freeFrom ? 0 : method.price;
     const [name, user] = PEOPLE[spec.person % PEOPLE.length]!;
 
     const steps = PATH[spec.status];
-    const history: OrderEvent[] = [{ at: at(spec.minutesAgo), type: "created", from: null, to: "new", actor: "store", text: "" }];
+    const history: OrderEvent[] = [{ at: at(spec.minutesAgo), type: "created", from: null, to: spec.status === "quote" ? "quote" : "new", actor: "store", text: "" }];
     let from: OrderStatus = "new";
     steps.forEach((to, i) => {
       // Each step happened a bit later than the previous one, never in the future.
@@ -102,17 +134,17 @@ export function demoOrders(products: Product[], now: number): AdminOrder[] {
       });
       from = to;
     });
-    if (spec.note) history.push({ at: at(Math.max(1, spec.minutesAgo - 2)), type: "note", from: null, to: null, actor, text: tr(spec.note) });
+    if (spec.note && spec.type !== "quote") history.push({ at: at(Math.max(1, spec.minutesAgo - 2)), type: "note", from: null, to: null, actor, text: tr(spec.note) });
     const paid = history.find((e) => e.to === "paid");
-    const tracking = spec.ship === "delivery" && (spec.status === "shipped" || spec.status === "delivered") ? `EX-${String(1000 + n)}` : null;
+    const tracking = ships && spec.ship === "delivery" && (spec.status === "shipped" || spec.status === "delivered") ? `EX-${String(1000 + n)}` : null;
 
-    return {
+    return [{
       id: `P-DEMO${String(n + 1).padStart(4, "0")}`,
       createdAt: at(spec.minutesAgo),
       currency: brand.currency,
       lines,
       subtotal,
-      shipping: { methodId: method.id, price: shipping },
+      shipping: { methodId: ships ? method.id : "none", price: shipping },
       total: subtotal + shipping,
       paymentProvider: "manual",
       paymentMethod: spec.pay,
@@ -123,7 +155,7 @@ export function demoOrders(products: Product[], now: number): AdminOrder[] {
         name,
         email: `${user}@example.com`,
         phone: `+00 000 000 ${String(1000 + spec.person)}`,
-        ...(method.requiresAddress
+        ...(ships && method.requiresAddress
           ? { address: tr({ es: `Calle de Ejemplo ${100 + n}`, en: `${100 + n} Example Street` }), city: tr({ es: "Ciudad de Ejemplo", en: "Example City" }), postalCode: "0000" }
           : {}),
       },
@@ -131,6 +163,7 @@ export function demoOrders(products: Product[], now: number): AdminOrder[] {
       history: history.sort((a, b) => a.at.localeCompare(b.at)),
       cancelReason: spec.status === "cancelled" ? tr({ es: "El cliente pidió cancelar.", en: "The customer asked to cancel." }) : null,
       purchaseSentAt: null,
-    } satisfies AdminOrder;
+      quote: spec.type === "quote" ? { sentAt: spec.quoted ? at(Math.max(1, spec.minutesAgo - 30)) : null } : null,
+    } satisfies AdminOrder];
   });
 }

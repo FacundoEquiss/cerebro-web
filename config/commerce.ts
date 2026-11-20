@@ -5,6 +5,7 @@
 // ⚠ EVERYTHING BELOW IS AN EXAMPLE. Replace it with the real conditions of the business.
 
 import type { Locale } from "../i18n/routes";
+import type { WeeklyAvailability } from "../lib/data/types";
 
 type Text = Record<Locale, string>;
 
@@ -58,6 +59,36 @@ export const commerce = {
 
   /** Days the customer has to ask for a return. `null` = not defined yet (the store says nothing). */
   returnWindowDays: null as number | null,
+
+  /**
+   * EXAMPLE — defaults of the `service` products (appointments). Each product may override
+   * `weekly` and add its own closed days; see docs/product-types.md.
+   */
+  booking: {
+    /** IANA time zone the opening hours are written in. Slots are stored as exact instants. */
+    timeZone: "America/Argentina/Buenos_Aires",
+    /** Opening ranges per weekday. A day that is missing is closed. */
+    weekly: {
+      mon: [["09:00", "13:00"], ["14:00", "18:00"]],
+      tue: [["09:00", "13:00"], ["14:00", "18:00"]],
+      wed: [["09:00", "13:00"], ["14:00", "18:00"]],
+      thu: [["09:00", "13:00"], ["14:00", "18:00"]],
+      fri: [["09:00", "13:00"], ["14:00", "18:00"]],
+      sat: [["09:00", "13:00"]],
+    } as WeeklyAvailability,
+    /** Closed days for every service (`YYYY-MM-DD`): holidays, vacations. */
+    blockedDates: [] as string[],
+    /** A slot cannot be booked with less notice than this. */
+    minNoticeHours: 2,
+    /** How far ahead the calendar opens. */
+    maxDaysAhead: 30,
+  },
+
+  /** Downloads of the `digital` products. */
+  digital: {
+    /** Hours a download link works. The order page gives a fresh one while the order link is valid. */
+    linkHours: 72,
+  },
 
   /** Options of the `manual` payment provider (the default one: no payment gateway needed). */
   manualPayment: {

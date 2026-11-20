@@ -1,4 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Canvas tote bag in black">
-<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#edecea"/><stop offset="1" stop-color="#dedcd8"/></linearGradient></defs>
-<rect width="800" height="1000" fill="url(#bg)"/><ellipse cx="400" cy="850" rx="250" ry="24" fill="#000000" opacity=".09"/><path d="M290 430C290 215 510 215 510 430" fill="none" stroke="#1d1f23" stroke-width="24"/><path d="M220 420H580L612 820H188Z" fill="#23262b"/><path d="M220 420H580L583 455H217Z" fill="#202227"/>
-</svg>

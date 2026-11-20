@@ -39,6 +39,41 @@ export interface Variant {
   price?: number | null;
 }
 
+/**
+ * What kind of thing is sold. It decides what the product page asks for, whether the order needs
+ * shipping, and what happens after the payment. See docs/product-types.md.
+ *   physical  a thing that is shipped or picked up (the default)
+ *   digital   a file: no shipping; a signed, expiring download link once the order is paid
+ *   service   an appointment: the customer picks a day and a time; the slot is reserved
+ *   quote     no public price: the customer asks, the owner prices it, the customer accepts and pays
+ */
+export type ProductType = "physical" | "digital" | "service" | "quote";
+export const PRODUCT_TYPES: readonly ProductType[] = ["physical", "digital", "service", "quote"];
+
+export type Weekday = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
+/** Opening ranges per weekday, in the store's time zone: `{ mon: [["09:00", "13:00"]] }`. */
+export type WeeklyAvailability = Partial<Record<Weekday, [string, string][]>>;
+
+/** Settings of a `service` product. What is missing falls back to `commerce.booking`. */
+export interface ServiceSettings {
+  /** Length of one appointment. Slots start every `durationMinutes` inside each opening range. */
+  durationMinutes: number;
+  /** People (or seats) that fit in ONE slot. */
+  capacity: number;
+  /** Overrides `commerce.booking.weekly` for this product. */
+  weekly?: WeeklyAvailability | null;
+  /** Extra closed days (`YYYY-MM-DD`), added to `commerce.booking.blockedDates`. */
+  blockedDates?: string[];
+}
+
+/** The file of a `digital` product. PRIVATE: it is only served to paid orders (lib/orders/download.ts). */
+export interface DigitalFile {
+  /** The name the customer sees and downloads ("guide.pdf"). */
+  name: string;
+  /** Key of the file in the private storage. Only the admin panel and the server ever read it. */
+  file?: string;
+}
+
 export interface Product {
   id: string;
   slug: string;
@@ -58,7 +93,22 @@ export interface Product {
   featured: boolean;
   /** False = paused: hidden from the store, still visible in the admin panel. */
   active: boolean;
+  /** Smallest quantity of one line, in `unit` (the "min"). May be a decimal: 0.25 kg. */
   minQuantity: number;
+  type: ProductType;
+  /**
+   * Unit of measure the price refers to: "u" (a piece — the default), "kg", "g", "m", "l"…
+   * With anything but "u" the price is shown as "$ X / kg" and quantities may be decimals.
+   */
+  unit: string;
+  /** Quantities must be multiples of this (1 for pieces, 0.25 for a quarter kilo…). */
+  step: number;
+  /** Largest quantity of one line. `null` = `commerce.maxQuantityPerLine`. */
+  maxQuantity: number | null;
+  /** Only for `type: "service"`. */
+  service: ServiceSettings | null;
+  /** Only for `type: "digital"`. The storefront never receives `file`. */
+  digital: DigitalFile | null;
   /** Extra attributes for the feeds (gender, ageGroup, material, googleCategory…). */
   attributes: Record<string, string>;
   createdAt: string;
@@ -73,7 +123,16 @@ export interface OrderLineRequest {
   productId: string;
   variantId?: string | null;
   selection?: Record<string, string>;
+  /** Units, or kilos, metres… — a multiple of the product's `step`. For a service: seats. */
   quantity: number;
+  /** Service only: the chosen slot as wall time of the store, `YYYY-MM-DDTHH:MM`. */
+  slot?: string | null;
+}
+
+/** A reserved appointment: the instant it starts and ends (ISO, UTC). */
+export interface Slot {
+  start: string;
+  end: string;
 }
 
 export interface Customer {
@@ -90,18 +149,37 @@ export type PaymentMethod = "whatsapp" | "bank_transfer" | "online";
 
 /**
  * Where an order is in the owner's workflow — the columns of the admin kanban.
+ * `quote` = an enquiry about a product without a public price: not an order yet.
  * Allowed moves: lib/orders/status.ts.
  */
-export type OrderStatus = "new" | "paid" | "preparing" | "shipped" | "delivered" | "cancelled";
+export type OrderStatus = "quote" | "new" | "paid" | "preparing" | "shipped" | "delivered" | "cancelled";
 
 export interface OrderRequest {
   idempotencyKey: string;
   lines: OrderLineRequest[];
   customer: Customer;
+  /** "none" when nothing in the order is shipped (the server decides, not the browser). */
   shippingMethodId: string;
   paymentProvider: string;
   paymentMethod: PaymentMethod;
   attribution?: Record<string, string>;
+}
+
+/** An enquiry about ONE `quote` product. It becomes an order in the status `quote`. */
+export interface QuoteRequest {
+  idempotencyKey: string;
+  productId: string;
+  quantity: number;
+  /** What the customer needs, in their words. */
+  detail: string;
+  customer: Customer;
+  attribution?: Record<string, string>;
+}
+
+/** What the owner answers to an enquiry: a unit price per line (in order) and the shipping. */
+export interface QuoteAnswer {
+  prices: number[];
+  shipping: number;
 }
 
 export interface OrderLine {
@@ -110,8 +188,15 @@ export interface OrderLine {
   name: string;
   variantLabel: string;
   quantity: number;
+  /** Per `unit`. 0 in an enquiry that was not priced yet. */
   unitPrice: number;
   image: string | null;
+  type: ProductType;
+  unit: string;
+  /** The reserved appointment of a service line. */
+  slot: Slot | null;
+  /** What the customer asked for in an enquiry. */
+  note?: string;
   /** Internal: this line took units from the stock (cancelling returns only those). */
   stockTaken?: boolean;
 }
@@ -131,11 +216,31 @@ export interface Order {
   /** When the money was confirmed. `null` = not paid yet. */
   paidAt: string | null;
   tracking: string | null;
+  /**
+   * Set when the order was born as an enquiry. `sentAt` = when the owner sent the price;
+   * `null` = still being priced (it cannot be accepted or paid).
+   */
+  quote: { sentAt: string | null } | null;
+}
+
+/** One reserved slot, as the Agenda of the admin panel shows it. */
+export interface Booking {
+  orderId: string;
+  productId: string;
+  name: string;
+  variantLabel: string;
+  start: string;
+  end: string;
+  seats: number;
+  orderStatus: OrderStatus;
+  paid: boolean;
+  customerName: string;
+  customerPhone: string;
 }
 
 export interface OrderEvent {
   at: string;
-  type: "created" | "status" | "payment" | "note" | "tracking";
+  type: "created" | "status" | "payment" | "note" | "tracking" | "quote";
   from: OrderStatus | null;
   to: OrderStatus | null;
   /** Who did it: an admin e-mail, "store", or a payment provider id. */
@@ -189,7 +294,9 @@ export class OrderError extends Error {
   constructor(
     public code:
       | "empty" | "unknown_product" | "selection_required" | "unknown_variant" | "out_of_stock"
-      | "quantity" | "minimum_order" | "shipping_method" | "address_required",
+      | "quantity" | "minimum_order" | "shipping_method" | "address_required"
+      | "slot_required" | "slot_invalid" | "slot_taken" | "quote_only" | "not_a_quote"
+      | "quote_not_sent" | "quote_changed" | "quote_incomplete" | "not_found",
     public detail = "",
   ) {
     super(`${code}${detail ? `: ${detail}` : ""}`);
@@ -205,7 +312,7 @@ export class ReadOnlyError extends Error {
 
 /** Someone else changed the order first (or it does not exist). `code` is stable. */
 export class AdminError extends Error {
-  constructor(public code: "not_found" | "conflict" | "invalid_transition" | "slug_taken" | "category" | "invalid", detail = "") {
+  constructor(public code: "not_found" | "conflict" | "invalid_transition" | "slug_taken" | "category" | "invalid" | "quote_incomplete", detail = "") {
     super(`${code}${detail ? `: ${detail}` : ""}`);
   }
 }
@@ -231,6 +338,21 @@ export interface DataAdapter {
    * Must be idempotent: the same `idempotencyKey` returns the same order. Throws `OrderError`.
    */
   createOrder(request: OrderRequest, shipping: ShippingTerms): Promise<Order>;
+  /**
+   * Registers an enquiry about a `quote` product: an order in the status `quote`, with no price.
+   * Idempotent like `createOrder`. Throws `OrderError`.
+   */
+  createQuote(request: QuoteRequest): Promise<Order>;
+  /**
+   * The customer accepts a SENT quote: it becomes a normal order (`new`). `expectedTotal` is the
+   * total the customer saw: if the stored one differs, or the quote was not sent, it throws
+   * `OrderError` ("quote_changed" / "quote_not_sent") and nothing changes.
+   */
+  acceptQuote(id: string, expectedTotal: number, paymentProvider: string, paymentMethod: PaymentMethod): Promise<Order>;
+  /** How many seats are taken per slot of a product between two instants (cancelled orders do not count). */
+  listBookings(from: string, to: string): Promise<Booking[]>;
+  /** The private file of a digital product (with its storage key). Server only. */
+  getDigitalFile(productId: string): Promise<Required<DigitalFile> | null>;
   /** The stored order, or `null` if unknown or the adapter does not store orders. */
   getOrder(id: string): Promise<Order | null>;
   /** Registers a payment exactly once and marks the order as paid when the amount matches. */
@@ -253,6 +375,10 @@ export interface DataAdapter {
    */
   setOrderStatus(id: string, from: OrderStatus, to: OrderStatus, actor: string, reason?: string): Promise<AdminOrder>;
   addOrderNote(id: string, text: string, actor: string): Promise<AdminOrder>;
+  /** Saves the prices of an enquiry. It is NOT sent yet (and a sent quote stops being sent). */
+  setQuote(id: string, answer: QuoteAnswer, actor: string): Promise<AdminOrder>;
+  /** Marks the quote as sent: from now on the customer can accept it. Throws if a line has no price. */
+  sendQuote(id: string, actor: string): Promise<AdminOrder>;
   setOrderTracking(id: string, tracking: string, actor: string): Promise<AdminOrder>;
   /** True ONLY for the first caller: whoever gets it reports the purchase. */
   claimPurchaseEvent(id: string): Promise<boolean>;

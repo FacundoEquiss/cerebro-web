@@ -5,6 +5,7 @@ import { data } from "@/lib/data";
 import { AdminError, type AdminOrder, type OrderStatus } from "@/lib/data/types";
 import { sendServerEvent } from "@/lib/analytics/server";
 import { env } from "@/lib/env";
+import { sendPaidMail } from "@/lib/orders/notify";
 import { canMove } from "@/lib/orders/status";
 
 /**
@@ -49,6 +50,11 @@ export async function moveOrder(id: string, to: OrderStatus, actor: string, reas
     await reportPurchaseOnce(order, { claim: (orderId) => adapter.claimPurchaseEvent(orderId), send: sendServerEvent, siteUrl: env().siteUrl }).catch(
       (e) => console.error("[purchase-event]", e instanceof Error ? e.message : e),
     );
+    // The owner confirmed the money by hand: the buyer is told — and, if they bought something
+    // digital, this is the e-mail that carries the download links.
+    void adapter.getOrder(id)
+      .then((stored) => (stored ? sendPaidMail(stored, null, order.customer.email) : undefined))
+      .catch((e) => console.error("[paid-mail]", e instanceof Error ? e.message : e));
   }
   return order;
 }

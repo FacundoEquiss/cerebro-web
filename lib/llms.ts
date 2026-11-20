@@ -7,7 +7,7 @@ import { commerce } from "@/config/commerce";
 import { paths, tr } from "@/i18n";
 import { productAvailability, selectionLabel, unitPrice, availabilityOf } from "@/lib/data/availability";
 import type { Availability, Category, Product } from "@/lib/data/types";
-import { formatPrice } from "@/lib/format";
+import { formatUnitPrice, formatPrice } from "@/lib/format";
 
 const AVAILABILITY: Record<Availability, string> = { in_stock: "in stock", made_to_order: "made to order", out_of_stock: "out of stock" };
 
@@ -24,6 +24,12 @@ function facts(siteUrl: string): string[] {
   return lines;
 }
 
+/** A product priced on request has NO price: an assistant must not be handed a number to repeat. */
+const priceText = (p: { type: string; price: number; unit: string }) =>
+  p.type === "quote" ? "on request (no public price)" : formatUnitPrice(p.price, p.unit);
+const kindText = (p: Parameters<typeof productAvailability>[0] & { type: string }) =>
+  p.type === "physical" ? AVAILABILITY[productAvailability(p)] : p.type === "service" ? "by appointment" : p.type === "digital" ? "digital download" : "quote on request";
+
 export function llmsTxt(products: Product[], categories: Category[], siteUrl: string): string {
   return [
     `# ${brand.name}`,
@@ -39,7 +45,7 @@ export function llmsTxt(products: Product[], categories: Category[], siteUrl: st
     "",
     "## Products",
     "",
-    ...products.map((p) => `- [${p.name}](${siteUrl}${paths.product(p.slug)}): ${formatPrice(p.price)} · ${AVAILABILITY[productAvailability(p)]}`),
+    ...products.map((p) => `- [${p.name}](${siteUrl}${paths.product(p.slug)}): ${priceText(p)} · ${kindText(p)}`),
     "",
     "## More",
     "",
@@ -56,7 +62,7 @@ export function llmsFullTxt(products: Product[], categories: Category[], siteUrl
     if (list.length === 0) continue;
     out.push(`## ${c.name}`, "", c.description, "");
     for (const p of list) {
-      out.push(`### ${p.name}`, "", `- URL: ${siteUrl}${paths.product(p.slug)}`, `- Price: ${formatPrice(p.price)}${p.compareAtPrice && p.compareAtPrice > p.price ? ` (list price ${formatPrice(p.compareAtPrice)})` : ""}`);
+      out.push(`### ${p.name}`, "", `- URL: ${siteUrl}${paths.product(p.slug)}`, `- Type: ${p.type}`, `- Price: ${priceText(p)}${p.type !== "quote" && p.compareAtPrice && p.compareAtPrice > p.price ? ` (list price ${formatPrice(p.compareAtPrice)})` : ""}`);
       out.push(`- Availability: ${AVAILABILITY[productAvailability(p)]}`);
       for (const o of p.options) out.push(`- ${o.name}: ${o.values.map((v) => v.label).join(", ")}`);
       if (p.variants.length > 0) {

@@ -11,7 +11,10 @@ import { SQL_ARGS, sqlAdapter, type SqlFunction, type SqlGateway } from "./sql";
 export type Query = (sql: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
 
 const JSON_ARGS = new Set(["p"]);
-const CASTS: Record<string, string> = { p_amount: "::numeric", p_limit: "::int", p_stock: "::int", p_hours: "::numeric" };
+const CASTS: Record<string, string> = {
+  p_amount: "::numeric", p_limit: "::int", p_stock: "::numeric", p_hours: "::numeric", p_total: "::numeric",
+  p_since: "::timestamptz", p_until: "::timestamptz",
+};
 
 /** `select fn($1::jsonb, $2…) as r`, built from the shared argument table. */
 function callSql(fn: SqlFunction): string {

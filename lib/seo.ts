@@ -5,7 +5,7 @@
 import type { Metadata } from "next";
 import { brand } from "@/config/brand";
 import { languageTag, paths, tr } from "@/i18n";
-import { availabilityOf, productAvailability, unitPrice } from "@/lib/data/availability";
+import { availabilityOf, byPiece, productAvailability, unitPrice } from "@/lib/data/availability";
 import type { Availability, Category, Product } from "@/lib/data/types";
 import { env } from "@/lib/env";
 import { plainPrice } from "@/lib/format";
@@ -99,6 +99,14 @@ export function breadcrumbJsonLd(trail: { name: string; path: string }[]) {
 }
 
 /**
+ * STRUCTURED DATA PER PRODUCT TYPE
+ *   physical  `Product` + `Offer` (per variant). Sold by weight or measure: the offer also carries a
+ *             `UnitPriceSpecification` saying which quantity the price refers to.
+ *   digital   `Product` + `Offer`, always in stock (a file does not run out).
+ *   service   `Service` (not `Product`) with its provider and an `Offer` with the price of one slot.
+ *   quote     `Product` WITHOUT `offers`: there is no public price, so none is declared. Never a
+ *             made-up amount, never "0".
+ *
  * Product + offers. One offer per variant when there are variants, so the price and availability
  * of each one match the page and the feeds. Shipping details and return policy are NOT emitted:
  * a half-filled block is worse than none — add them when the real conditions are confirmed.
@@ -106,16 +114,41 @@ export function breadcrumbJsonLd(trail: { name: string; path: string }[]) {
  */
 export function productJsonLd(product: Product, category?: Category) {
   const url = absolute(paths.product(product.slug));
+  const measured = !byPiece(product);
   const offer = (price: number, availability: Availability, sku: string) => ({
     "@type": "Offer",
     url,
     sku,
     price: plainPrice(price),
     priceCurrency: brand.currency,
-    availability: SCHEMA_AVAILABILITY[availability],
-    itemCondition: "https://schema.org/NewCondition",
+    ...(measured
+      ? {
+          priceSpecification: {
+            "@type": "UnitPriceSpecification",
+            price: plainPrice(price),
+            priceCurrency: brand.currency,
+            referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitText: product.unit },
+          },
+        }
+      : {}),
+    availability: SCHEMA_AVAILABILITY[product.type === "digital" ? "in_stock" : availability],
+    ...(product.type === "physical" ? { itemCondition: "https://schema.org/NewCondition" } : {}),
     seller: { "@id": `${siteUrl()}/#organization` },
   });
+  if (product.type === "service") {
+    return {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "@id": `${url}#service`,
+      name: product.name,
+      description: product.description,
+      url,
+      image: product.images.map((i) => absolute(i.src)),
+      provider: { "@id": `${siteUrl()}/#organization` },
+      ...(category ? { serviceType: category.name } : {}),
+      offers: { "@type": "Offer", url, price: plainPrice(product.price), priceCurrency: brand.currency, availability: SCHEMA_AVAILABILITY.in_stock },
+    };
+  }
   const offers =
     product.variants.length > 0
       ? product.variants.map((v) => offer(unitPrice(product, v), availabilityOf(product, v), v.id))
@@ -131,7 +164,8 @@ export function productJsonLd(product: Product, category?: Category) {
     image: product.images.map((i) => absolute(i.src)),
     brand: { "@type": "Brand", name: brand.name },
     ...(category ? { category: category.name } : {}),
-    offers: offers.length === 1 ? offers[0] : offers,
+    // No public price → no offer at all.
+    ...(product.type === "quote" ? {} : { offers: offers.length === 1 ? offers[0] : offers }),
   };
 }
 

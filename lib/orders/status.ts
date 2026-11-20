@@ -5,18 +5,23 @@
 import type { OrderStatus } from "@/lib/data/types";
 
 /** The kanban columns, left to right. `cancelled` is shown apart, folded. */
-export const ORDER_FLOW: readonly OrderStatus[] = ["new", "paid", "preparing", "shipped", "delivered"];
+export const ORDER_FLOW: readonly OrderStatus[] = ["quote", "new", "paid", "preparing", "shipped", "delivered"];
 export const ORDER_STATUSES: readonly OrderStatus[] = [...ORDER_FLOW, "cancelled"];
 
 /**
  * Allowed moves. An order must be paid before it is prepared; a step can be undone while the
  * parcel has not been delivered; `paid` never goes back to `new` (the purchase was already
  * reported) and `cancelled` is final (its stock went back to the shelf).
+ *
+ * `quote` (an enquiry) is not moved by hand: it becomes `new` only when the CUSTOMER accepts the
+ * quote that was sent (lib/admin/quotes.ts); the owner can only cancel it. An order with nothing
+ * to ship (a service, a download) may go straight from `paid` to `delivered`.
  */
 const MOVES: Record<OrderStatus, readonly OrderStatus[]> = {
+  quote: ["cancelled"],
   new: ["paid", "cancelled"],
-  paid: ["preparing", "shipped", "cancelled"],
-  preparing: ["paid", "shipped", "cancelled"],
+  paid: ["preparing", "shipped", "delivered", "cancelled"],
+  preparing: ["paid", "shipped", "delivered", "cancelled"],
   shipped: ["preparing", "delivered"],
   delivered: ["shipped"],
   cancelled: [],

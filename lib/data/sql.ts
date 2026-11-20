@@ -4,7 +4,8 @@
 
 import { brand } from "@/config/brand";
 import { commerce } from "@/config/commerce";
-import { AdminError, OrderError, type AdminOrder, type Category, type DataAdapter, type Order, type Product } from "./types";
+import { resolveSlot } from "@/lib/booking/slots";
+import { AdminError, OrderError, type AdminOrder, type Booking, type Category, type DataAdapter, type DigitalFile, type Order, type Product, type ProductType } from "./types";
 
 export interface SqlGateway {
   /** Rows of the view `public_catalog`. */
@@ -20,7 +21,8 @@ export interface SqlGateway {
 export type SqlFunction =
   | "create_order" | "record_payment" | "get_order"
   | "admin_orders" | "admin_order" | "set_order_status" | "add_order_note" | "set_order_tracking"
-  | "claim_purchase_event" | "admin_catalog" | "save_product" | "set_stock" | "expire_orders";
+  | "claim_purchase_event" | "admin_catalog" | "save_product" | "set_stock" | "expire_orders"
+  | "create_quote" | "set_quote" | "send_quote" | "accept_quote" | "bookings_between" | "digital_file";
 
 /** Positional argument names of every function (PostgREST wants them by name). */
 export const SQL_ARGS: Record<SqlFunction, string[]> = {
@@ -37,6 +39,12 @@ export const SQL_ARGS: Record<SqlFunction, string[]> = {
   save_product: ["p"],
   set_stock: ["p_product_id", "p_variant_id", "p_stock"],
   expire_orders: ["p_hours", "p_reason"],
+  create_quote: ["p"],
+  set_quote: ["p_id", "p", "p_actor"],
+  send_quote: ["p_id", "p_actor"],
+  accept_quote: ["p_id", "p_total", "p_provider", "p_method"],
+  bookings_between: ["p_since", "p_until"],
+  digital_file: ["p_product_id"],
 };
 
 const num = (v: unknown): number => Number(v);
@@ -65,6 +73,12 @@ export function rowToProduct(r: Record<string, unknown>): Product {
     active: r.active === undefined ? true : Boolean(r.active),
     minQuantity: num(r.min_quantity ?? 1),
     attributes: (r.attributes as Record<string, string>) ?? {},
+    type: (r.type as ProductType | undefined) ?? "physical",
+    unit: String(r.unit ?? "u"),
+    step: num(r.step ?? 1),
+    maxQuantity: numOrNull(r.max_quantity),
+    service: (r.service as Product["service"]) ?? null,
+    digital: (r.digital as Product["digital"]) ?? null,
     createdAt: new Date(String(r.created_at)).toISOString(),
   };
 }
@@ -76,9 +90,13 @@ function toOrder(json: unknown): Order {
     subtotal: num(o.subtotal),
     total: num(o.total),
     shipping: { methodId: o.shipping.methodId, price: num(o.shipping.price) },
-    lines: o.lines.map((l) => ({ ...l, unitPrice: num(l.unitPrice), quantity: num(l.quantity) })),
+    lines: o.lines.map((l) => {
+      const { note, ...line } = l;
+      return { ...line, unitPrice: num(l.unitPrice), quantity: num(l.quantity), type: l.type ?? "physical", unit: l.unit ?? "u", slot: l.slot ?? null, ...(note ? { note } : {}) };
+    }),
     paidAt: o.paidAt ?? null,
     tracking: o.tracking ?? null,
+    quote: o.quote ?? null,
   };
 }
 
@@ -105,9 +123,17 @@ export function toAdminError(e: unknown): unknown {
   const message = e instanceof Error ? e.message : String(e);
   if (message.includes("ORDER_NOT_FOUND")) return new AdminError("not_found");
   if (message.includes("ORDER_CONFLICT")) return new AdminError("conflict");
+  if (message.includes("QUOTE_INCOMPLETE")) return new AdminError("quote_incomplete");
   const m = /PRODUCT_ERROR:([a-z_]+)/.exec(message);
   if (m) return new AdminError(m[1] === "slug_taken" || m[1] === "category" ? m[1] : "invalid");
   return e;
+}
+
+/** `slot_start` / `slot_end` of a service line, once the server has checked the slot. */
+function slotOf(line: { slot?: string | null }, product: Product | undefined, now: number): { slot_start?: string; slot_end?: string } {
+  if (!line.slot || !product || product.type !== "service") return {};
+  const slot = resolveSlot(product, line.slot, now);
+  return { slot_start: slot.start, slot_end: slot.end };
 }
 
 export function sqlAdapter(id: string, gateway: SqlGateway): DataAdapter {
@@ -126,6 +152,10 @@ export function sqlAdapter(id: string, gateway: SqlGateway): DataAdapter {
       }));
     },
     async createOrder(request, shipping) {
+      // The slot of a service line is checked HERE against the opening hours (and turned into
+      // exact instants); its capacity is checked inside create_order(), with the row locked.
+      const byId = new Map(request.lines.some((l) => l.slot) ? (await gateway.catalog()).map(rowToProduct).map((p) => [p.id, p]) : []);
+      const now = Date.now();
       // No prices travel in `lines`: create_order() looks them up in the database.
       const payload = {
         idempotency_key: request.idempotencyKey,
@@ -135,6 +165,7 @@ export function sqlAdapter(id: string, gateway: SqlGateway): DataAdapter {
           variant_id: l.variantId ?? null,
           selection: l.selection ?? {},
           quantity: l.quantity,
+          ...slotOf(l, byId.get(l.productId), now),
         })),
         shipping: { method: request.shippingMethodId, price: shipping.price, free_from: shipping.freeFrom },
         payment_provider: request.paymentProvider,
@@ -149,6 +180,37 @@ export function sqlAdapter(id: string, gateway: SqlGateway): DataAdapter {
       } catch (e) {
         throw toOrderError(e);
       }
+    },
+    async createQuote(request) {
+      const payload = {
+        idempotency_key: request.idempotencyKey,
+        currency: brand.currency,
+        product_id: request.productId,
+        quantity: request.quantity,
+        detail: request.detail,
+        customer: request.customer,
+        attribution: request.attribution ?? {},
+      };
+      try {
+        return toOrder(await gateway.call("create_quote", [payload]));
+      } catch (e) {
+        throw toOrderError(e);
+      }
+    },
+    async acceptQuote(orderId, expectedTotal, paymentProvider, paymentMethod) {
+      try {
+        return toOrder(await gateway.call("accept_quote", [orderId, expectedTotal, paymentProvider, paymentMethod]));
+      } catch (e) {
+        throw toOrderError(e);
+      }
+    },
+    async listBookings(from, to) {
+      const rows = ((await gateway.call("bookings_between", [from, to])) as Booking[] | null) ?? [];
+      return rows.map((b) => ({ ...b, seats: num(b.seats) }));
+    },
+    async getDigitalFile(productId) {
+      const f = (await gateway.call("digital_file", [productId])) as Required<DigitalFile> | null;
+      return f?.file ? f : null;
     },
     async getOrder(orderId) {
       const json = await gateway.call("get_order", [orderId]);
@@ -199,6 +261,20 @@ export function sqlAdapter(id: string, gateway: SqlGateway): DataAdapter {
     async addOrderNote(orderId, text, actor) {
       try {
         return toAdminOrder(await gateway.call("add_order_note", [orderId, text, actor]));
+      } catch (e) {
+        throw toAdminError(e);
+      }
+    },
+    async setQuote(orderId, answer, actor) {
+      try {
+        return toAdminOrder(await gateway.call("set_quote", [orderId, answer, actor]));
+      } catch (e) {
+        throw toAdminError(e);
+      }
+    },
+    async sendQuote(orderId, actor) {
+      try {
+        return toAdminOrder(await gateway.call("send_quote", [orderId, actor]));
       } catch (e) {
         throw toAdminError(e);
       }

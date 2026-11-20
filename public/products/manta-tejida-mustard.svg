@@ -1,4 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Knitted throw in mustard">
-<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3f0ea"/><stop offset="1" stop-color="#eae4d9"/></linearGradient></defs>
-<rect width="800" height="1000" fill="url(#bg)"/><ellipse cx="400" cy="850" rx="250" ry="24" fill="#000000" opacity=".09"/><path d="M200 330Q400 290 600 330V690Q400 730 200 690Z" fill="#c99a3b"/><path d="M200 420Q400 380 600 420M200 510Q400 470 600 510M200 600Q400 560 600 600" fill="none" stroke="#ad8433" stroke-width="7"/><path d="M600 330V690C640 680 652 640 640 520 652 400 640 345 600 330Z" fill="#9d782e"/><path d="M214 700V742M250 706V750M286 710V756M322 713V760M358 715V762M394 716V763M430 715V762M466 713V760M502 710V756M538 706V750M574 701V744" stroke="#b58b35" stroke-width="8" stroke-linecap="round"/>
-</svg>

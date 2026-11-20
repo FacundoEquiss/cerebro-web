@@ -20,12 +20,16 @@ import path from "node:path";
 import raw from "@/content/products.json";
 import { tr } from "@/i18n";
 import { env } from "@/lib/env";
-import { buildOrder, priceOrder } from "@/lib/orders/pricing";
+import { lineTotal } from "@/lib/format";
+import { buildOrder, buildQuote, priceOrder, quoteTotals } from "@/lib/orders/pricing";
+import { roundQuantity } from "./availability";
 import { orderIdFromKey } from "@/lib/orders/receipt";
 import { demoOrders } from "./demo-orders";
 import {
   AdminError, ReadOnlyError,
-  type AdminOrder, type Category, type DataAdapter, type Order, type OrderEvent, type OrderRequest, type Product,
+  OrderError,
+  type AdminOrder, type Booking, type Category, type DataAdapter, type Order, type OrderEvent, type OrderRequest, type Product,
+  type ProductType, type ServiceSettings,
 } from "./types";
 
 type Text = string | Record<string, string>;
@@ -33,6 +37,8 @@ interface RawProduct {
   id: string; slug: string; name: Text; description: Text; category: string; price: number;
   compareAtPrice?: number | null; featured?: boolean; active?: boolean; minQuantity?: number; stock?: number | null;
   attributes?: Record<string, string>; createdAt?: string;
+  type?: ProductType; unit?: string; step?: number; maxQuantity?: number | null;
+  service?: ServiceSettings | null; digital?: { name: string; file?: string } | null;
   options?: { id: string; name: Text; values: { id: string; label: Text; swatch?: string }[] }[];
   variants?: { id: string; options: Record<string, string>; stock: number | null; price?: number | null }[];
   images: { src: string; alt: Text; width: number; height: number; option?: Record<string, string> }[];
@@ -65,12 +71,58 @@ export function parseCatalog(data: { categories: { slug: string; name: Text; des
     active: p.active ?? true,
     minQuantity: p.minQuantity ?? 1,
     attributes: p.attributes ?? {},
+    type: p.type ?? "physical",
+    unit: p.unit ?? "u",
+    step: p.step ?? 1,
+    maxQuantity: p.maxQuantity ?? null,
+    service: p.type === "service" ? (p.service ?? null) : null,
+    digital: p.type === "digital" ? (p.digital ?? null) : null,
     createdAt: p.createdAt ?? "2026-01-01T00:00:00.000Z",
   }));
   return { categories, products };
 }
 
-type StoredOrder = AdminOrder & { idempotencyKey?: string };
+type StoredOrder = AdminOrder & { idempotencyKey?: string; acceptedAt?: string | null };
+
+/** Catalogues saved by 0.1.0 have no product types: fill in the defaults. */
+function upgradeCatalog(c: Catalog): Catalog {
+  for (const p of c.products) {
+    p.type ??= "physical";
+    p.unit ??= "u";
+    p.step ??= 1;
+    p.maxQuantity ??= null;
+    p.service ??= null;
+    p.digital ??= null;
+  }
+  return c;
+}
+
+function upgradeOrders(orders: StoredOrder[]): StoredOrder[] {
+  for (const o of orders) {
+    o.quote ??= null;
+    for (const l of o.lines) {
+      l.type ??= "physical";
+      l.unit ??= "u";
+      l.slot ??= null;
+    }
+  }
+  return orders;
+}
+
+/** The storefront never receives the storage key of a digital file. */
+function forStore(p: Product): Product {
+  return p.digital ? { ...p, digital: { name: p.digital.name } } : p;
+}
+
+/** Seats held per `<productId>|<slot start>` by every order that is not cancelled. */
+function seatsHeld(orders: StoredOrder[]): Map<string, number> {
+  const held = new Map<string, number>();
+  for (const o of orders) {
+    if (o.status === "cancelled") continue;
+    for (const l of o.lines) if (l.slot) held.set(`${l.productId}|${l.slot.start}`, (held.get(`${l.productId}|${l.slot.start}`) ?? 0) + l.quantity);
+  }
+  return held;
+}
 
 // ONE state per server process. It hangs from `globalThis` because the bundler may load this
 // module more than once (pages and route handlers live in different layers).
@@ -130,7 +182,7 @@ async function loadCatalog(): Promise<Catalog> {
   const s = state();
   if (!s.catalog) {
     const saved = jsonWritable() ? await readFile<Catalog>("catalog.json") : undefined;
-    s.catalog = saved ?? parseCatalog(raw as unknown as Parameters<typeof parseCatalog>[0]);
+    s.catalog = saved ? upgradeCatalog(saved) : parseCatalog(raw as unknown as Parameters<typeof parseCatalog>[0]);
   }
   return s.catalog;
 }
@@ -141,7 +193,7 @@ async function loadOrders(): Promise<StoredOrder[]> {
   if (!s.orders) {
     const saved = await readFile<StoredOrder[]>("orders.json");
     if (saved) {
-      s.orders = saved;
+      s.orders = upgradeOrders(saved);
     } else {
       // First run: example orders in every status, so the kanban is not an empty screen.
       s.orders = process.env.DEMO_ORDERS === "false" ? [] : demoOrders((await loadCatalog()).products, Date.now());
@@ -155,7 +207,7 @@ const saveOrders = () => writeFile("orders.json", state().orders ?? []);
 const saveCatalog = () => writeFile("catalog.json", state().catalog);
 
 function publicOrder(o: StoredOrder): Order {
-  const { customer: _c, attribution: _a, history: _h, cancelReason: _r, purchaseSentAt: _p, idempotencyKey: _k, ...order } = o;
+  const { customer: _c, attribution: _a, history: _h, cancelReason: _r, purchaseSentAt: _p, idempotencyKey: _k, acceptedAt: _t, ...order } = o;
   return { ...order, lines: order.lines.map(({ stockTaken: _s, ...line }) => line) };
 }
 
@@ -177,7 +229,7 @@ function moveStock(catalog: Catalog, lines: Order["lines"], sign: 1 | -1): void 
     const product = catalog.products.find((p) => p.id === line.productId);
     const variant = line.variantId ? product?.variants.find((v) => v.id === line.variantId) : undefined;
     const target = variant ?? (product && product.options.length === 0 ? product : undefined);
-    if (target && target.stock !== null) target.stock = Math.max(0, target.stock + sign * line.quantity);
+    if (target && target.stock !== null) target.stock = Math.max(0, roundQuantity(target.stock + sign * line.quantity));
     line.stockTaken = sign === -1 && Boolean(target) && target!.stock !== null;
   }
 }
@@ -213,7 +265,7 @@ export const jsonAdapter: DataAdapter = {
   },
 
   async listProducts() {
-    return (await loadCatalog()).products.filter((p) => p.active);
+    return (await loadCatalog()).products.filter((p) => p.active).map(forStore);
   },
   async listCategories() {
     return (await loadCatalog()).categories;
@@ -232,7 +284,7 @@ export const jsonAdapter: DataAdapter = {
       const existing = orders.find((o) => o.idempotencyKey === key);
       if (existing) return publicOrder(existing);
       const catalog = await loadCatalog();
-      const priced = priceOrder(request, catalog.products.filter((p) => p.active), shipping);
+      const priced = priceOrder(request, catalog.products.filter((p) => p.active), shipping, { taken: seatsHeld(orders) });
       const order = buildOrder(id, request, priced, new Date().toISOString());
       const stored = { ...order, lines: order.lines.map((l) => ({ ...l })) };
       moveStock(catalog, stored.lines, -1);
@@ -249,6 +301,69 @@ export const jsonAdapter: DataAdapter = {
       await saveCatalog();
       return order;
     });
+  },
+
+  async createQuote(request) {
+    const key = `${request.idempotencyKey}.${createHash("sha256").update(JSON.stringify([request.productId, request.quantity, request.detail, request.customer.email])).digest("hex").slice(0, 32)}`;
+    const id = orderIdFromKey(key, env().orderSecret);
+    if (!jsonWritable()) return buildQuote(id, request, await this.listProducts(), new Date().toISOString());
+    return exclusive(async () => {
+      const orders = await loadOrders();
+      const existing = orders.find((o) => o.idempotencyKey === key);
+      if (existing) return publicOrder(existing);
+      const order = buildQuote(id, request, (await loadCatalog()).products.filter((p) => p.active), new Date().toISOString());
+      orders.unshift({
+        ...order,
+        lines: order.lines.map((l) => ({ ...l })),
+        customer: request.customer,
+        attribution: request.attribution ?? {},
+        history: [event("created", "store", { to: "quote" })],
+        cancelReason: null,
+        purchaseSentAt: null,
+        idempotencyKey: key,
+      });
+      await saveOrders();
+      return order;
+    });
+  },
+
+  async acceptQuote(id, expectedTotal, paymentProvider, paymentMethod) {
+    if (!jsonWritable()) throw new OrderError("not_found", id);
+    return exclusive(async () => {
+      const order = (await loadOrders()).find((o) => o.id === id);
+      if (!order || !order.quote || order.status === "cancelled") throw new OrderError("not_found", id);
+      // Accepting twice is the same as accepting once.
+      if (order.status !== "quote") return publicOrder(order);
+      if (!order.quote.sentAt) throw new OrderError("quote_not_sent", id);
+      if (!Number.isFinite(expectedTotal) || Math.abs(order.total - expectedTotal) >= 0.005) throw new OrderError("quote_changed", id);
+      order.status = "new";
+      order.acceptedAt = new Date().toISOString();
+      order.paymentProvider = paymentProvider;
+      order.paymentMethod = paymentMethod;
+      order.history.push(event("status", "store", { from: "quote", to: "new" }));
+      await saveOrders();
+      return publicOrder(order);
+    });
+  },
+
+  async listBookings(from, to) {
+    const out: Booking[] = [];
+    for (const o of await loadOrders()) {
+      if (o.status === "cancelled") continue;
+      for (const l of o.lines) {
+        if (!l.slot || l.slot.start < from || l.slot.start >= to) continue;
+        out.push({
+          orderId: o.id, productId: l.productId, name: l.name, variantLabel: l.variantLabel, start: l.slot.start, end: l.slot.end,
+          seats: l.quantity, orderStatus: o.status, paid: o.paidAt !== null, customerName: o.customer.name, customerPhone: o.customer.phone,
+        });
+      }
+    }
+    return out.sort((a, b) => a.start.localeCompare(b.start));
+  },
+
+  async getDigitalFile(productId) {
+    const digital = (await loadCatalog()).products.find((p) => p.id === productId && p.type === "digital")?.digital;
+    return digital?.file ? { name: digital.name, file: digital.file } : null;
   },
 
   async getOrder(id) {
@@ -351,6 +466,31 @@ export const jsonAdapter: DataAdapter = {
     });
   },
 
+  async setQuote(id, answer, actor) {
+    return mutateOrder(id, (order) => {
+      if (order.status !== "quote") throw new AdminError("conflict", order.status);
+      order.lines.forEach((l, i) => {
+        l.unitPrice = Math.max(0, Math.round((answer.prices[i] ?? 0) * 100) / 100);
+      });
+      const totals = quoteTotals(order.lines, order.lines.map((l) => l.unitPrice), answer.shipping);
+      order.subtotal = totals.subtotal;
+      order.shipping = { methodId: order.shipping.methodId, price: totals.shipping };
+      order.total = totals.total;
+      // What the customer can accept is always what was last SENT.
+      order.quote = { sentAt: null };
+      order.history.push(event("quote", actor, { text: `priced:${totals.total}` }));
+    });
+  },
+
+  async sendQuote(id, actor) {
+    return mutateOrder(id, (order) => {
+      if (order.status !== "quote") throw new AdminError("conflict", order.status);
+      if (order.total <= 0 || order.lines.some((l) => lineTotal(l) <= 0)) throw new AdminError("quote_incomplete");
+      order.quote = { sentAt: new Date().toISOString() };
+      order.history.push(event("quote", actor, { text: `sent:${order.total}` }));
+    });
+  },
+
   async setOrderTracking(id, tracking, actor) {
     return mutateOrder(id, (order) => {
       order.tracking = tracking.trim() || null;
@@ -378,7 +518,8 @@ export const jsonAdapter: DataAdapter = {
     if (!jsonWritable() || hours <= 0) return 0;
     return exclusive(async () => {
       const cutoff = Date.now() - hours * 3_600_000;
-      const stale = (await loadOrders()).filter((o) => o.status === "new" && o.paidAt === null && Date.parse(o.createdAt) < cutoff);
+      // A quote the customer accepted counts from the moment they accepted it.
+      const stale = (await loadOrders()).filter((o) => o.status === "new" && o.paidAt === null && Date.parse(o.acceptedAt ?? o.createdAt) < cutoff);
       if (stale.length === 0) return 0;
       const catalog = await loadCatalog();
       for (const order of stale) {

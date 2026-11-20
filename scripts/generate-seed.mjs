@@ -27,9 +27,16 @@ export function seedSql() {
   });
   for (const p of data.products) {
     const images = p.images.map(({ placeholder: _p, alt, ...rest }) => ({ ...rest, alt: tr(alt) }));
-    const options = p.options.map((o) => ({ id: o.id, name: tr(o.name), values: o.values.map((v) => ({ ...v, label: tr(v.label) })) }));
-    sql += `\ninsert into products (id, slug, name, description, category, price, compare_at_price, images, options, stock, featured, min_quantity, attributes, created_at)\n  values (${q(p.id)}, ${q(p.slug)}, ${q(tr(p.name))}, ${q(tr(p.description))}, ${q(p.category)}, ${p.price}, ${p.compareAtPrice ?? "null"}, ${j(images)}, ${j(options)}, ${p.stock ?? "null"}, ${p.featured}, ${p.minQuantity ?? 1}, ${j(p.attributes ?? {})}, ${q(p.createdAt)})\n  on conflict (id) do update set slug = excluded.slug, name = excluded.name, description = excluded.description, category = excluded.category,\n    price = excluded.price, compare_at_price = excluded.compare_at_price, images = excluded.images, options = excluded.options,\n    featured = excluded.featured, min_quantity = excluded.min_quantity, attributes = excluded.attributes;\n`;
-    for (const v of p.variants) {
+    const options = (p.options ?? []).map((o) => ({ id: o.id, name: tr(o.name), values: o.values.map((v) => ({ ...v, label: tr(v.label) })) }));
+    const type = p.type ?? "physical";
+    const digital = type === "digital" && p.digital ? { name: p.digital.name } : null;
+    const service = type === "service" ? (p.service ?? null) : null;
+    sql += `\ninsert into products (id, slug, name, description, category, price, compare_at_price, images, options, stock, featured, min_quantity, attributes, created_at, type, unit, step, max_quantity, service, digital)\n  values (${q(p.id)}, ${q(p.slug)}, ${q(tr(p.name))}, ${q(tr(p.description))}, ${q(p.category)}, ${p.price}, ${p.compareAtPrice ?? "null"}, ${j(images)}, ${j(options)}, ${p.stock ?? "null"}, ${p.featured}, ${p.minQuantity ?? 1}, ${j(p.attributes ?? {})}, ${q(p.createdAt)}, ${q(type)}, ${q(p.unit ?? "u")}, ${p.step ?? 1}, ${p.maxQuantity ?? "null"}, ${service ? j(service) : "null"}, ${digital ? j(digital) : "null"})\n  on conflict (id) do update set slug = excluded.slug, name = excluded.name, description = excluded.description, category = excluded.category,\n    price = excluded.price, compare_at_price = excluded.compare_at_price, images = excluded.images, options = excluded.options,\n    featured = excluded.featured, min_quantity = excluded.min_quantity, attributes = excluded.attributes, type = excluded.type, unit = excluded.unit,\n    step = excluded.step, max_quantity = excluded.max_quantity, service = excluded.service, digital = excluded.digital;\n`;
+    // The private file of a digital product lives in its own table (never readable with the public key).
+    if (type === "digital" && p.digital?.file) {
+      sql += `insert into product_files (product_id, file) values (${q(p.id)}, ${q(p.digital.file)})\n  on conflict (product_id) do update set file = excluded.file;\n`;
+    }
+    for (const v of p.variants ?? []) {
       sql += `insert into variants (id, product_id, options, stock, price) values (${q(v.id)}, ${q(p.id)}, ${j(v.options)}, ${v.stock ?? "null"}, ${v.price ?? "null"})\n  on conflict (id) do update set options = excluded.options, price = excluded.price;\n`;
     }
   }

@@ -12,11 +12,14 @@ export function lineKey(
   variantId?: string | null,
   selection: Record<string, string> = {},
   optionOrder: readonly string[] = Object.keys(selection).sort(),
+  slot?: string | null,
 ): string {
-  if (variantId) return variantId;
+  // Two different appointments of the same service are two different lines.
+  const at = slot ? `@${slot}` : "";
+  if (variantId) return `${variantId}${at}`;
   const extra = optionOrder
     .map((id) => selection[id])
     .filter((v): v is string => Boolean(v))
     .join("|");
-  return extra ? `${productId}|${extra}` : productId;
+  return `${extra ? `${productId}|${extra}` : productId}${at}`;
 }

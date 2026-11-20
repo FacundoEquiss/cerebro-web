@@ -10,7 +10,7 @@ import { OrderError } from "@/lib/data/types";
 import { env } from "@/lib/env";
 import { normalizeCustomer, normalizeLines } from "@/lib/orders/idempotency";
 import { notifyOrderCreated } from "@/lib/orders/notify";
-import { shippingMethod, shippingTerms } from "@/lib/orders/pricing";
+import { NO_SHIPPING, requestNeedsShipping, shippingMethod, shippingTerms } from "@/lib/orders/pricing";
 import { expireStaleOrders } from "@/lib/orders/expiry";
 import { signReceipt } from "@/lib/orders/receipt";
 import { orderRequestSchema } from "@/lib/orders/schema";
@@ -52,24 +52,30 @@ export async function POST(request: Request) {
   if (!perBuyer.allowed) return fail("rate_limited", 429, { retryAfterSeconds: perBuyer.retryAfterSeconds });
   const e = env();
   try {
-    const method = shippingMethod(body.shippingMethodId);
-    if (!method) throw new OrderError("shipping_method", body.shippingMethodId);
-    if (method.requiresAddress && !(customer.address && customer.city && customer.postalCode)) throw new OrderError("address_required");
-
-    // Free the stock held by orders nobody paid, before this buyer is told "out of stock".
-    await expireStaleOrders();
     const adapter = await data();
+    // SHIPPING ONLY IF SOMETHING IS SHIPPED — and that is read from the catalogue, not from the
+    // browser: an order of services and downloads has no method, no address and no shipping cost.
+    const ships = requestNeedsShipping(body.lines, await adapter.listProducts());
+    const shippingMethodId = ships ? (body.shippingMethodId ?? "") : NO_SHIPPING;
+    if (ships) {
+      const method = shippingMethod(shippingMethodId);
+      if (!method) throw new OrderError("shipping_method", shippingMethodId);
+      if (method.requiresAddress && !(customer.address && customer.city && customer.postalCode)) throw new OrderError("address_required");
+    }
+
+    // Free the stock and the slots held by orders nobody paid, before this buyer is told "no".
+    await expireStaleOrders();
     const order = await adapter.createOrder(
       {
         idempotencyKey: body.idempotencyKey,
         lines: normalizeLines(body.lines),
         customer,
-        shippingMethodId: body.shippingMethodId,
+        shippingMethodId,
         paymentProvider: provider.id,
         paymentMethod: body.paymentMethod,
         attribution: body.attribution,
       },
-      shippingTerms(body.shippingMethodId),
+      shippingTerms(shippingMethodId),
     );
 
     // The buyer's key to their own order: a signed receipt in the URL, no cookie needed.

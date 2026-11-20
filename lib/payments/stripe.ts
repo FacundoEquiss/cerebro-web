@@ -7,6 +7,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { env } from "@/lib/env";
 import { t } from "@/i18n";
 import type { PaymentRecord } from "@/lib/data/types";
+import { formatQuantity, lineTotal } from "@/lib/format";
 import type { PaymentAdapter } from "./types";
 
 const API = "https://api.stripe.com/v1";
@@ -93,11 +94,12 @@ export const stripeAdapter: PaymentAdapter = {
     form.set("success_url", `${returnUrl}&session_id={CHECKOUT_SESSION_ID}`);
     form.set("cancel_url", returnUrl);
     for (const [k, v] of Object.entries(metadata)) form.set(`metadata[${k}]`, v);
-    const items = order.lines.map((l) => ({
-      name: l.variantLabel ? `${l.name} (${l.variantLabel})` : l.name,
-      amount: l.unitPrice,
-      quantity: l.quantity,
-    }));
+    // A gateway counts whole units: a line sold by weight (0.75 kg) goes as ONE item worth the line.
+    const items = order.lines.map((l) => {
+      const whole = Number.isInteger(l.quantity);
+      const name = l.variantLabel ? `${l.name} (${l.variantLabel})` : l.name;
+      return { name: whole ? name : `${name} — ${formatQuantity(l.quantity, l.unit)}`, amount: whole ? l.unitPrice : lineTotal(l), quantity: whole ? l.quantity : 1 };
+    });
     if (order.shipping.price > 0) items.push({ name: t.cart.shipping, amount: order.shipping.price, quantity: 1 });
     items.forEach((item, i) => {
       form.set(`line_items[${i}][quantity]`, String(item.quantity));
