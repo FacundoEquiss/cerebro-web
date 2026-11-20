@@ -4,6 +4,7 @@
 
 import { brand } from "@/config/brand";
 import { commerce } from "@/config/commerce";
+import { bookingHoldHours } from "@/lib/booking/hold";
 import { resolveSlot } from "@/lib/booking/slots";
 import { AdminError, OrderError, type AdminOrder, type Booking, type Category, type DataAdapter, type DigitalFile, type Order, type Product, type ProductType } from "./types";
 
@@ -42,7 +43,7 @@ export const SQL_ARGS: Record<SqlFunction, string[]> = {
   create_quote: ["p"],
   set_quote: ["p_id", "p", "p_actor"],
   send_quote: ["p_id", "p_actor"],
-  accept_quote: ["p_id", "p_total", "p_provider", "p_method"],
+  accept_quote: ["p_id", "p_total", "p_provider", "p_method", "p_delivery"],
   bookings_between: ["p_since", "p_until"],
   digital_file: ["p_product_id"],
 };
@@ -174,6 +175,9 @@ export function sqlAdapter(id: string, gateway: SqlGateway): DataAdapter {
         attribution: request.attribution ?? {},
         minimum_order: commerce.minimumOrder,
         max_quantity: commerce.maxQuantityPerLine,
+        hold_hours: bookingHoldHours(),
+        max_slots: commerce.booking.maxSlotsPerOrder,
+        max_unpaid_slots: commerce.booking.maxUnpaidPerBuyer,
       };
       try {
         return toOrder(await gateway.call("create_order", [payload]));
@@ -197,9 +201,9 @@ export function sqlAdapter(id: string, gateway: SqlGateway): DataAdapter {
         throw toOrderError(e);
       }
     },
-    async acceptQuote(orderId, expectedTotal, paymentProvider, paymentMethod) {
+    async acceptQuote(orderId, expectedTotal, paymentProvider, paymentMethod, delivery) {
       try {
-        return toOrder(await gateway.call("accept_quote", [orderId, expectedTotal, paymentProvider, paymentMethod]));
+        return toOrder(await gateway.call("accept_quote", [orderId, Number.isFinite(expectedTotal) ? expectedTotal : null, paymentProvider, paymentMethod, delivery ?? null]));
       } catch (e) {
         throw toOrderError(e);
       }
@@ -290,7 +294,7 @@ export function sqlAdapter(id: string, gateway: SqlGateway): DataAdapter {
       return (await gateway.call("claim_purchase_event", [orderId])) === true;
     },
     async expireOrders(hours, reason) {
-      const count = Number(await gateway.call("expire_orders", [hours, reason]));
+      const count = Number(await gateway.call("expire_orders", [Math.max(0, hours), reason]));
       if (count > 0) gateway.invalidate?.(); // the stock went back
       return count;
     },

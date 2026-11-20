@@ -14,7 +14,8 @@
 // S3-compatible storage is on the roadmap. To add one implement `StorageAdapter` and register it.
 // The browser already shrank the photo to WebP (1600 px at most) before it gets here.
 
-import { promises as fs } from "node:fs";
+import { createReadStream, promises as fs } from "node:fs";
+import { Readable } from "node:stream";
 import path from "node:path";
 import { env } from "@/lib/env";
 
@@ -24,8 +25,16 @@ export interface StorageAdapter {
   put(name: string, bytes: Uint8Array, contentType: string): Promise<string>;
   /** Saves a PRIVATE file and returns its key (what `DigitalFile.file` stores). Never a URL. */
   putPrivate(name: string, bytes: Uint8Array, contentType: string): Promise<string>;
-  /** The bytes of a private file, or `null` if it does not exist. */
-  getPrivate(key: string): Promise<Uint8Array | null>;
+  /**
+   * A private file as a STREAM (never the whole file in memory), or `null` if it does not exist.
+   * `size` is given when it is known.
+   */
+  openPrivate(key: string): Promise<PrivateFile | null>;
+}
+
+export interface PrivateFile {
+  stream: ReadableStream<Uint8Array>;
+  size: number | null;
 }
 
 export const MAX_DIGITAL_BYTES = 50 * 1024 * 1024;
@@ -54,12 +63,41 @@ const privateDir = () => path.join(/* turbopackIgnore: true */ path.resolve(/* t
 /** The example files of the presets (generated, harmless). Not under public/: they are only served to paid orders. */
 const samplesDir = () => path.join(/* turbopackIgnore: true */ process.cwd(), "content", "downloads");
 
-async function readIfThere(file: string): Promise<Uint8Array | null> {
+async function openIfThere(file: string): Promise<PrivateFile | null> {
   try {
-    return new Uint8Array(await fs.readFile(/* turbopackIgnore: true */ file));
+    const { size } = await fs.stat(/* turbopackIgnore: true */ file);
+    return { stream: Readable.toWeb(createReadStream(/* turbopackIgnore: true */ file)) as ReadableStream<Uint8Array>, size };
   } catch {
     return null;
   }
+}
+
+/**
+ * THE PRIVATE BUCKET MUST BE PRIVATE. Supabase lets a bucket be public, and then every file in it
+ * has a public address: the paid download would be free for anyone who guessed a name. Before the
+ * first private read or write the server asks the storage API; if the bucket is public (or the
+ * answer cannot be read) nothing is served and the log says why. Checked again every 10 minutes.
+ */
+let bucketCheck: { at: number; ok: boolean } | undefined;
+export async function privateBucketIsPrivate(now = Date.now()): Promise<boolean> {
+  if (bucketCheck && now - bucketCheck.at < 10 * 60_000) return bucketCheck.ok;
+  const e = env();
+  const key = e.SUPABASE_SERVICE_ROLE_KEY!;
+  let ok = false;
+  try {
+    const res = await fetch(`${e.SUPABASE_URL}/storage/v1/bucket/${e.SUPABASE_PRIVATE_BUCKET}`, { headers: { apikey: key, Authorization: `Bearer ${key}` }, cache: "no-store" });
+    const bucket = res.ok ? ((await res.json()) as { public?: unknown }) : null;
+    ok = bucket !== null && bucket.public === false;
+    if (!ok) console.error(`[storage] REFUSING to use the bucket "${e.SUPABASE_PRIVATE_BUCKET}" for digital products: ${bucket ? "it is PUBLIC — make it private in the storage settings" : `could not read its settings (${res.status}) — create it as a private bucket`}.`);
+  } catch (err) {
+    console.error("[storage] could not check the private bucket:", err instanceof Error ? err.message : err);
+  }
+  bucketCheck = { at: now, ok };
+  return ok;
+}
+/** Test helper. */
+export function resetBucketCheck(): void {
+  bucketCheck = undefined;
 }
 
 export const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
@@ -80,11 +118,11 @@ const local: StorageAdapter = {
     await fs.writeFile(/* turbopackIgnore: true */ path.join(/* turbopackIgnore: true */ privateDir(), name), bytes);
     return name;
   },
-  async getPrivate(key) {
+  async openPrivate(key) {
     if (!safeKey(key)) return null;
     return (
-      (await readIfThere(path.join(/* turbopackIgnore: true */ privateDir(), key))) ??
-      (await readIfThere(path.join(/* turbopackIgnore: true */ samplesDir(), key)))
+      (await openIfThere(path.join(/* turbopackIgnore: true */ privateDir(), key))) ??
+      (await openIfThere(path.join(/* turbopackIgnore: true */ samplesDir(), key)))
     );
   },
 };
@@ -104,6 +142,7 @@ const supabase: StorageAdapter = {
   },
   async putPrivate(name, bytes, contentType) {
     if (!safeKey(name)) throw new Error("invalid file name");
+    if (!(await privateBucketIsPrivate())) throw new Error("the private bucket is not private");
     const e = env();
     const key = e.SUPABASE_SERVICE_ROLE_KEY!;
     const res = await fetch(`${e.SUPABASE_URL}/storage/v1/object/${e.SUPABASE_PRIVATE_BUCKET}/${name}`, {
@@ -114,8 +153,12 @@ const supabase: StorageAdapter = {
     if (!res.ok) throw new Error(`private storage upload failed (${res.status})`);
     return name;
   },
-  async getPrivate(key) {
+  async openPrivate(key) {
     if (!safeKey(key)) return null;
+    // The example files of a preset are not in the bucket: they ship with the code.
+    const sample = await openIfThere(path.join(/* turbopackIgnore: true */ samplesDir(), key));
+    if (sample) return sample;
+    if (!(await privateBucketIsPrivate())) return null;
     const e = env();
     const service = e.SUPABASE_SERVICE_ROLE_KEY!;
     // The bucket is PRIVATE: only this request, made by the server with the service key, can read it.
@@ -123,9 +166,9 @@ const supabase: StorageAdapter = {
       headers: { apikey: service, Authorization: `Bearer ${service}` },
       cache: "no-store",
     });
-    if (res.ok) return new Uint8Array(await res.arrayBuffer());
-    // The example files of a preset are not in the bucket: they ship with the code.
-    return readIfThere(path.join(/* turbopackIgnore: true */ samplesDir(), key));
+    if (!res.ok || !res.body) return null;
+    const length = Number(res.headers.get("content-length"));
+    return { stream: res.body, size: Number.isFinite(length) && length > 0 ? length : null };
   },
 };
 

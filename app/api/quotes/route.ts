@@ -13,6 +13,7 @@ import { notifyQuoteRequested } from "@/lib/orders/notify";
 import { signReceipt } from "@/lib/orders/receipt";
 import { quoteRequestSchema } from "@/lib/orders/schema";
 import { clientIp, hit, sameOrigin } from "@/lib/rate-limit";
+import { storeMode } from "@/lib/store-mode";
 
 const fail = (error: string, status: number, extra: Record<string, unknown> = {}) => NextResponse.json({ error, ...extra }, { status });
 
@@ -32,6 +33,8 @@ export async function POST(request: Request) {
   if (!perBuyer.allowed) return fail("rate_limited", 429, { retryAfterSeconds: perBuyer.retryAfterSeconds });
 
   try {
+    // An enquiry nobody can store is an enquiry nobody will answer: refuse it honestly.
+    if ((await storeMode()) === "contact") throw new OrderError("needs_store", body.productId);
     const order = await (await data()).createQuote({
       idempotencyKey: body.idempotencyKey,
       productId: body.productId,

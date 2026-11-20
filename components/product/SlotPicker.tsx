@@ -19,11 +19,9 @@ const dayLabel = (date: string) => {
 };
 
 export function SlotPicker({
-  productId, dates, timeZone, seats, value, onChange,
+  productId, timeZone, seats, value, onChange,
 }: {
   productId: string;
-  /** Days that have slots, `YYYY-MM-DD`. */
-  dates: string[];
   timeZone: string;
   seats: number;
   /** `YYYY-MM-DDTHH:MM` or "". */
@@ -33,6 +31,19 @@ export function SlotPicker({
   const [date, setDate] = useState("");
   const [slots, setSlots] = useState<SlotOption[] | null>(null);
   const [failed, setFailed] = useState(false);
+  // The days that can be booked are asked when the page OPENS: a cached page never offers a day
+  // that already passed.
+  const [dates, setDates] = useState<string[] | null>(null);
+  useEffect(() => {
+    let alive = true;
+    fetch(`/api/slots?product=${encodeURIComponent(productId)}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((body: { dates: string[] }) => alive && setDates(body.dates))
+      .catch(() => alive && setDates([]));
+    return () => {
+      alive = false;
+    };
+  }, [productId]);
 
   useEffect(() => {
     if (!date) return;
@@ -48,6 +59,7 @@ export function SlotPicker({
     };
   }, [productId, date]);
 
+  if (dates === null) return <p className="muted" data-testid="dates-loading">{t.types.slotsLoading}</p>;
   if (dates.length === 0) return <p className="notice" data-testid="no-dates">{t.types.noDates}</p>;
 
   return (

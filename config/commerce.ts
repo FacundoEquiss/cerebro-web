@@ -82,6 +82,17 @@ export const commerce = {
     minNoticeHours: 2,
     /** How far ahead the calendar opens. */
     maxDaysAhead: 30,
+    /** Most appointments ONE order may contain: nobody books the whole week in one go. */
+    maxSlotsPerOrder: 3,
+    /** Most UNPAID appointments one buyer (by e-mail) may be holding at a time. */
+    maxUnpaidPerBuyer: 3,
+    /**
+     * Hours an UNPAID order keeps its slot. After that the seat is free again at once (nothing has
+     * to run for it), and the order is cancelled by the usual clean-up. Shorter than
+     * ORDER_EXPIRY_HOURS on purpose: time is the stock of a service. The server variable
+     * BOOKING_HOLD_HOURS overrides it.
+     */
+    holdHours: 12,
   },
 
   /** Downloads of the `digital` products. */

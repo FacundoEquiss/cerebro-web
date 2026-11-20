@@ -176,6 +176,9 @@ export interface QuoteRequest {
   attribution?: Record<string, string>;
 }
 
+/** Where a quote with shipping is delivered. Required to accept it when the shipping is not 0. */
+export type Delivery = Pick<Customer, "address" | "city" | "postalCode">;
+
 /** What the owner answers to an enquiry: a unit price per line (in order) and the shipping. */
 export interface QuoteAnswer {
   prices: number[];
@@ -296,7 +299,8 @@ export class OrderError extends Error {
       | "empty" | "unknown_product" | "selection_required" | "unknown_variant" | "out_of_stock"
       | "quantity" | "minimum_order" | "shipping_method" | "address_required"
       | "slot_required" | "slot_invalid" | "slot_taken" | "quote_only" | "not_a_quote"
-      | "quote_not_sent" | "quote_changed" | "quote_incomplete" | "not_found",
+      | "quote_not_sent" | "quote_changed" | "quote_incomplete" | "not_found"
+      | "booking_limit" | "needs_store",
     public detail = "",
   ) {
     super(`${code}${detail ? `: ${detail}` : ""}`);
@@ -346,10 +350,14 @@ export interface DataAdapter {
   /**
    * The customer accepts a SENT quote: it becomes a normal order (`new`). `expectedTotal` is the
    * total the customer saw: if the stored one differs, or the quote was not sent, it throws
-   * `OrderError` ("quote_changed" / "quote_not_sent") and nothing changes.
+   * `OrderError` ("quote_changed" / "quote_not_sent") and nothing changes. A quote that charges
+   * shipping needs `delivery` ("address_required").
    */
-  acceptQuote(id: string, expectedTotal: number, paymentProvider: string, paymentMethod: PaymentMethod): Promise<Order>;
-  /** How many seats are taken per slot of a product between two instants (cancelled orders do not count). */
+  acceptQuote(id: string, expectedTotal: number, paymentProvider: string, paymentMethod: PaymentMethod, delivery?: Delivery): Promise<Order>;
+  /**
+   * The appointments that overlap `[from, to)`. Cancelled orders do not count, and neither do
+   * unpaid orders whose hold has lapsed (lib/booking/hold.ts) — checked when READING.
+   */
   listBookings(from: string, to: string): Promise<Booking[]>;
   /** The private file of a digital product (with its storage key). Server only. */
   getDigitalFile(productId: string): Promise<Required<DigitalFile> | null>;
@@ -384,7 +392,8 @@ export interface DataAdapter {
   claimPurchaseEvent(id: string): Promise<boolean>;
   /**
    * Cancels the orders still unpaid in `new` after `hours`, with `reason`, and returns their
-   * stock. Returns how many were cancelled. Unpaid orders must not hold stock forever.
+   * stock. Returns how many were cancelled. Unpaid orders must not hold stock forever. Orders
+   * with an appointment whose hold lapsed are cancelled too, whatever `hours` is (even 0).
    */
   expireOrders(hours: number, reason: string): Promise<number>;
 }

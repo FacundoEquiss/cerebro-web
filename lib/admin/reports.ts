@@ -1,6 +1,7 @@
 // Numbers for the admin panel, computed from the order list. Pure: orders in, figures out.
 // "Sales" = orders whose payment was confirmed (cancelled ones never count).
 
+import { multiplyMoney } from "@/lib/decimal";
 import type { AdminOrder } from "@/lib/data/types";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -64,7 +65,7 @@ export function salesSummary(orders: AdminOrder[], now = Date.now()): SalesSumma
     for (const l of o.lines) {
       const row = products.get(l.productId) ?? { productId: l.productId, name: l.name, units: 0, revenue: 0 };
       row.units += l.quantity;
-      row.revenue += Math.round(l.quantity * l.unitPrice * 100) / 100;
+      row.revenue += multiplyMoney(l.unitPrice, l.quantity);
       products.set(l.productId, row);
     }
   }

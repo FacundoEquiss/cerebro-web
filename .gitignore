@@ -15,3 +15,5 @@ coverage/
 /screenshots/
 # Your own forbidden terms for `npm run check` (see CONTRIBUTING.md). Local only, never committed.
 .brand-blocklist
+# Copies kept by `npm run preset` of the files it replaces.
+.preset-backups/

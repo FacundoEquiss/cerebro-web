@@ -358,9 +358,13 @@ describe("with Supabase's default grants, the public key cannot write anything",
 import { openDates, resolveSlot, slotsOn } from "@/lib/booking/slots";
 import type { Product } from "@/lib/data/types";
 
+const WHERE = { address: "Example Street 1", city: "Example City", postalCode: "0000" };
+
 describe("product types in the database", () => {
   let n = 0;
   const nextKey = () => `types-${String(++n).padStart(58, "0")}`;
+  /** A different buyer each time: the limit of unpaid appointments is per e-mail. */
+  const buyer = () => ({ ...request().customer, email: `buyer${++n}@example.com` });
   const free = { price: 0, freeFrom: null };
   const byId = async (id: string) => (await adapter.listProducts()).find((p) => p.id === id)!;
   const freeSlot = (p: Product, skip = 0) => {
@@ -368,7 +372,7 @@ describe("product types in the database", () => {
     return `${day}T${slotsOn(p, day, Date.now())[0]!.time}`;
   };
   const book = (productId: string, slot: string, quantity = 1) =>
-    adapter.createOrder(request({ idempotencyKey: nextKey(), lines: [{ productId, quantity, slot }], shippingMethodId: "delivery" }), terms);
+    adapter.createOrder(request({ idempotencyKey: nextKey(), customer: buyer(), lines: [{ productId, quantity, slot }], shippingMethodId: "delivery" }), terms);
 
   it("reads every type through the public view, without the storage key of a digital file", async () => {
     const products = await adapter.listProducts();
@@ -428,7 +432,7 @@ describe("product types in the database", () => {
 
     // Idempotent: the same key is the same order, and no second seat.
     const again = freeSlot(haircut, 1);
-    const body = request({ idempotencyKey: nextKey(), lines: [{ productId: "corte-de-pelo", quantity: 1, slot: again }] });
+    const body = request({ idempotencyKey: nextKey(), customer: buyer(), lines: [{ productId: "corte-de-pelo", quantity: 1, slot: again }] });
     const first = await adapter.createOrder(body, terms);
     expect((await adapter.createOrder(body, terms)).id).toBe(first.id);
     expect(first.lines[0]!.slot).toEqual(resolveSlot(haircut, again, Date.now()));
@@ -468,7 +472,7 @@ describe("product types in the database", () => {
   it("charges shipping only when the order has something physical", async () => {
     const slot = freeSlot(await byId("corte-de-pelo"), 3);
     // A download and an appointment, and a browser that insists on "delivery": no shipping.
-    const light = await adapter.createOrder(request({ idempotencyKey: nextKey(), lines: [{ productId: "guia-en-pdf", quantity: 1 }, { productId: "corte-de-pelo", quantity: 1, slot }], shippingMethodId: "delivery" }), terms);
+    const light = await adapter.createOrder(request({ idempotencyKey: nextKey(), customer: buyer(), lines: [{ productId: "guia-en-pdf", quantity: 1 }, { productId: "corte-de-pelo", quantity: 1, slot }], shippingMethodId: "delivery" }), terms);
     expect(light).toMatchObject({ subtotal: 19900, shipping: { methodId: "none", price: 0 }, total: 19900 });
     expect(light.lines.map((l) => l.type)).toEqual(["digital", "service"]);
     // The same two plus a mug: now the shipping is charged, once.
@@ -511,9 +515,13 @@ describe("product types in the database", () => {
     await expect(adapter.acceptQuote(enquiry.id, 386000, "manual", "bank_transfer")).rejects.toMatchObject({ code: "quote_changed" });
     expect((await adapter.getOrder(enquiry.id))?.status).toBe("quote");
 
-    const accepted = await adapter.acceptQuote(enquiry.id, 366000, "manual", "whatsapp");
+    // It charges shipping: without the delivery address it is not accepted.
+    await expect(adapter.acceptQuote(enquiry.id, 366000, "manual", "whatsapp")).rejects.toMatchObject({ code: "address_required" });
+    await expect(adapter.acceptQuote(enquiry.id, 366000, "manual", "whatsapp", { address: "Example Street 1", city: " ", postalCode: "0000" })).rejects.toMatchObject({ code: "address_required" });
+    const accepted = await adapter.acceptQuote(enquiry.id, 366000, "manual", "whatsapp", WHERE);
+    expect((await adapter.getAdminOrder(enquiry.id))?.customer).toMatchObject(WHERE);
     expect(accepted).toMatchObject({ status: "new", total: 366000, paymentMethod: "whatsapp", paidAt: null });
-    expect((await adapter.acceptQuote(enquiry.id, 366000, "manual", "bank_transfer")).paymentMethod).toBe("whatsapp");
+    expect((await adapter.acceptQuote(enquiry.id, 366000, "manual", "bank_transfer", WHERE)).paymentMethod).toBe("whatsapp");
     await expect(adapter.setQuote(enquiry.id, { prices: [1], shipping: 0 }, "owner@example.com")).rejects.toMatchObject({ code: "conflict" });
     await expect(adapter.acceptQuote("P-NOPE", 1, "manual", "bank_transfer")).rejects.toMatchObject({ code: "not_found" });
 
@@ -597,5 +605,151 @@ describe("migration 0001 → 0002: a 0.1.0 database keeps its data", () => {
       expect(fresh.total).toBe(2000 + 6500);
       await old.close();
     }
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// Regression tests for the independent review of 0.2.0, in the real SQL.
+// ---------------------------------------------------------------------------------------------
+import { commerce } from "@/config/commerce";
+import { lineTotal } from "@/lib/format";
+import { priceOrder } from "@/lib/orders/pricing";
+
+describe("review of 0.2.0, in the database", () => {
+  let n = 0;
+  const nextKey = () => `review-${String(++n).padStart(57, "0")}`;
+  const buyer = (name = `r${++n}`) => ({ ...request().customer, email: `${name}@example.com` });
+  const free = { price: 0, freeFrom: null };
+  const day = (p: Product, i: number) => openDates(p, Date.now())[i]!;
+  const slotAt = (p: Product, dayIndex: number, i: number) => `${day(p, dayIndex)}T${slotsOn(p, day(p, dayIndex), Date.now())[i]!.time}`;
+
+  it("JS and SQL give the same cent, over a grid of prices and quantities", async () => {
+    await db.exec(`insert into products (id, slug, name, category, price, unit, step, min_quantity, max_quantity)
+                   values ('grid', 'grid', 'Grid', 'almacen', 1, 'kg', 0.001, 0.001, 100000) on conflict do nothing`);
+    const quantities = [0.001, 0.005, 0.015, 0.125, 0.335, 0.5, 0.75, 1.005, 1.115, 2.675, 3.333, 7.5, 12.345];
+    // The reviewer's case first, then a grid that is full of exact half cents.
+    const prices = [3.3, 0.01, 0.05, 0.15, 0.35, 1.005, 2.5, 9.99, 10.1, 33.33, 100.5, 1234.56, 99999.99];
+    for (let cents = 2; cents <= 400; cents += 6) prices.push(cents / 100);
+    let checked = 0;
+    for (const price of prices) {
+      await db.query("update products set price = round($1::numeric, 2) where id = 'grid'", [price]);
+      const lines = quantities.map((quantity) => ({ productId: "grid", quantity }));
+      const sql = await adapter.createOrder(request({ idempotencyKey: nextKey(), lines }), free);
+      const grid = (await adapter.listProducts()).find((p) => p.id === "grid")!;
+      const js = priceOrder(request({ lines }), [grid], free);
+      // Line by line (SQL rounds each one) and in total.
+      const perLine = (await db.query("select round(unit_price * quantity, 2)::float as t from order_lines where order_id = $1 order by position", [sql.id])).rows.map((r) => (r as { t: number }).t);
+      expect(js.lines.map(lineTotal), `price ${price}`).toEqual(perLine);
+      expect(js.subtotal, `price ${price}`).toBe(sql.subtotal);
+      expect(js.total).toBe(sql.total);
+      checked += lines.length;
+    }
+    expect(checked).toBeGreaterThan(1000);
+    // The exact case of the review: 3.30 × 0.75 = 2.475 → 2.48 on both sides.
+    await db.query("update products set price = 3.30 where id = 'grid'");
+    const one = await adapter.createOrder(request({ idempotencyKey: nextKey(), lines: [{ productId: "grid", quantity: 0.75 }] }), free);
+    expect(one.subtotal).toBe(2.48);
+    // And a quote: the owner types 1.005 per unit.
+    const enquiry = await adapter.createQuote({ idempotencyKey: nextKey(), productId: "mueble-a-medida", quantity: 3, detail: "Three tables", customer: buyer() });
+    const priced = await adapter.setQuote(enquiry.id, { prices: [1.005], shipping: 0.125 }, "owner@example.com");
+    expect([priced.subtotal, priced.shipping.price, priced.total]).toEqual([3.03, 0.13, 3.16]);
+  });
+
+  it("a float that is 0.3 for a person is 0.3 for the database", async () => {
+    const order = await adapter.createOrder(request({ idempotencyKey: nextKey(), lines: [{ productId: "mix-de-frutos-secos", quantity: 0.1 + 0.2 }] }), free);
+    expect(order.lines[0]).toMatchObject({ quantity: 0.3 });
+    expect(order.subtotal).toBe(5850);
+  });
+
+  it("a download is one per line, and seats are whole", async () => {
+    await expect(adapter.createOrder(request({ idempotencyKey: nextKey(), lines: [{ productId: "guia-en-pdf", quantity: 5 }] }), free)).rejects.toMatchObject({ code: "quantity" });
+    const yoga = (await adapter.listProducts()).find((p) => p.id === "clase-grupal-de-yoga")!;
+    await db.query("update products set step = 0.5, min_quantity = 0.5 where id = 'clase-grupal-de-yoga'");
+    try {
+      const payload = { idempotency_key: nextKey(), currency: "ARS", lines: [{ product_id: yoga.id, quantity: 1.5, slot_start: "2031-01-06T21:00:00Z", slot_end: "2031-01-06T22:00:00Z" }], shipping: { method: "none", price: 0 }, payment_provider: "manual", payment_method: "bank_transfer", customer: buyer() };
+      await expect(db.query("select create_order($1::jsonb)", [JSON.stringify(payload)])).rejects.toThrow(/ORDER_ERROR:quantity/);
+    } finally {
+      await db.query("update products set step = 1, min_quantity = 1 where id = 'clase-grupal-de-yoga'");
+    }
+  });
+
+  it("capacity counts what OVERLAPS: a change of duration cannot double-book", async () => {
+    const base = {
+      slug: "dur", name: "Duration test", description: "", category: "servicios", price: 1000, compareAtPrice: null, images: [], options: [], variants: [],
+      stock: null, featured: false, active: true, minQuantity: 1, attributes: {}, unit: "u", step: 1, maxQuantity: null, digital: null, type: "service" as const,
+    };
+    const half = await adapter.saveProduct({ ...base, id: "dur", service: { durationMinutes: 30, capacity: 1 } });
+    // Booked while it lasted 30 minutes: the second slot of the morning (09:30–10:00).
+    const d = day(half, 3);
+    const taken = `${d}T${slotsOn(half, d, Date.now())[1]!.time}`;
+    await adapter.createOrder(request({ idempotencyKey: nextKey(), customer: buyer(), lines: [{ productId: "dur", quantity: 1, slot: taken }] }), free);
+    // Now it lasts an hour: the 09:00–10:00 slot overlaps that booking, 10:00–11:00 does not.
+    const hour = await adapter.saveProduct({ ...base, id: "dur", service: { durationMinutes: 60, capacity: 1 } });
+    const slots = slotsOn(hour, d, Date.now());
+    await expect(adapter.createOrder(request({ idempotencyKey: nextKey(), customer: buyer(), lines: [{ productId: "dur", quantity: 1, slot: `${d}T${slots[0]!.time}` }] }), free)).rejects.toMatchObject({ code: "slot_taken" });
+    expect((await adapter.createOrder(request({ idempotencyKey: nextKey(), customer: buyer(), lines: [{ productId: "dur", quantity: 1, slot: `${d}T${slots[1]!.time}` }] }), free)).status).toBe("new");
+    // The agenda finds a booking by overlap too.
+    const mid = new Date(Date.parse(slots[0]!.start) + 45 * 60_000).toISOString();
+    expect((await adapter.listBookings(mid, new Date(Date.parse(mid) + 60_000).toISOString())).map((b) => b.productId)).toEqual(["dur"]);
+  });
+
+  it("one order cannot hoard the calendar, nor one buyer hold many unpaid appointments", async () => {
+    const haircut = (await adapter.listProducts()).find((p) => p.id === "corte-de-pelo")!;
+    const max = commerce.booking.maxSlotsPerOrder;
+    const lines = (count: number, dayIndex: number) => Array.from({ length: count }, (_, i) => ({ productId: "corte-de-pelo", quantity: 1, slot: slotAt(haircut, dayIndex, i) }));
+    await expect(adapter.createOrder(request({ idempotencyKey: nextKey(), customer: buyer(), lines: lines(max + 1, 6) }), free)).rejects.toMatchObject({ code: "booking_limit" });
+    expect((await db.query("select count(*)::int as n from order_lines where slot_start >= $1::timestamptz", [`${day(haircut, 6)}T00:00:00Z`])).rows).toEqual([{ n: 0 }]);
+
+    const first = await adapter.createOrder(request({ idempotencyKey: nextKey(), customer: buyer("hoarder"), lines: lines(max, 6) }), free);
+    expect(first.lines).toHaveLength(max);
+    const more = { idempotencyKey: nextKey(), customer: buyer("HOARDER"), lines: [{ productId: "corte-de-pelo", quantity: 1, slot: slotAt(haircut, 6, max) }] };
+    await expect(adapter.createOrder(request(more), free)).rejects.toMatchObject({ code: "booking_limit" }); // same e-mail, whatever the case
+    await adapter.setOrderStatus(first.id, "new", "paid", "owner@example.com");
+    expect((await adapter.createOrder(request(more), free)).status).toBe("new"); // paid appointments do not count
+  });
+
+  it("an unpaid hold lapses on its own: the read stops counting it, the clean-up cancels it", async () => {
+    const haircut = (await adapter.listProducts()).find((p) => p.id === "corte-de-pelo")!;
+    const slot = slotAt(haircut, 7, 0);
+    const { start, end } = resolveSlot(haircut, slot, Date.now());
+    const held = await adapter.createOrder(request({ idempotencyKey: nextKey(), customer: buyer(), lines: [{ productId: "corte-de-pelo", quantity: 1, slot }] }), free);
+    const row = (await db.query("select extract(epoch from (hold_until - now())) / 3600 as hours from orders where id = $1", [held.id])).rows[0] as { hours: number };
+    expect(Math.round(Number(row.hours))).toBe(commerce.booking.holdHours);
+    // A plain order has no hold.
+    const plain = await adapter.createOrder(request({ idempotencyKey: nextKey(), lines: [{ productId: "vela-aromatica-de-soja", quantity: 1 }] }), free);
+    expect((await db.query("select hold_until from orders where id = $1", [plain.id])).rows).toEqual([{ hold_until: null }]);
+
+    const book = () => adapter.createOrder(request({ idempotencyKey: nextKey(), customer: buyer(), lines: [{ productId: "corte-de-pelo", quantity: 1, slot }] }), free);
+    await expect(book()).rejects.toMatchObject({ code: "slot_taken" });
+    expect(await adapter.listBookings(start, end)).toHaveLength(1);
+
+    // The hold passes. NOTHING runs: the seat is free for the next buyer and gone from the agenda.
+    await db.query("update orders set hold_until = now() - interval '1 minute' where id = $1", [held.id]);
+    expect(await adapter.listBookings(start, end)).toEqual([]);
+    const next = await book();
+    expect((await adapter.listBookings(start, end)).map((b) => b.orderId)).toEqual([next.id]);
+    expect((await adapter.getOrder(held.id))?.status).toBe("new");
+    // The clean-up then cancels the lapsed order — even when orders never expire by age (0).
+    expect(await adapter.expireOrders(0, "Expired")).toBe(1);
+    expect((await adapter.getOrder(held.id))?.status).toBe("cancelled");
+    expect((await adapter.getOrder(next.id))?.status).toBe("new");
+    await adapter.setOrderStatus(plain.id, "new", "cancelled", "owner@example.com", "x");
+  });
+});
+
+describe("migration 0002 on its own leaves a working catalogue", () => {
+  it("recreates the public view it had to drop, before db/schema.sql is run again", async () => {
+    const old = new PGlite();
+    await old.exec(readFileSync("db/migrations/0001_initial.sql", "utf8"));
+    await old.exec(`insert into categories (slug, name) values ('hogar', 'Hogar');
+                    insert into products (id, slug, name, category, price, stock, min_quantity) values ('mug', 'mug', 'Mug', 'hogar', 1000, 5, 2);`);
+    await old.exec(readFileSync("db/migrations/0002_product_types.sql", "utf8"));
+    await old.exec(readFileSync("db/migrations/0002_product_types.sql", "utf8")); // twice is safe
+    const rows = (await old.query("select id, type, unit, step::float as step, min_quantity::float as min, stock::float as stock, service, digital from public_catalog")).rows;
+    expect(rows).toEqual([{ id: "mug", type: "physical", unit: "u", step: 1, min: 2, stock: 5, service: null, digital: null }]);
+    // The store keeps selling with the 0.1.0 functions until schema.sql replaces them.
+    const order = (await old.query(`select create_order('${JSON.stringify({ idempotency_key: "z".repeat(64), currency: "ARS", lines: [{ product_id: "mug", quantity: 2 }], shipping: { method: "pickup", price: 0, free_from: null }, payment_provider: "manual", payment_method: "bank_transfer", customer: {} })}'::jsonb) as r`)).rows[0] as { r: { total: number } };
+    expect(Number(order.r.total)).toBe(2000);
+    await old.close();
   });
 });

@@ -1,6 +1,7 @@
 import { brand } from "@/config/brand";
 import { commerce } from "@/config/commerce";
 import { languageTag } from "@/i18n";
+import { multiplyMoney, roundCents } from "@/lib/decimal";
 
 const money = new Intl.NumberFormat(languageTag, {
   style: "currency",
@@ -25,7 +26,7 @@ export function formatDate(iso: string): string {
 
 /** Rounds to cents, avoiding binary float drift (0.1 + 0.2). */
 export function roundMoney(n: number): number {
-  return Math.round((n + Number.EPSILON) * 100) / 100;
+  return roundCents(n);
 }
 
 /** Lowercase, no accents: for search and comparisons. */
@@ -41,7 +42,8 @@ export function formatQuantity(quantity: number, unit = "u"): string {
 
 /** The amount of one order line, rounded to cents ON ITS OWN (the subtotal adds these). */
 export function lineTotal(line: { unitPrice: number; quantity: number }): number {
-  return roundMoney(line.unitPrice * line.quantity);
+  // Integer math, half up: the same cent PostgreSQL gives (lib/decimal.ts).
+  return multiplyMoney(line.unitPrice, line.quantity);
 }
 
 /** "$ 12.000 / kg" for what is sold by weight or measure; the plain price for a piece. */

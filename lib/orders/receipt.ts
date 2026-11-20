@@ -12,7 +12,10 @@ import type { Order } from "@/lib/data/types";
 
 export const RECEIPT_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const VERSION = "v1";
-const MAX_LENGTH = 6000;
+// The receipt travels in a URL. Servers and proxies accept addresses of 14–16 KB; this stays under.
+export const MAX_LENGTH = 12000;
+/** What a FULL receipt may measure. Above it the lines are slimmed down (see `compact`). */
+const COMFORTABLE = 6000;
 
 interface Payload {
   o: Order;
@@ -27,28 +30,60 @@ function sign(secret: string, body: string): string {
   return createHmac("sha256", secret).update(`order-receipt/${VERSION}.${body}`).digest("base64url");
 }
 
-/** The receipt travels in a URL: the defaults of a line are left out and put back when it is read. */
-function compact(order: Order): Order {
+type Slim = 0 | 1 | 2;
+const short = (s: string, max: number) => (s.length > max ? `${s.slice(0, max - 1)}…` : s);
+
+/**
+ * The receipt travels in a URL, so it is kept small:
+ *   · the defaults of a line are left out and put back when it is read;
+ *   · a slot is `[start in minutes since 1970, length in minutes]`;
+ *   · the free text of an enquiry (`note`) NEVER travels: the order page reads it from the store;
+ *   · a big order is slimmed in steps — first without the photos, then with short names and no
+ *     ids — so that even 50 lines with slots fit. The amounts are never touched.
+ */
+function compact(order: Order, slim: Slim): unknown {
   const lines = order.lines.map((l) => {
-    const { type, unit, slot, ...rest } = l;
-    return { ...rest, ...(type !== "physical" ? { type } : {}), ...(unit !== "u" ? { unit } : {}), ...(slot ? { slot } : {}) };
+    const { type, unit, slot, note: _note, image, productId, variantId, name, variantLabel, ...rest } = l;
+    return {
+      ...(slim < 2 ? { productId, variantId } : {}),
+      name: slim < 2 ? name : short(name, 40),
+      variantLabel: slim < 2 ? variantLabel : short(variantLabel, 24),
+      ...rest,
+      ...(slim < 1 ? { image } : {}),
+      ...(type !== "physical" ? { type } : {}),
+      ...(unit !== "u" ? { unit } : {}),
+      ...(slot ? { s: [Math.round(Date.parse(slot.start) / 60_000), Math.round((Date.parse(slot.end) - Date.parse(slot.start)) / 60_000)] } : {}),
+    };
   });
   const { quote, ...rest } = order;
-  return { ...rest, lines, ...(quote ? { quote } : {}) } as Order;
+  return { ...rest, lines, ...(quote ? { quote } : {}) };
 }
+
+type StoredLine = Partial<Order["lines"][number]> & { s?: [number, number] };
 
 function expand(order: Order): Order {
   return {
     ...order,
     quote: order.quote ?? null,
-    lines: (order.lines ?? []).map((l) => ({ ...l, type: l.type ?? "physical", unit: l.unit ?? "u", slot: l.slot ?? null })),
+    lines: ((order.lines ?? []) as StoredLine[]).map(({ s, ...l }) => ({
+      productId: "", variantId: null, name: "", variantLabel: "", quantity: 0, unitPrice: 0, image: null,
+      ...l,
+      type: l.type ?? "physical",
+      unit: l.unit ?? "u",
+      slot: s ? { start: new Date(s[0] * 60_000).toISOString(), end: new Date((s[0] + s[1]) * 60_000).toISOString() } : (l.slot ?? null),
+    })),
   };
 }
 
 export function signReceipt(order: Order, secret: string, now = Date.now()): string {
-  const payload: Payload = { o: compact(order), exp: now + RECEIPT_TTL_MS };
-  const body = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
-  return `${VERSION}.${body}.${sign(secret, body)}`;
+  let token = "";
+  for (const slim of [0, 1, 2] as Slim[]) {
+    const payload = { o: compact(order, slim), exp: now + RECEIPT_TTL_MS };
+    const body = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+    token = `${VERSION}.${body}.${sign(secret, body)}`;
+    if (token.length <= (slim < 2 ? COMFORTABLE : MAX_LENGTH)) return token;
+  }
+  return token;
 }
 
 export function verifyReceipt(token: string | null | undefined, secret: string, now = Date.now()): ReceiptResult {

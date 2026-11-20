@@ -6,10 +6,12 @@
 --
 -- HOW TO APPLY IT (ask the owner first: it changes a real database)
 --   1. Make a backup.
---   2. Run this file.
---   3. Run db/schema.sql again: it replaces the views, the functions and the permissions.
---      (schema.sql alone also works — it contains these same statements — this file exists for
---      those who keep a record of migrations.)
+--   2. Run this file. It is self-contained for the DATA: tables, columns and the public catalogue
+--      view (which it has to drop to change a column type, and creates again at the end).
+--   3. Run db/schema.sql again: it replaces the FUNCTIONS and the permissions with the 0.2.0 ones.
+--      Until you do, the store keeps working with the 0.1.0 functions.
+--      (schema.sql alone also does everything — it contains these same statements — this file
+--      exists for those who keep a record of migrations.)
 --
 -- Nothing is deleted. Existing products become `physical`, sold by the piece ('u', step 1);
 -- existing orders keep their lines. Safe to run twice.
@@ -52,6 +54,7 @@ alter table products add column if not exists digital jsonb;
 alter table orders add column if not exists is_quote boolean not null default false;
 alter table orders add column if not exists quote_sent_at timestamptz;
 alter table orders add column if not exists accepted_at timestamptz;
+alter table orders add column if not exists hold_until timestamptz;
 alter table orders drop constraint if exists orders_status_check;
 alter table orders add constraint orders_status_check
   check (status in ('quote', 'new', 'paid', 'preparing', 'shipped', 'delivered', 'cancelled'));
@@ -79,3 +82,32 @@ create table if not exists payments (
   primary key (provider, payment_id)
 );
 
+
+-- The public catalogue view, with the new columns. (It was dropped above when a column it used
+-- changed its type.) Same definition as db/schema.sql.
+create or replace view public_catalog with (security_invoker = true) as
+select
+  p.id, p.slug, p.name, p.description, p.category, p.price, p.compare_at_price, p.images, p.options,
+  p.stock, p.featured, p.min_quantity, p.attributes, p.created_at,
+  coalesce(
+    (select jsonb_agg(jsonb_build_object('id', v.id, 'options', v.options, 'stock', v.stock, 'price', v.price) order by v.id)
+       from variants v where v.product_id = p.id and v.active),
+    '[]'::jsonb
+  ) as variants,
+  p.type, p.unit, p.step, p.max_quantity, p.service, p.digital
+from products p
+where p.active;
+
+do $$
+declare
+  r text;
+begin
+  foreach r in array array['anon', 'authenticated'] loop
+    if exists (select 1 from pg_roles where rolname = r) then
+      execute format('revoke all on public_catalog, product_files from %I', r);
+      execute format('grant select on public_catalog to %I', r);
+    end if;
+  end loop;
+  revoke all on public_catalog, product_files from public;
+end;
+$$;

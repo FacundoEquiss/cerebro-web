@@ -13,7 +13,7 @@ import { Bell, BellOff, Search, Volume2, VolumeX, CalendarClock } from "lucide-r
 import { fill, t } from "@/i18n";
 import type { AdminOrder, OrderStatus, PaymentMethod } from "@/lib/data/types";
 import { formatPrice, formatSlot } from "@/lib/format";
-import { allowedMoves, canMove, neighbour, ORDER_FLOW } from "@/lib/orders/status";
+import { allowedMoves, canMove, neighbour, ORDER_FLOW, orderShips } from "@/lib/orders/status";
 import { adminFetch } from "./api";
 import { paymentLabel, shippingLabel, statusLabel, timeAgo } from "./format";
 import { OrderDetail } from "./OrderDetail";
@@ -172,7 +172,7 @@ export function OrdersBoard({ initial, initialVersion, serverNow, canWrite }: { 
 
   async function move(order: AdminOrder, to: OrderStatus, reason?: string): Promise<boolean> {
     if (order.status === to) return true;
-    if (!canMove(order.status, to)) {
+    if (!canMove(order.status, to, orderShips(order))) {
       setMessage(a.invalidMove);
       return false;
     }
@@ -278,7 +278,7 @@ export function OrdersBoard({ initial, initialVersion, serverNow, canWrite }: { 
       open(order.id, e.currentTarget);
     } else if (e.shiftKey && (e.key === "ArrowRight" || e.key === "ArrowLeft")) {
       e.preventDefault();
-      const to = neighbour(order.status, e.key === "ArrowRight" ? 1 : -1);
+      const to = neighbour(order.status, e.key === "ArrowRight" ? 1 : -1, orderShips(order));
       if (to) void move(order, to);
       else setMessage(a.invalidMove);
     }
@@ -290,7 +290,7 @@ export function OrdersBoard({ initial, initialVersion, serverNow, canWrite }: { 
     const enquiry = order.status === "quote";
     const slots = order.lines.filter((l) => l.slot);
     const ships = order.lines.some((l) => l.type === "physical");
-    const moves = allowedMoves(order.status);
+    const moves = allowedMoves(order.status, orderShips(order));
     const dragging = drag?.id === order.id;
     return (
       <li key={order.id}>
@@ -414,7 +414,7 @@ export function OrdersBoard({ initial, initialVersion, serverNow, canWrite }: { 
       <div className={styles.columns} ref={scroller} data-testid="kanban">
         {ORDER_FLOW.map((status) => {
           const list = byStatus(status);
-          const droppable = drag ? drag.from !== status && canMove(drag.from, status) : false;
+          const droppable = drag ? drag.from !== status && canMove(drag.from, status, orderShips(orders.find((o) => o.id === drag.id) ?? { lines: [] })) : false;
           return (
             <section
               key={status}

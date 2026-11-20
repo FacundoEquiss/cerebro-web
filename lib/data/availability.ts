@@ -1,3 +1,4 @@
+import { isMultiple, roundMillis } from "@/lib/decimal";
 import type { Availability, Product, Variant } from "./types";
 
 /** The variant that matches a complete selection, if the product has generated variants. */
@@ -53,7 +54,7 @@ export function selectionLabel(product: Product, selection: Record<string, strin
 
 /** Three decimals are enough for grams in a kilo, and keep float noise out of a quantity. */
 export function roundQuantity(q: number): number {
-  return Math.round((q + Number.EPSILON) * 1000) / 1000;
+  return roundMillis(q);
 }
 
 /** Largest quantity of one line (in the product's unit). */
@@ -69,8 +70,8 @@ export function maxQuantityOf(product: Pick<Product, "maxQuantity">, fallback: n
 export function validQuantity(product: Pick<Product, "minQuantity" | "step" | "maxQuantity">, quantity: number, fallbackMax: number): boolean {
   if (!Number.isFinite(quantity) || quantity <= 0) return false;
   const step = product.step > 0 ? product.step : 1;
-  const steps = quantity / step;
-  return quantity >= product.minQuantity && quantity <= maxQuantityOf(product, fallbackMax) && Math.abs(steps - Math.round(steps)) < 1e-6;
+  // Exact, on thousandths — the same test as `mod(quantity, step) = 0` in SQL.
+  return quantity >= product.minQuantity && quantity <= maxQuantityOf(product, fallbackMax) && isMultiple(quantity, step);
 }
 
 /** Sold by the piece? Anything else (kg, g, m, l…) shows its price "per unit of measure". */

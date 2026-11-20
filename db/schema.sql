@@ -112,7 +112,10 @@ create table if not exists orders (
   is_quote         boolean not null default false,
   quote_sent_at    timestamptz,
   -- When the customer accepted the quote: the clock of an unpaid order starts here.
-  accepted_at      timestamptz
+  accepted_at      timestamptz,
+  -- Orders with an appointment: until when an UNPAID order keeps its slot. After that the seat
+  -- stops counting as taken at once (every read checks it) and expire_orders() cancels the order.
+  hold_until       timestamptz
 );
 create index if not exists orders_created_idx on orders (created_at desc);
 
@@ -186,6 +189,7 @@ alter table products add column if not exists digital jsonb;
 alter table orders add column if not exists is_quote boolean not null default false;
 alter table orders add column if not exists quote_sent_at timestamptz;
 alter table orders add column if not exists accepted_at timestamptz;
+alter table orders add column if not exists hold_until timestamptz;
 alter table orders drop constraint if exists orders_status_check;
 alter table orders add constraint orders_status_check
   check (status in ('quote', 'new', 'paid', 'preparing', 'shipped', 'delivered', 'cancelled'));
@@ -299,7 +303,8 @@ $$;
 --               "slot_start": "…Z", "slot_end": "…Z" }],        ← slot: service lines only
 --   "shipping": { "method": "delivery", "price": 6500, "free_from": 90000 | null },
 --   "payment_provider": "manual", "payment_method": "whatsapp",
---   "customer": { … }, "attribution": { … }, "minimum_order": 0, "max_quantity": 20
+--   "customer": { … }, "attribution": { … }, "minimum_order": 0, "max_quantity": 20,
+--   "hold_hours": 12, "max_slots": 3, "max_unpaid_slots": 3        ← appointments (config/commerce.ts)
 -- }
 -- Any "price" inside a line is never read. Shipping conditions come from the web server's own
 -- configuration (this function is not callable with the public key), and so does the slot of a
@@ -322,6 +327,8 @@ declare
   v_slot_from timestamptz;
   v_slot_to   timestamptz;
   v_booked    numeric;
+  v_slots     int := 0;
+  v_open      int;
   v_variant   variants%rowtype;
   v_has_var   boolean;
   v_selection jsonb;
@@ -374,6 +381,10 @@ begin
        or mod(v_qty, v_product.step) <> 0 then
       raise exception 'ORDER_ERROR:quantity:%', v_product.id;
     end if;
+    -- A download is one licence per line; seats are whole.
+    if (v_product.type = 'digital' and v_qty <> 1) or (v_product.type = 'service' and v_qty <> trunc(v_qty)) then
+      raise exception 'ORDER_ERROR:quantity:%', v_product.id;
+    end if;
     v_physical := v_physical or v_product.type = 'physical';
 
     v_slot_from := null;
@@ -384,10 +395,19 @@ begin
       if v_slot_from is null or v_slot_to is null or v_slot_to <= v_slot_from then
         raise exception 'ORDER_ERROR:slot_required:%', v_product.id;
       end if;
-      -- Seats already held in this slot by every order that is not cancelled (this one included).
+      -- One order cannot hoard the calendar.
+      v_slots := v_slots + 1;
+      if v_slots > coalesce((p ->> 'max_slots')::int, 3) then
+        raise exception 'ORDER_ERROR:booking_limit:%', coalesce(p ->> 'max_slots', '3');
+      end if;
+      -- Seats already held during this time (this order included). OVERLAP, not "same start": an
+      -- appointment taken when the service lasted longer still blocks the time it occupies.
+      -- Cancelled orders hold nothing, and neither does an unpaid order whose hold has lapsed.
       select coalesce(sum(l.quantity), 0) into v_booked
         from order_lines l join orders o on o.id = l.order_id
-        where l.product_id = v_product.id and l.slot_start = v_slot_from and o.status <> 'cancelled';
+        where l.product_id = v_product.id and l.slot_start < v_slot_to and l.slot_end > v_slot_from
+          and o.status <> 'cancelled'
+          and (o.paid_at is not null or o.hold_until is null or o.hold_until > now());
       if v_booked + v_qty > greatest(coalesce((v_product.service ->> 'capacity')::int, 1), 1) then
         raise exception 'ORDER_ERROR:slot_taken:%', v_product.id;
       end if;
@@ -482,8 +502,23 @@ begin
     v_shipping := 0;
   end if;
 
+  if v_slots > 0 then
+    -- …and one buyer cannot sit on many unpaid appointments at a time.
+    select count(*) into v_open
+      from order_lines l join orders o on o.id = l.order_id
+      where l.slot_start is not null and o.id <> v_id and o.status = 'new' and o.paid_at is null
+        and (o.hold_until is null or o.hold_until > now())
+        and lower(o.customer ->> 'email') = lower(p #>> '{customer,email}');
+    if v_open + v_slots > coalesce((p ->> 'max_unpaid_slots')::int, 3) then
+      raise exception 'ORDER_ERROR:booking_limit:%', coalesce(p ->> 'max_unpaid_slots', '3');
+    end if;
+  end if;
+
   update orders set subtotal = v_subtotal, shipping_price = v_shipping, total = v_subtotal + v_shipping,
-                    shipping_method = case when v_physical then shipping_method else 'none' end
+                    shipping_method = case when v_physical then shipping_method else 'none' end,
+                    hold_until = case when v_slots > 0
+                      then now() + make_interval(secs => (coalesce((p ->> 'hold_hours')::numeric, 12) * 3600)::double precision)
+                      else null end
   where id = v_id;
   return order_json(v_id);
 end;
@@ -644,7 +679,10 @@ end;
 $$;
 
 -- The customer accepts. p_total is the total THEY SAW: it must equal the one that was sent.
-create or replace function accept_quote(p_id text, p_total numeric, p_provider text, p_method text) returns jsonb
+drop function if exists accept_quote(text, numeric, text, text);
+-- p_delivery = { "address": "…", "city": "…", "postalCode": "…" } — REQUIRED when the quote charges
+-- shipping: something is going to be delivered, so the customer says where before accepting.
+create or replace function accept_quote(p_id text, p_total numeric, p_provider text, p_method text, p_delivery jsonb) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
   v_order orders%rowtype;
@@ -666,7 +704,17 @@ begin
   if p_total is null or round(p_total, 2) <> v_order.total then
     raise exception 'ORDER_ERROR:quote_changed:%', p_id;
   end if;
-  update orders set status = 'new', accepted_at = now(), payment_provider = p_provider, payment_method = p_method where id = p_id;
+  if v_order.shipping_price > 0 and (
+       coalesce(trim(p_delivery ->> 'address'), '') = '' or coalesce(trim(p_delivery ->> 'city'), '') = ''
+       or coalesce(trim(p_delivery ->> 'postalCode'), '') = '') then
+    raise exception 'ORDER_ERROR:address_required:%', p_id;
+  end if;
+  update orders set status = 'new', accepted_at = now(), payment_provider = p_provider, payment_method = p_method,
+                    customer = customer || case when jsonb_typeof(p_delivery) = 'object'
+                      then jsonb_strip_nulls(jsonb_build_object('address', nullif(trim(p_delivery ->> 'address'), ''),
+                             'city', nullif(trim(p_delivery ->> 'city'), ''), 'postalCode', nullif(trim(p_delivery ->> 'postalCode'), '')))
+                      else '{}'::jsonb end
+  where id = p_id;
   insert into order_events (order_id, type, from_status, to_status, actor, text)
   values (p_id, 'status', 'quote', 'new', 'store', '');
   return order_json(p_id);
@@ -686,7 +734,9 @@ language sql stable security definer set search_path = public as $$
     'customerName', coalesce(o.customer ->> 'name', ''), 'customerPhone', coalesce(o.customer ->> 'phone', '')
   ) order by l.slot_start, o.created_at), '[]'::jsonb)
   from order_lines l join orders o on o.id = l.order_id
-  where l.slot_start is not null and l.slot_start >= p_since and l.slot_start < p_until and o.status <> 'cancelled';
+  where l.slot_start is not null and l.slot_end > p_since and l.slot_start < p_until and o.status <> 'cancelled'
+    -- An unpaid order whose hold lapsed no longer has the seat.
+    and (o.paid_at is not null or o.hold_until is null or o.hold_until > now());
 $$;
 
 -- The private file of a digital product: { "name": "guide.pdf", "file": "<storage key>" } or null.
@@ -756,14 +806,17 @@ declare
   v_id    text;
   v_count int := 0;
 begin
-  if p_hours is null or p_hours <= 0 then
+  if p_hours is null or p_hours < 0 then
     return to_jsonb(0);
   end if;
+  -- p_hours = 0: orders never expire by age; lapsed appointment holds are still released.
   for v_id in
     select id from orders
     -- A quote the customer accepted counts from the moment they accepted it. Enquiries never expire here.
     where status = 'new' and paid_at is null
-      and coalesce(accepted_at, created_at) < now() - make_interval(secs => (p_hours * 3600)::double precision)
+      and ((p_hours > 0 and coalesce(accepted_at, created_at) < now() - make_interval(secs => (p_hours * 3600)::double precision))
+           -- An order with an appointment has its own, shorter deadline.
+           or (hold_until is not null and hold_until < now()))
     for update skip locked
   loop
     update orders set status = 'cancelled', cancel_reason = p_reason where id = v_id;
@@ -956,7 +1009,7 @@ declare
     'save_product(jsonb)', 'set_stock(text, text, numeric)', 'release_order_stock(text)',
     'expire_orders(numeric, text)', 'iso(timestamptz)',
     'create_quote(jsonb)', 'set_quote(text, jsonb, text)', 'send_quote(text, text)',
-    'accept_quote(text, numeric, text, text)', 'bookings_between(timestamptz, timestamptz)', 'digital_file(text)'
+    'accept_quote(text, numeric, text, text, jsonb)', 'bookings_between(timestamptz, timestamptz)', 'digital_file(text)'
   ];
   server_fns text[] := array[
     'create_order(jsonb)', 'record_payment(text, text, text, numeric, text, text)', 'get_order(text)',
@@ -964,7 +1017,7 @@ declare
     'add_order_note(text, text, text)', 'set_order_tracking(text, text, text)', 'claim_purchase_event(text)',
     'admin_catalog()', 'save_product(jsonb)', 'set_stock(text, text, numeric)', 'expire_orders(numeric, text)',
     'create_quote(jsonb)', 'set_quote(text, jsonb, text)', 'send_quote(text, text)',
-    'accept_quote(text, numeric, text, text)', 'bookings_between(timestamptz, timestamptz)', 'digital_file(text)'
+    'accept_quote(text, numeric, text, text, jsonb)', 'bookings_between(timestamptz, timestamptz)', 'digital_file(text)'
   ];
 begin
   foreach o in array tables loop

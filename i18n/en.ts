@@ -145,6 +145,8 @@ export const en: Dictionary = {
     inAppHint: "If the payment gets stuck, open this page in your phone's browser (menu ⋯ → “Open in browser”).",
     antibotWaiting: "Checking you are not a robot…",
     errors: {
+      needs_store: "This store cannot take that order online. Message us and we will arrange it.",
+      booking_limit: "You reached the maximum number of appointments that can be held unpaid ({detail}). Pay or cancel one to book another.",
       slot_required: "Choose a day and a time for the appointment.",
       slot_invalid: "That time is no longer available. Go back to the product and choose another one.",
       slot_taken: "That time was just taken. Go back to the product and choose another one.",
@@ -348,6 +350,22 @@ export const en: Dictionary = {
     text: "We had a problem showing this page. Please try again.",
   },
   types: {
+    contact: {
+      service: "Online booking is not active in this store. Message us and we will arrange your appointment.",
+      quote: "To get a price for this, message us: tell us what you need and we will send you the quote.",
+      digital: "Buying this product online is not active in this store. Message us and we will send it to you.",
+    },
+    contactWhatsapp: "Message us on WhatsApp",
+    contactPage: "Go to contact",
+    contactMessage: "Hi, I would like to ask about “{product}”.",
+    demo: {
+      service: "You are in the demo: nothing is stored here. You can try the booking, but the slot is not really taken and every time always shows as free.",
+      quote: "You are in the demo: nothing is stored here. You can send the enquiry to see how it works, but nobody will receive or price it.",
+      digital: "You are in the demo: nothing is stored here. You can place the order to see how it works, but the download is not delivered.",
+    },
+    notStored: "This store does not keep orders: appointments are not reserved, quotes cannot be priced from here and downloads are not delivered. If this is a demo, that is expected.",
+    quoteAddressTitle: "Where do we deliver it?",
+    quoteAddressMissing: "To accept this quote we need the full delivery address.",
     consult: "Ask for the price",
     badge: {
       digital: "Digital",
@@ -423,6 +441,11 @@ export const en: Dictionary = {
   ],
   admin: {
     quote: {
+      sentNoMail: "The quote is ready for the customer, but NO e-mail was sent (no mail provider is set up, or it failed). Give them the link below.",
+      link: "The customer's link to see, accept and pay",
+      linkCopy: "Copy link",
+      linkWhatsapp: "Send by WhatsApp",
+      whatsappText: "Hi {name}, here is the quote from {brand} for {total}. You can see it, accept it and pay here: {url}",
       piece: "unit",
       title: "Quote",
       request: "What the customer asked for",
@@ -436,7 +459,7 @@ export const en: Dictionary = {
       notSent: "Not sent yet: the customer cannot accept or pay it.",
       incomplete: "Enter a price above zero on every line before sending it.",
       saved: "Quote saved. It has not been sent yet.",
-      sent: "Quote sent to the customer.",
+      sent: "Quote sent to the customer by e-mail.",
       badge: "Enquiry",
       badgeSent: "Sent",
       failed: "The quote could not be saved.",

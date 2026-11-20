@@ -46,7 +46,7 @@ const PATTERNS = [
 const REPOSITORY = ["Fac", "undoEquiss/cerebro-web"].join("");
 const ALLOWED = [new RegExp(REPOSITORY.replace("/", "\\/"), "gi")];
 
-const SKIP_DIRS = new Set(["node_modules", ".next", ".git", ".vercel", ".data", "out", "coverage", "test-results", "playwright-report"]);
+const SKIP_DIRS = new Set(["node_modules", ".next", ".git", ".vercel", ".data", "out", "coverage", "test-results", "playwright-report", ".preset-backups"]);
 const SKIP_FILES = new Set([".brand-blocklist", "package-lock.json", "tsconfig.tsbuildinfo", "next-env.d.ts"]); // generated: hashes and third-party metadata
 const BINARY = /\.(png|jpe?g|webp|avif|gif|ico|woff2?|ttf|otf|pdf|zip|gz|mp4|webm)$/i;
 const DOCS = (file) => /^README(\.[a-z]{2})?\.md$/.test(file) || file.startsWith(`docs${sep}`) || file.startsWith(`cerebro${sep}`);

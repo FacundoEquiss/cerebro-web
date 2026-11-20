@@ -5,8 +5,9 @@ import { data } from "@/lib/data";
 import { AdminError, type AdminOrder, type OrderStatus } from "@/lib/data/types";
 import { sendServerEvent } from "@/lib/analytics/server";
 import { env } from "@/lib/env";
+import { defer } from "@/lib/defer";
 import { sendPaidMail } from "@/lib/orders/notify";
-import { canMove } from "@/lib/orders/status";
+import { canMove, orderShips } from "@/lib/orders/status";
 
 /**
  * THE PURCHASE IS REPORTED ONCE PER ORDER, from the server, with the order id as `event_id`.
@@ -44,17 +45,24 @@ export async function moveOrder(id: string, to: OrderStatus, actor: string, reas
   const adapter = await data();
   const current = await adapter.getAdminOrder(id);
   if (!current) throw new AdminError("not_found");
-  if (!canMove(current.status, to)) throw new AdminError("invalid_transition", `${current.status} → ${to}`);
+  // «Paid → Delivered» in one step only for an order with nothing to ship (a service, a download).
+  if (!canMove(current.status, to, orderShips(current))) throw new AdminError("invalid_transition", `${current.status} → ${to}`);
+  // Read BEFORE the move: an adapter may hand back the very object it then changes.
+  const firstPayment = current.paidAt === null;
   const order = await adapter.setOrderStatus(id, current.status, to, actor, reason);
   if (to === "paid") {
     await reportPurchaseOnce(order, { claim: (orderId) => adapter.claimPurchaseEvent(orderId), send: sendServerEvent, siteUrl: env().siteUrl }).catch(
       (e) => console.error("[purchase-event]", e instanceof Error ? e.message : e),
     );
     // The owner confirmed the money by hand: the buyer is told — and, if they bought something
-    // digital, this is the e-mail that carries the download links.
-    void adapter.getOrder(id)
-      .then((stored) => (stored ? sendPaidMail(stored, null, order.customer.email) : undefined))
-      .catch((e) => console.error("[paid-mail]", e instanceof Error ? e.message : e));
+    // digital, this is the e-mail that carries the download links. ONCE per order: only the first
+    // time it becomes paid (stepping back to «Paid» from «Preparing» sends nothing).
+    if (firstPayment) {
+      defer(async () => {
+        const stored = await adapter.getOrder(id);
+        if (stored) await sendPaidMail(stored, null, order.customer.email);
+      }, "paid-mail");
+    }
   }
   return order;
 }

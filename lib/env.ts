@@ -34,6 +34,8 @@ const schema = z
     ORDER_SECRET: optional,
     // Hours an unpaid order may hold its stock before it is cancelled. 0 = never.
     ORDER_EXPIRY_HOURS: z.preprocess((v) => (v === undefined || v === "" ? 48 : Number(v)), z.number().min(0).max(24 * 365)),
+    // Hours an unpaid order keeps the slot of a service. Empty = commerce.booking.holdHours.
+    BOOKING_HOLD_HOURS: z.preprocess((v) => (v === undefined || v === "" ? undefined : Number(v)), z.number().min(0.25).max(24 * 30).optional()),
     CRON_SECRET: optional,
     TRUSTED_PROXY_HEADER: optional,
 

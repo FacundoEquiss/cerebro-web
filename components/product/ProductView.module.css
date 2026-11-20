@@ -66,3 +66,5 @@
 .lineTotal { font-weight: 500; opacity: 0.9; white-space: nowrap; }
 .note { font-size: 0.84rem; }
 .quantity output { padding-inline: 4px; white-space: nowrap; }
+.contact { display: grid; gap: 12px; padding: 18px; }
+.contactActions { display: flex; flex-wrap: wrap; gap: 8px; }

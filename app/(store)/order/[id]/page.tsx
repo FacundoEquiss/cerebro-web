@@ -75,6 +75,7 @@ export default async function OrderPage({ params, searchParams }: Props) {
   const quoteProblem = !enquiry ? null
     : quoteFlag === "changed" ? t.types.quoteChanged
     : quoteFlag === "not_sent" ? t.types.quoteNotSent
+    : quoteFlag === "address" ? t.types.quoteAddressMissing
     : quoteFlag ? t.types.quoteUnavailable : null;
   const ships = needsShipping(order.lines);
   const slots = order.lines.filter((l) => l.slot);
@@ -126,6 +127,10 @@ export default async function OrderPage({ params, searchParams }: Props) {
         </form>
       ) : null}
 
+      {!adapter.storesOrders && (enquiry || slots.length > 0 || digital.length > 0) ? (
+        <p className="notice" data-testid="order-not-stored">{t.types.notStored}</p>
+      ) : null}
+
       {quoteProblem ? <p className="notice" role="alert" data-testid="quote-problem">{quoteProblem}</p> : null}
 
       {quoteSent ? (
@@ -136,6 +141,26 @@ export default async function OrderPage({ params, searchParams }: Props) {
           <input type="hidden" name="t" value={token ?? ""} />
           <input type="hidden" name="total" value={order.total} />
           <p><strong>{t.cart.total}: <span data-testid="quote-total">{formatPrice(order.total)}</span></strong></p>
+          {order.shipping.price > 0 ? (
+            // The quote charges shipping: where it goes is part of accepting it.
+            <fieldset className={styles.address} data-testid="quote-address">
+              <legend>{t.types.quoteAddressTitle}</legend>
+              <div className="field">
+                <label htmlFor="quote-address-line">{t.checkout.address}</label>
+                <input id="quote-address-line" name="address" className="input" required maxLength={200} autoComplete="street-address" data-testid="quote-address-line" />
+              </div>
+              <div className={styles.two}>
+                <div className="field">
+                  <label htmlFor="quote-address-city">{t.checkout.city}</label>
+                  <input id="quote-address-city" name="city" className="input" required maxLength={120} autoComplete="address-level2" data-testid="quote-address-city" />
+                </div>
+                <div className="field">
+                  <label htmlFor="quote-address-postal">{t.checkout.postalCode}</label>
+                  <input id="quote-address-postal" name="postalCode" className="input" required maxLength={20} autoComplete="postal-code" data-testid="quote-address-postal" />
+                </div>
+              </div>
+            </fieldset>
+          ) : null}
           <fieldset className={styles.pay}>
             <legend>{t.types.quoteHowToPay}</legend>
             {payMethods.map((m, i) => (

@@ -21,6 +21,8 @@ export async function POST(request: Request) {
   const token = String(form?.get("t") ?? "");
   const method = String(form?.get("payment") ?? "") as PaymentMethod;
   const total = Number(form?.get("total"));
+  const field = (name: string) => String(form?.get(name) ?? "").trim().slice(0, 200);
+  const delivery = { address: field("address"), city: field("city"), postalCode: field("postalCode").slice(0, 20) };
   const back = (t: string, flag?: string) => NextResponse.redirect(`${e.siteUrl}${paths.order(id, t)}${flag ? `&quote=${flag}` : ""}`, 303);
 
   // No origin check: the order page forbids referrers, so browsers send `Origin: null`. The signed
@@ -37,7 +39,7 @@ export async function POST(request: Request) {
     const adapter = await data();
     if (!adapter.storesOrders) return back(token, "unavailable");
     await expireStaleOrders();
-    const order = await adapter.acceptQuote(id, total, provider.id, method);
+    const order = await adapter.acceptQuote(id, total, provider.id, method, delivery);
     // A fresh receipt: the old one was signed when the enquiry had no price.
     const fresh = signReceipt(order, e.orderSecret);
     if (order.status === "new" && order.paymentMethod === "online") {
@@ -52,7 +54,7 @@ export async function POST(request: Request) {
     }
     return back(fresh);
   } catch (err) {
-    if (err instanceof OrderError) return back(token, err.code === "quote_changed" ? "changed" : err.code === "quote_not_sent" ? "not_sent" : "unavailable");
+    if (err instanceof OrderError) return back(token, err.code === "quote_changed" ? "changed" : err.code === "quote_not_sent" ? "not_sent" : err.code === "address_required" ? "address" : "unavailable");
     console.error("[quote-accept]", err instanceof Error ? err.message : err);
     return back(token, "unavailable");
   }

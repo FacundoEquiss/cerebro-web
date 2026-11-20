@@ -6,7 +6,7 @@
 import { commerce } from "@/config/commerce";
 import { brand } from "@/config/brand";
 import { lineTotal, roundMoney } from "@/lib/format";
-import { resolveSlot } from "@/lib/booking/slots";
+import { resolveSlot, seatsOverlapping, type Held } from "@/lib/booking/slots";
 import { findVariant, missingOptions, needsShipping, roundQuantity, selectionLabel, unitPrice, unitsAvailable, validQuantity } from "@/lib/data/availability";
 import { OrderError, type Order, type OrderLine, type OrderLineRequest, type OrderRequest, type Product, type QuoteRequest, type ShippingTerms } from "@/lib/data/types";
 
@@ -45,8 +45,8 @@ export interface PricedOrder {
 }
 
 export interface PricingContext {
-  /** Seats already taken per `<productId>|<slot start ISO>`, from the stored bookings. */
-  taken?: Map<string, number>;
+  /** Seats already held by other orders (cancelled and lapsed ones excluded), from the store. */
+  held?: Held[];
   now?: number;
 }
 
@@ -67,7 +67,8 @@ export function priceOrder(
   const now = context.now ?? Date.now();
   const byId = new Map(products.map((p) => [p.id, p]));
   const wanted = new Map<string, number>(); // units asked per variant/product, across lines
-  const seats = new Map<string, number>(); // seats asked per slot, across lines
+  const bookedHere: Held[] = []; // seats asked by THIS order, line by line
+  let serviceLines = 0;
   const lines: OrderLine[] = [];
 
   for (const line of request.lines) {
@@ -77,6 +78,8 @@ export function priceOrder(
     if (product.type === "quote") throw new OrderError("quote_only", product.id);
     const quantity = roundQuantity(Number(line.quantity));
     if (!validQuantity(product, quantity, commerce.maxQuantityPerLine)) throw new OrderError("quantity", product.id);
+    // A download is one licence per order line: there is no "three of the same file".
+    if (product.type === "digital" && quantity !== 1) throw new OrderError("quantity", product.id);
 
     let variant = null;
     let selection: Record<string, string> = {};
@@ -102,12 +105,14 @@ export function priceOrder(
     let slot = null;
     if (product.type === "service") {
       // The slot must be one this service really offers now, and it must have room.
+      // One order cannot hoard the calendar.
+      if (++serviceLines > commerce.booking.maxSlotsPerOrder) throw new OrderError("booking_limit", String(commerce.booking.maxSlotsPerOrder));
+      if (!Number.isInteger(quantity)) throw new OrderError("quantity", product.id); // seats are whole
       slot = resolveSlot(product, line.slot, now);
-      const key = `${product.id}|${slot.start}`;
-      const booked = (seats.get(key) ?? 0) + quantity;
-      seats.set(key, booked);
       const capacity = Math.max(1, Math.trunc(product.service?.capacity ?? 1));
-      if ((context.taken?.get(key) ?? 0) + booked > capacity) throw new OrderError("slot_taken", product.id);
+      const taken = seatsOverlapping(context.held ?? [], product.id, slot.start, slot.end) + seatsOverlapping(bookedHere, product.id, slot.start, slot.end);
+      if (taken + quantity > capacity) throw new OrderError("slot_taken", product.id);
+      bookedHere.push({ productId: product.id, start: slot.start, end: slot.end, seats: quantity });
     }
 
     lines.push({

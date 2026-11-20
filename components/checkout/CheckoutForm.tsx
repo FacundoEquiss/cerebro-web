@@ -136,9 +136,9 @@ export function CheckoutForm({
           attribution: { ...readAttribution(), ...browserIds() },
         }),
       });
-      const body = (await response.json().catch(() => ({}))) as { url?: string; redirect?: string | null; paymentError?: boolean; error?: string; field?: string };
+      const body = (await response.json().catch(() => ({}))) as { url?: string; redirect?: string | null; paymentError?: boolean; error?: string; field?: string; detail?: string };
       if (!response.ok || !body.url) {
-        setFormError(body.error === "invalid" && body.field ? (ERRORS[body.field] ?? ERRORS.generic!) : (ERRORS[body.error ?? "generic"] ?? ERRORS.generic!));
+        setFormError(body.error === "invalid" && body.field ? (ERRORS[body.field] ?? ERRORS.generic!) : fill(ERRORS[body.error ?? "generic"] ?? ERRORS.generic!, { detail: body.detail ?? "" }));
         // The token was spent by this attempt: get a new one before the next.
         setResetSignal((n) => n + 1);
         setSending(false);

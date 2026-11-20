@@ -61,7 +61,8 @@ export function resolveLine(line: StoredLine, catalog: CartProduct[]): ResolvedL
   // Never in a cart: a product that is asked for, and a service without its slot (or with one that passed).
   if (product.type === "quote") return null;
   if (product.type === "service" && !(line.slot && line.slot > localNow())) return null;
-  const max = Math.min(available, maxQuantityOf(product, commerce.maxQuantityPerLine));
+  // A download is one per order line.
+  const max = product.type === "digital" ? 1 : Math.min(available, maxQuantityOf(product, commerce.maxQuantityPerLine));
   const step = product.step > 0 ? product.step : 1;
   // Snap what was saved to what can be bought today: inside the limits, on a multiple of the step.
   const snapped = roundQuantity(Math.max(product.minQuantity, Math.min(max, Math.round(line.quantity / step) * step)));

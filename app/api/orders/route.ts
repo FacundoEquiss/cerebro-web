@@ -16,6 +16,7 @@ import { signReceipt } from "@/lib/orders/receipt";
 import { orderRequestSchema } from "@/lib/orders/schema";
 import { payments } from "@/lib/payments";
 import { startPayment } from "@/lib/payments/start";
+import { needsStore, storeMode } from "@/lib/store-mode";
 import { clientIp, hit, sameOrigin } from "@/lib/rate-limit";
 
 const fail = (error: string, status: number, extra: Record<string, unknown> = {}) => NextResponse.json({ error, ...extra }, { status });
@@ -55,7 +56,14 @@ export async function POST(request: Request) {
     const adapter = await data();
     // SHIPPING ONLY IF SOMETHING IS SHIPPED — and that is read from the catalogue, not from the
     // browser: an order of services and downloads has no method, no address and no shipping cost.
-    const ships = requestNeedsShipping(body.lines, await adapter.listProducts());
+    const products = await adapter.listProducts();
+    // A slot, a quote and a download need a store that remembers the order. Without one (and
+    // outside a demo) they are refused here, whatever the page showed.
+    if ((await storeMode()) === "contact") {
+      const blocked = body.lines.find((l) => needsStore(products.find((p) => p.id === l.productId)?.type));
+      if (blocked) throw new OrderError("needs_store", blocked.productId);
+    }
+    const ships = requestNeedsShipping(body.lines, products);
     const shippingMethodId = ships ? (body.shippingMethodId ?? "") : NO_SHIPPING;
     if (ships) {
       const method = shippingMethod(shippingMethodId);

@@ -33,14 +33,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const item = order!.lines[index];
     if (!item || item.type !== "digital") return refuse("not_found", 404);
     const file = await adapter.getDigitalFile(item.productId);
-    const bytes = file ? await storage().getPrivate(file.file) : null;
-    if (!file || !bytes) return refuse("not_found", 404);
+    // A stream: the file is never held whole in memory, whatever it weighs.
+    const opened = file ? await storage().openPrivate(file.file) : null;
+    if (!file || !opened) return refuse("not_found", 404);
     const name = file.name.replace(/[^\w. -]+/g, "_") || "download";
-    return new NextResponse(Buffer.from(bytes), {
+    return new NextResponse(opened.stream, {
       headers: {
         "Content-Type": DIGITAL_TYPES[extensionOf(file.file)] ?? "application/octet-stream",
         "Content-Disposition": `attachment; filename="${name}"`,
-        "Content-Length": String(bytes.byteLength),
+        ...(opened.size !== null ? { "Content-Length": String(opened.size) } : {}),
         "Cache-Control": "private, no-store",
         "X-Robots-Tag": "noindex",
       },

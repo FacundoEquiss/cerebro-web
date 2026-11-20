@@ -30,6 +30,9 @@ const nextConfig: NextConfig = {
   images: { formats: ["image/avif", "image/webp"] },
   // `pg` is only loaded when DATA_SOURCE=postgres; keep it out of the bundles.
   serverExternalPackages: ["pg"],
+  // The example files of the digital products are read from disk at request time: make sure
+  // they travel with the server (serverless bundles and the standalone output).
+  outputFileTracingIncludes: { "/api/downloads/**/*": ["./content/downloads/**/*"] },
 
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

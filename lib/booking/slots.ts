@@ -58,7 +58,11 @@ export function wallTime(instant: Date | string | number, timeZone: string): { d
   return { date: `${p.year}-${pad(p.month!)}-${pad(p.day!)}`, time: `${pad(p.hour!)}:${pad(p.minute!)}` };
 }
 
-/** The instant at which the clocks of `timeZone` show `date` `time`. */
+/**
+ * The instant at which the clocks of `timeZone` show `date` `time`. Always answers: for a wall
+ * time that does not exist (the hour skipped when clocks go forward) it gives the instant right
+ * after the jump — good for the edges of a day. To know whether a time really exists use `existingInstant`.
+ */
 export function zonedInstant(date: string, time: string, timeZone: string): Date {
   const [y, m, d] = date.split("-").map(Number) as [number, number, number];
   const [h, min] = time.split(":").map(Number) as [number, number];
@@ -70,7 +74,33 @@ export function zonedInstant(date: string, time: string, timeZone: string): Date
     const shown = Date.UTC(p.year!, p.month! - 1, p.day!, p.hour!, p.minute!);
     guess += wanted - shown;
   }
+  // A wall time the clocks skip: the rounds above land just BEFORE the jump. Step over it, to
+  // the first instant whose clock is past what was asked (for 00:00, the first instant of that day).
+  const p = parts(new Date(guess), timeZone);
+  const behind = wanted - Date.UTC(p.year!, p.month! - 1, p.day!, p.hour!, p.minute!);
+  if (behind > 0) guess += behind;
   return new Date(guess);
+}
+
+/**
+ * Like `zonedInstant`, but honest about daylight saving:
+ *   · a wall time that does NOT exist that day (02:30 when clocks jump from 02:00 to 03:00, or
+ *     00:30 in a zone that switches at midnight) → `null`: there is no such appointment;
+ *   · a wall time that happens TWICE (clocks go back) → the FIRST of the two, always.
+ */
+export function existingInstant(date: string, time: string, timeZone: string): Date | null {
+  const found = zonedInstant(date, time, timeZone);
+  const shows = (at: number) => {
+    const w = wallTime(at, timeZone);
+    return w.date === date && w.time === time;
+  };
+  if (!shows(found.getTime())) return null;
+  // Changes are of an hour (or half an hour in a few zones): look for an earlier twin.
+  for (const back of [120, 60, 30]) {
+    const earlier = found.getTime() - back * MINUTE;
+    if (shows(earlier)) return new Date(earlier);
+  }
+  return found;
 }
 
 export function weekdayOf(date: string): Weekday {
@@ -107,7 +137,9 @@ export function slotsOn(product: Pick<Product, "service">, date: string, now: nu
     if (!TIME.test(from) || !TIME.test(to)) continue;
     for (let at = minutes(from); at + rules.durationMinutes <= minutes(to); at += rules.durationMinutes) {
       const time = clock(at);
-      const start = zonedInstant(date, time, rules.timeZone);
+      // A time the clocks skip that day is not a slot.
+      const start = existingInstant(date, time, rules.timeZone);
+      if (!start) continue;
       if (start.getTime() < now + rules.minNoticeHours * 60 * MINUTE) continue;
       out.push({ time, start: start.toISOString(), end: new Date(start.getTime() + rules.durationMinutes * MINUTE).toISOString() });
     }
@@ -139,12 +171,23 @@ export function resolveSlot(product: Pick<Product, "id" | "service">, slot: stri
   return { start: found.start, end: found.end };
 }
 
-/** Seats already taken per slot start (ISO), from a list of bookings of ONE product. */
-export function seatsTaken(bookings: { start: string; seats: number }[]): Map<string, number> {
-  const taken = new Map<string, number>();
-  for (const b of bookings) {
-    const key = new Date(b.start).toISOString();
-    taken.set(key, (taken.get(key) ?? 0) + b.seats);
-  }
-  return taken;
+/** A seat that is held: which product, from when to when, how many. */
+export interface Held {
+  productId: string;
+  start: string;
+  end: string;
+  seats: number;
+}
+
+/**
+ * Seats of a product already held during `[start, end)`. Bookings count when they OVERLAP the
+ * range, not only when they start at the same minute: if the duration of a service changes, the
+ * appointments taken with the old duration still block the time they occupy.
+ */
+export function seatsOverlapping(held: Held[], productId: string, start: string, end: string): number {
+  const from = Date.parse(start);
+  const to = Date.parse(end);
+  let seats = 0;
+  for (const h of held) if (h.productId === productId && Date.parse(h.start) < to && Date.parse(h.end) > from) seats += h.seats;
+  return seats;
 }

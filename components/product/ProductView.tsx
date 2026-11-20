@@ -3,7 +3,7 @@
 // changes the photo. Server-rendered like everything else: name, price and options are in the
 // HTML before any JavaScript runs.
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Check, Minus, Plus } from "lucide-react";
 import { brand } from "@/config/brand";
@@ -12,15 +12,13 @@ import { fill, paths, t } from "@/i18n";
 import { track } from "@/lib/analytics/client";
 import { availabilityOf, byPiece, findVariant, maxQuantityOf, missingOptions, productAvailability, roundQuantity, unitPrice, unitsAvailable } from "@/lib/data/availability";
 import type { Product } from "@/lib/data/types";
-import { formatPrice, formatQuantity, formatUnitPrice } from "@/lib/format";
+import { formatPrice, formatQuantity, formatUnitPrice, lineTotal } from "@/lib/format";
 import { useCart } from "@/stores/cart";
 import { QuoteForm } from "./QuoteForm";
 import { SlotPicker } from "./SlotPicker";
 import styles from "./ProductView.module.css";
 
 export interface BookingInfo {
-  /** Days with slots, `YYYY-MM-DD` (computed on the server from the opening hours). */
-  dates: string[];
   timeZone: string;
   durationMinutes: number;
 }
@@ -29,6 +27,25 @@ export function ProductView({ product, booking, antibot = "none" }: { product: P
   const isQuote = product.type === "quote";
   const isService = product.type === "service";
   const [slot, setSlot] = useState("");
+  // Bookings, quotes and downloads need a store that remembers orders (lib/store-mode.ts). The
+  // answer is asked when the page opens: "contact" = this store cannot take them online.
+  const needsStore = product.type !== "physical";
+  const [mode, setMode] = useState<"live" | "demo" | "contact" | null>(needsStore ? null : "live");
+  useEffect(() => {
+    if (!needsStore) return;
+    let alive = true;
+    fetch("/api/store-mode", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((body: { mode: "live" | "demo" | "contact" }) => alive && setMode(body.mode))
+      .catch(() => alive && setMode("live"));
+    return () => {
+      alive = false;
+    };
+  }, [needsStore]);
+  const kind = isQuote ? "quote" : isService ? "service" : "digital";
+  const whatsapp = brand.contact.whatsapp
+    ? `https://wa.me/${brand.contact.whatsapp}?text=${encodeURIComponent(fill(t.types.contactMessage, { product: product.name }))}`
+    : null;
   const [selection, setSelection] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(product.minQuantity);
   const [imageIndex, setImageIndex] = useState(0);
@@ -45,7 +62,8 @@ export function ProductView({ product, booking, antibot = "none" }: { product: P
   const availability = unavailable ? "out_of_stock" : complete ? availabilityOf(product, variant) : productAvailability(product);
   const price = unitPrice(product, variant);
   const onSale = product.compareAtPrice !== null && product.compareAtPrice > price;
-  const limit = maxQuantityOf(product, commerce.maxQuantityPerLine);
+  // A download is one per order line.
+  const limit = product.type === "digital" ? 1 : maxQuantityOf(product, commerce.maxQuantityPerLine);
   const max = Math.min(limit, complete && !unavailable ? unitsAvailable(product, variant) : limit);
   const step = product.step > 0 ? product.step : 1;
   const piece = byPiece(product);
@@ -177,11 +195,26 @@ export function ProductView({ product, booking, antibot = "none" }: { product: P
           })}
         </div>
 
-        {isService && booking ? (
-          <SlotPicker productId={product.id} dates={booking.dates} timeZone={booking.timeZone} seats={quantity} value={slot} onChange={(v) => { setSlot(v); setError(""); setAdded(false); }} />
+        {mode === null ? <div className="skeleton" style={{ height: 120 }} role="status" aria-label={t.common.loading} /> : null}
+
+        {mode === "contact" ? (
+          // A real store that cannot remember orders: no booking, no quote form, no cart for this.
+          <div className={`card ${styles.contact}`} data-testid="contact-instead">
+            <p>{t.types.contact[kind]}</p>
+            <div className={styles.contactActions}>
+              {whatsapp ? <a href={whatsapp} className="btn" target="_blank" rel="noopener noreferrer" data-testid="contact-whatsapp">{t.types.contactWhatsapp}</a> : null}
+              <Link href={paths.contact()} className={`btn ${whatsapp ? "btn-secondary" : ""}`} data-testid="contact-link">{t.types.contactPage}</Link>
+            </div>
+          </div>
         ) : null}
 
-        {isQuote ? <QuoteForm product={product} antibot={antibot} /> : null}
+        {mode === "demo" ? <p className="notice" data-testid="demo-not-stored">{t.types.demo[kind]}</p> : null}
+
+        {isService && booking && (mode === "live" || mode === "demo") ? (
+          <SlotPicker productId={product.id} timeZone={booking.timeZone} seats={quantity} value={slot} onChange={(v) => { setSlot(v); setError(""); setAdded(false); }} />
+        ) : null}
+
+        {isQuote && (mode === "live" || mode === "demo") ? <QuoteForm product={product} antibot={antibot} /> : null}
 
         {isQuote || isService || product.type === "digital" ? null : (
         <p className={styles.stock} data-state={availability} data-testid="stock-status">
@@ -193,7 +226,7 @@ export function ProductView({ product, booking, antibot = "none" }: { product: P
         </p>
         )}
 
-        {isQuote ? null : (
+        {isQuote || mode === null || mode === "contact" ? null : (
         <div className={styles.actions}>
           {product.type === "digital" ? null : (
           <div className={styles.quantity} title={isService ? t.types.seats : undefined}>
@@ -214,7 +247,7 @@ export function ProductView({ product, booking, antibot = "none" }: { product: P
             data-testid="add-to-cart"
           >
             {availability === "out_of_stock" && complete ? t.product.unavailable : isService ? t.types.book : t.product.addToCart}
-            {!piece && !(availability === "out_of_stock" && complete) ? <span className={styles.lineTotal}> · {formatPrice(Math.round(price * quantity * 100) / 100)}</span> : null}
+            {!piece && !(availability === "out_of_stock" && complete) ? <span className={styles.lineTotal}> · {formatPrice(lineTotal({ unitPrice: price, quantity }))}</span> : null}
           </button>
         </div>
         )}

@@ -2,9 +2,9 @@
 
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireWriter } from "@/lib/admin/auth";
+import { requireAdmin, requireWriter } from "@/lib/admin/auth";
 import { moveOrder } from "@/lib/admin/orders";
-import { priceQuote, sendQuote } from "@/lib/admin/quotes";
+import { priceQuote, quoteLink, sendQuote } from "@/lib/admin/quotes";
 import { data } from "@/lib/data";
 import { AdminError, ReadOnlyError } from "@/lib/data/types";
 
@@ -32,12 +32,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: "reason_required" }, { status: 400 });
     }
     const adapter = await data();
+    if (body.action === "send_quote") {
+      // `mailed` says whether the e-mail really went out; `link` lets the owner deliver it by hand.
+      return NextResponse.json(await sendQuote(id, { prices: body.prices, shipping: body.shipping }, actor));
+    }
     const order =
       body.action === "move" ? await moveOrder(id, body.to, actor, body.reason)
       : body.action === "note" ? await adapter.addOrderNote(id, body.text, actor)
       : body.action === "tracking" ? await adapter.setOrderTracking(id, body.tracking, actor)
-      : body.action === "quote" ? await priceQuote(id, { prices: body.prices, shipping: body.shipping }, actor)
-      : await sendQuote(id, { prices: body.prices, shipping: body.shipping }, actor);
+      : await priceQuote(id, { prices: body.prices, shipping: body.shipping }, actor);
     return NextResponse.json({ order });
   } catch (e) {
     if (e instanceof AdminError) return NextResponse.json({ error: e.code }, { status: STATUS[e.code] });
@@ -45,4 +48,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     console.error("[admin-order]", e instanceof Error ? e.message : e);
     return NextResponse.json({ error: "generic" }, { status: 500 });
   }
+}
+
+/** GET /api/admin/orders/<id> — the customer's signed link to a quote, to copy or send by message. */
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const guard = await requireAdmin();
+  if (guard.response) return guard.response;
+  const { id } = await params;
+  // The demo user reads everything else, but this link lets its holder accept a quote.
+  if (guard.session.role !== "admin") return NextResponse.json({ link: null });
+  return NextResponse.json({ link: await quoteLink(id) }, { headers: { "Cache-Control": "no-store" } });
 }

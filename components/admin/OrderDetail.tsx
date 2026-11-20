@@ -10,7 +10,7 @@ import { fill, t } from "@/i18n";
 import type { AdminOrder, OrderEvent, OrderStatus } from "@/lib/data/types";
 import { formatPrice, formatQuantity, formatSlot, formatUnitPrice, lineTotal } from "@/lib/format";
 import { quoteTotals } from "@/lib/orders/quote-totals";
-import { allowedMoves, ORDER_FLOW } from "@/lib/orders/status";
+import { allowedMoves, ORDER_FLOW, orderShips } from "@/lib/orders/status";
 import { adminFetch } from "./api";
 import { formatDateTime, paymentLabel, shippingLabel, statusLabel, timeAgo } from "./format";
 import styles from "./OrderDetail.module.css";
@@ -70,13 +70,57 @@ export function OrderDetail({
   const shippingNumber = Number(quoteShipping.replace(",", ".")) || 0;
   const preview = quoteTotals(order.lines, numbers, shippingNumber);
 
+  const [quoteLink, setQuoteLink] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const sentAt = order.quote?.sentAt ?? null;
+  // The customer's signed link, to deliver by hand when there is no e-mail (or on top of it).
+  useEffect(() => {
+    if (!enquiry || !sentAt || !canWrite) {
+      setQuoteLink(null);
+      return;
+    }
+    let alive = true;
+    adminFetch<{ link?: string | null }>(`/api/admin/orders/${encodeURIComponent(order.id)}`).then((r) => alive && setQuoteLink(r.ok ? (r.data.link ?? null) : null));
+    return () => {
+      alive = false;
+    };
+  }, [enquiry, sentAt, canWrite, order.id, order.total]);
+  const quotePhone = order.customer.phone.replace(/\D/g, "");
+  const quoteWhatsapp = quoteLink && quotePhone.length >= 6
+    ? `https://wa.me/${quotePhone}?text=${encodeURIComponent(fill(t.admin.quote.whatsappText, { name: order.customer.name.split(" ")[0] ?? "", brand: brand.name, total: formatPrice(order.total), url: quoteLink }))}`
+    : null;
+
   async function submitQuote(send: boolean) {
     setQuoteNote("");
     if (send && numbers.some((n) => n <= 0)) {
       setError(t.admin.quote.incomplete);
       return;
     }
-    if (await act({ action: send ? "send_quote" : "quote", prices: numbers, shipping: shippingNumber })) setQuoteNote(send ? t.admin.quote.sent : t.admin.quote.saved);
+    if (!canWrite) {
+      setError(t.admin.orders.readOnly);
+      return;
+    }
+    setBusy(true);
+    setError("");
+    const result = await adminFetch<{ order?: AdminOrder; mailed?: boolean; link?: string | null }>(`/api/admin/orders/${encodeURIComponent(order.id)}`, { json: { action: send ? "send_quote" : "quote", prices: numbers, shipping: shippingNumber } });
+    setBusy(false);
+    if (!result.ok || !result.data.order) {
+      setError(result.status === 403 ? t.admin.orders.readOnly : t.admin.quote.failed);
+      return;
+    }
+    onChange(result.data.order);
+    if (send) setQuoteLink(result.data.link ?? null);
+    // Never "sent to the customer" unless an e-mail really went out.
+    setQuoteNote(!send ? t.admin.quote.saved : result.data.mailed ? t.admin.quote.sent : t.admin.quote.sentNoMail);
+  }
+
+  async function copyLink() {
+    if (!quoteLink) return;
+    try {
+      await navigator.clipboard.writeText(quoteLink);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 1800);
+    } catch {}
   }
 
   useEffect(() => {
@@ -104,7 +148,7 @@ export function OrderDetail({
 
   useEffect(() => setTracking(order.tracking ?? ""), [order.id, order.tracking]);
 
-  const moves = allowedMoves(order.status);
+  const moves = allowedMoves(order.status, orderShips(order));
   const next = ORDER_FLOW[ORDER_FLOW.indexOf(order.status) + 1];
   const primary = next && moves.includes(next) ? next : null;
   const others = moves.filter((m) => m !== primary && m !== "cancelled");
@@ -203,6 +247,8 @@ export function OrderDetail({
               <a href={`mailto:${order.customer.email}`}><Mail aria-hidden size={15} /> {order.customer.email}</a>
               <a href={`tel:${order.customer.phone.replace(/[^\d+]/g, "")}`}><Phone aria-hidden size={15} /> {order.customer.phone}</a>
             </p>
+            {/* Nothing physical in the order, yet an address was given (a quote with shipping). */}
+            {!ships && address ? <p data-testid="detail-address">{address}</p> : null}
             {order.customer.notes ? <p className={styles.quote}><span>{d.customerNotes}:</span> {order.customer.notes}</p> : null}
             {source ? <p className={styles.meta}>{d.source}: {source}</p> : null}
           </section>
@@ -236,6 +282,22 @@ export function OrderDetail({
                 </button>
               </div>
               <p className={styles.meta} role="status" data-testid="quote-note">{quoteNote || t.admin.quote.help}</p>
+              {sentAt && quoteLink ? (
+                <div className={styles.quoteLink} data-testid="quote-link-box">
+                  <label htmlFor="quote-link">{t.admin.quote.link}</label>
+                  <input id="quote-link" className="input" readOnly value={quoteLink} onFocus={(e) => e.currentTarget.select()} data-testid="quote-link" />
+                  <div className={styles.inline}>
+                    <button type="button" className="btn btn-secondary" onClick={copyLink} data-testid="quote-link-copy">
+                      {linkCopied ? <Check aria-hidden size={17} /> : <Copy aria-hidden size={17} />} {linkCopied ? d.copied : t.admin.quote.linkCopy}
+                    </button>
+                    {quoteWhatsapp ? (
+                      <a className="btn btn-secondary" href={quoteWhatsapp} target="_blank" rel="noopener noreferrer" data-testid="quote-link-whatsapp">
+                        <MessageCircle aria-hidden size={17} /> {t.admin.quote.linkWhatsapp}
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
             </section>
           ) : null}
 

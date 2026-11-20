@@ -7,7 +7,7 @@ import { customersFromOrders, salesSummary } from "@/lib/admin/reports";
 import { generateVariants, slugify } from "@/lib/admin/products";
 import { demoOrders } from "@/lib/data/demo-orders";
 import { AdminError, type AdminOrder } from "@/lib/data/types";
-import { allowedMoves, canMove, neighbour, ORDER_FLOW, ORDER_STATUSES } from "@/lib/orders/status";
+import { allowedMoves, canMove, neighbour, ORDER_FLOW, ORDER_STATUSES, orderShips } from "@/lib/orders/status";
 import { sniffImage, uploadName } from "@/lib/storage";
 import { hoodie, product, request, tee } from "./helpers";
 
@@ -35,7 +35,14 @@ describe("order status transitions", () => {
     expect(allowedMoves("quote")).toEqual(["cancelled"]);
     expect(canMove("new", "quote")).toBe(false);
     // An order with nothing to ship (a service, a download) may be closed straight after the payment.
-    expect(canMove("paid", "delivered")).toBe(true);
+    // …and ONLY such an order: something that ships goes through «Ready / Shipped».
+    expect(canMove("paid", "delivered")).toBe(false);
+    expect(canMove("paid", "delivered", false)).toBe(true);
+    expect(canMove("preparing", "delivered", false)).toBe(true);
+    expect(canMove("new", "delivered", false)).toBe(false);
+    expect(orderShips({ lines: [{ type: "digital" }, { type: "service" }] })).toBe(false);
+    expect(orderShips({ lines: [{ type: "digital" }, { type: "physical" }] })).toBe(true);
+    expect(orderShips({ lines: [{}] })).toBe(true); // an order saved before types existed
     expect(canMove("shipped", "cancelled")).toBe(false);
     expect(canMove("delivered", "cancelled")).toBe(false);
     expect(canMove("delivered", "new")).toBe(false);

@@ -20,7 +20,11 @@ import path from "node:path";
 import raw from "@/content/products.json";
 import { tr } from "@/i18n";
 import { env } from "@/lib/env";
+import { roundCents } from "@/lib/decimal";
 import { lineTotal } from "@/lib/format";
+import { commerce } from "@/config/commerce";
+import { bookingHoldHours } from "@/lib/booking/hold";
+import type { Held } from "@/lib/booking/slots";
 import { buildOrder, buildQuote, priceOrder, quoteTotals } from "@/lib/orders/pricing";
 import { roundQuantity } from "./availability";
 import { orderIdFromKey } from "@/lib/orders/receipt";
@@ -82,7 +86,13 @@ export function parseCatalog(data: { categories: { slug: string; name: Text; des
   return { categories, products };
 }
 
-type StoredOrder = AdminOrder & { idempotencyKey?: string; acceptedAt?: string | null };
+type StoredOrder = AdminOrder & { idempotencyKey?: string; acceptedAt?: string | null; holdUntil?: string | null };
+
+/** Does this order still have its appointments? Not if cancelled, nor if unpaid past its hold. */
+function holdsSeats(o: StoredOrder, now: number): boolean {
+  if (o.status === "cancelled") return false;
+  return o.paidAt !== null || !o.holdUntil || Date.parse(o.holdUntil) > now;
+}
 
 /** Catalogues saved by 0.1.0 have no product types: fill in the defaults. */
 function upgradeCatalog(c: Catalog): Catalog {
@@ -114,12 +124,12 @@ function forStore(p: Product): Product {
   return p.digital ? { ...p, digital: { name: p.digital.name } } : p;
 }
 
-/** Seats held per `<productId>|<slot start>` by every order that is not cancelled. */
-function seatsHeld(orders: StoredOrder[]): Map<string, number> {
-  const held = new Map<string, number>();
+/** Every seat that is held right now (checked when reading: a lapsed hold frees the seat at once). */
+function seatsHeld(orders: StoredOrder[], now = Date.now()): Held[] {
+  const held: Held[] = [];
   for (const o of orders) {
-    if (o.status === "cancelled") continue;
-    for (const l of o.lines) if (l.slot) held.set(`${l.productId}|${l.slot.start}`, (held.get(`${l.productId}|${l.slot.start}`) ?? 0) + l.quantity);
+    if (!holdsSeats(o, now)) continue;
+    for (const l of o.lines) if (l.slot) held.push({ productId: l.productId, start: l.slot.start, end: l.slot.end, seats: l.quantity });
   }
   return held;
 }
@@ -207,7 +217,7 @@ const saveOrders = () => writeFile("orders.json", state().orders ?? []);
 const saveCatalog = () => writeFile("catalog.json", state().catalog);
 
 function publicOrder(o: StoredOrder): Order {
-  const { customer: _c, attribution: _a, history: _h, cancelReason: _r, purchaseSentAt: _p, idempotencyKey: _k, acceptedAt: _t, ...order } = o;
+  const { customer: _c, attribution: _a, history: _h, cancelReason: _r, purchaseSentAt: _p, idempotencyKey: _k, acceptedAt: _t, holdUntil: _u, ...order } = o;
   return { ...order, lines: order.lines.map(({ stockTaken: _s, ...line }) => line) };
 }
 
@@ -284,8 +294,17 @@ export const jsonAdapter: DataAdapter = {
       const existing = orders.find((o) => o.idempotencyKey === key);
       if (existing) return publicOrder(existing);
       const catalog = await loadCatalog();
-      const priced = priceOrder(request, catalog.products.filter((p) => p.active), shipping, { taken: seatsHeld(orders) });
-      const order = buildOrder(id, request, priced, new Date().toISOString());
+      const now = Date.now();
+      const priced = priceOrder(request, catalog.products.filter((p) => p.active), shipping, { held: seatsHeld(orders, now), now });
+      const slots = priced.lines.filter((l) => l.slot).length;
+      if (slots > 0) {
+        // One buyer cannot sit on many unpaid appointments at a time.
+        const email = request.customer.email.toLowerCase();
+        const open = orders.filter((o) => o.status === "new" && o.paidAt === null && holdsSeats(o, now) && o.customer.email.toLowerCase() === email)
+          .reduce((n, o) => n + o.lines.filter((l) => l.slot).length, 0);
+        if (open + slots > commerce.booking.maxUnpaidPerBuyer) throw new OrderError("booking_limit", String(commerce.booking.maxUnpaidPerBuyer));
+      }
+      const order = buildOrder(id, request, priced, new Date(now).toISOString());
       const stored = { ...order, lines: order.lines.map((l) => ({ ...l })) };
       moveStock(catalog, stored.lines, -1);
       orders.unshift({
@@ -296,6 +315,8 @@ export const jsonAdapter: DataAdapter = {
         cancelReason: null,
         purchaseSentAt: null,
         idempotencyKey: key,
+        // An unpaid order keeps its appointment for a limited time (lib/booking/hold.ts).
+        holdUntil: slots > 0 ? new Date(now + bookingHoldHours() * 3_600_000).toISOString() : null,
       });
       await saveOrders();
       await saveCatalog();
@@ -327,7 +348,7 @@ export const jsonAdapter: DataAdapter = {
     });
   },
 
-  async acceptQuote(id, expectedTotal, paymentProvider, paymentMethod) {
+  async acceptQuote(id, expectedTotal, paymentProvider, paymentMethod, delivery) {
     if (!jsonWritable()) throw new OrderError("not_found", id);
     return exclusive(async () => {
       const order = (await loadOrders()).find((o) => o.id === id);
@@ -336,6 +357,10 @@ export const jsonAdapter: DataAdapter = {
       if (order.status !== "quote") return publicOrder(order);
       if (!order.quote.sentAt) throw new OrderError("quote_not_sent", id);
       if (!Number.isFinite(expectedTotal) || Math.abs(order.total - expectedTotal) >= 0.005) throw new OrderError("quote_changed", id);
+      // Something is going to be delivered: the customer says where before accepting.
+      const where = { address: delivery?.address?.trim(), city: delivery?.city?.trim(), postalCode: delivery?.postalCode?.trim() };
+      if (order.shipping.price > 0 && !(where.address && where.city && where.postalCode)) throw new OrderError("address_required", id);
+      for (const k of ["address", "city", "postalCode"] as const) if (where[k]) order.customer[k] = where[k];
       order.status = "new";
       order.acceptedAt = new Date().toISOString();
       order.paymentProvider = paymentProvider;
@@ -348,10 +373,11 @@ export const jsonAdapter: DataAdapter = {
 
   async listBookings(from, to) {
     const out: Booking[] = [];
+    const now = Date.now();
     for (const o of await loadOrders()) {
-      if (o.status === "cancelled") continue;
+      if (!holdsSeats(o, now)) continue;
       for (const l of o.lines) {
-        if (!l.slot || l.slot.start < from || l.slot.start >= to) continue;
+        if (!l.slot || l.slot.end <= from || l.slot.start >= to) continue;
         out.push({
           orderId: o.id, productId: l.productId, name: l.name, variantLabel: l.variantLabel, start: l.slot.start, end: l.slot.end,
           seats: l.quantity, orderStatus: o.status, paid: o.paidAt !== null, customerName: o.customer.name, customerPhone: o.customer.phone,
@@ -470,7 +496,7 @@ export const jsonAdapter: DataAdapter = {
     return mutateOrder(id, (order) => {
       if (order.status !== "quote") throw new AdminError("conflict", order.status);
       order.lines.forEach((l, i) => {
-        l.unitPrice = Math.max(0, Math.round((answer.prices[i] ?? 0) * 100) / 100);
+        l.unitPrice = roundCents(Math.max(0, answer.prices[i] ?? 0));
       });
       const totals = quoteTotals(order.lines, order.lines.map((l) => l.unitPrice), answer.shipping);
       order.subtotal = totals.subtotal;
@@ -515,11 +541,13 @@ export const jsonAdapter: DataAdapter = {
   },
 
   async expireOrders(hours, reason) {
-    if (!jsonWritable() || hours <= 0) return 0;
+    if (!jsonWritable() || hours < 0) return 0;
     return exclusive(async () => {
-      const cutoff = Date.now() - hours * 3_600_000;
+      const now = Date.now();
+      // hours = 0: no expiry by age. A lapsed appointment hold is released either way.
+      const cutoff = hours > 0 ? now - hours * 3_600_000 : Number.NEGATIVE_INFINITY;
       // A quote the customer accepted counts from the moment they accepted it.
-      const stale = (await loadOrders()).filter((o) => o.status === "new" && o.paidAt === null && Date.parse(o.acceptedAt ?? o.createdAt) < cutoff);
+      const stale = (await loadOrders()).filter((o) => o.status === "new" && o.paidAt === null && (Date.parse(o.acceptedAt ?? o.createdAt) < cutoff || !holdsSeats(o, now)));
       if (stale.length === 0) return 0;
       const catalog = await loadCatalog();
       for (const order of stale) {

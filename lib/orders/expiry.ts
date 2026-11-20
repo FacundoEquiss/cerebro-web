@@ -16,7 +16,7 @@ const state = globalThis as unknown as { __lastExpiry?: number };
 
 export async function expireStaleOrders({ force = false, now = Date.now() } = {}): Promise<number> {
   const hours = env().ORDER_EXPIRY_HOURS;
-  if (hours <= 0) return 0;
+  // hours = 0: orders never expire by age — but a lapsed appointment hold is still released.
   if (!force && state.__lastExpiry && now - state.__lastExpiry < THROTTLE_MS) return 0;
   state.__lastExpiry = now;
   try {

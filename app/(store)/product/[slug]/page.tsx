@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { commerce } from "@/config/commerce";
 import { fill, paths, t, tr } from "@/i18n";
 import { getCategory, getProduct, getProducts } from "@/lib/data";
-import { openDates, serviceRules } from "@/lib/booking/slots";
+import { serviceRules } from "@/lib/booking/slots";
 import { env } from "@/lib/env";
 import { formatPrice, formatUnitPrice } from "@/lib/format";
 import { breadcrumbJsonLd, pageMetadata, productJsonLd } from "@/lib/seo";
@@ -47,9 +47,10 @@ export default async function ProductPage({ params }: Props) {
     { name: product.name, path: paths.product(product.slug) },
   ];
   const shipping = commerce.shipping.methods.filter((m) => m.enabled);
-  // The days a service can be booked are worked out on the server, from the opening hours.
+  // Only what does not go stale is rendered here (this page is cached): the days and the times
+  // that can be booked are asked by the browser when the page opens (/api/slots).
   const rules = product.type === "service" ? serviceRules(product) : null;
-  const booking = rules ? { dates: openDates(product, Date.now()), timeZone: rules.timeZone, durationMinutes: rules.durationMinutes } : undefined;
+  const booking = rules ? { timeZone: rules.timeZone, durationMinutes: rules.durationMinutes } : undefined;
 
   return (
     <div className="container page">

@@ -44,6 +44,8 @@ function freeSlot(p: Product, skip = 0): string {
   return `${day}T${slotsOn(p, day, Date.now())[0]!.time}`;
 }
 
+const WHERE = { address: "Example Street 1", city: "Example City", postalCode: "0000" };
+
 describe("sale by unit, weight or measure", () => {
   it("accepts multiples of the step between the minimum and the maximum, and nothing else", () => {
     for (const q of [0.25, 0.5, 0.75, 1, 2.5, 5]) expect(validQuantity(coffee, q, 20)).toBe(true);
@@ -135,12 +137,15 @@ describe("appointments: the slots of a service", () => {
   it("checks the capacity of the slot, also across the lines of one order", () => {
     const slot = freeSlot(yoga);
     const start = resolveSlot(yoga, slot, Date.now()).start;
-    const book = (quantity: number, taken = new Map<string, number>()) =>
-      priceOrder(request({ lines: [{ productId: "yoga", quantity, slot }] }), catalog, delivery, { taken });
+    const end = resolveSlot(yoga, slot, Date.now()).end;
+    const book = (quantity: number, seats = 0) =>
+      priceOrder(request({ lines: [{ productId: "yoga", quantity, slot }] }), catalog, delivery, { held: seats ? [{ productId: "yoga", start, end, seats }] : [] });
     expect(book(3).lines[0]).toMatchObject({ type: "service", quantity: 3, slot: { start } });
-    expect(() => book(4)).toThrowError(/quantity|slot_taken/);
-    expect(() => book(2, new Map([[`yoga|${start}`, 2]]))).toThrowError(/slot_taken/);
-    expect(book(1, new Map([[`yoga|${start}`, 2]])).total).toBe(6500);
+    expect(() => book(4)).toThrowError(/slot_taken/);
+    expect(() => book(2, 2)).toThrowError(/slot_taken/);
+    expect(book(1, 2).total).toBe(6500);
+    // Seats are whole.
+    expect(() => book(1.5)).toThrowError(/quantity/);
     // A service without its slot is not an order.
     expect(() => priceOrder(request({ lines: [{ productId: "haircut", quantity: 1 }] }), catalog, delivery)).toThrowError(/slot_required/);
     // Two different appointments of one service are two cart lines.
@@ -240,6 +245,8 @@ describe("the json adapter, end to end", () => {
   let adapter: DataAdapter;
   let key = 0;
   const nextKey = () => (++key).toString(16).padStart(64, "0");
+  /** A different buyer each time: the limit of unpaid appointments is per e-mail. */
+  const buyer = () => ({ ...request().customer, email: `buyer${++key}@example.com` });
   const free = { price: 0, freeFrom: null };
 
   beforeAll(async () => {
@@ -258,7 +265,7 @@ describe("the json adapter, end to end", () => {
 
   const service = async (id: string) => (await adapter.listProducts()).find((p) => p.id === id)!;
   const book = (productId: string, slot: string, quantity = 1) =>
-    adapter.createOrder(request({ idempotencyKey: nextKey(), lines: [{ productId, quantity, slot }], shippingMethodId: "none" }), free);
+    adapter.createOrder(request({ idempotencyKey: nextKey(), customer: buyer(), lines: [{ productId, quantity, slot }], shippingMethodId: "none" }), free);
 
   it("ships a demo with one product of every type, the file key hidden from the store", async () => {
     const products = await adapter.listProducts();
@@ -292,7 +299,7 @@ describe("the json adapter, end to end", () => {
 
   it("is idempotent: a retry is the same booking, not a second seat", async () => {
     const slot = freeSlot(await service("corte-de-pelo"), 1);
-    const body = request({ idempotencyKey: nextKey(), lines: [{ productId: "corte-de-pelo", quantity: 1, slot }], shippingMethodId: "none" });
+    const body = request({ idempotencyKey: nextKey(), customer: buyer(), lines: [{ productId: "corte-de-pelo", quantity: 1, slot }], shippingMethodId: "none" });
     const first = await adapter.createOrder(body, free);
     const again = await adapter.createOrder(body, free);
     expect(again.id).toBe(first.id);
@@ -360,9 +367,13 @@ describe("the json adapter, end to end", () => {
     expect((await adapter.getOrder(enquiry.id))?.status).toBe("quote");
 
     // The exact total that was sent: now it is a normal order, and accepting again changes nothing.
-    const accepted = await adapter.acceptQuote(enquiry.id, 366000, "manual", "whatsapp");
+    // It charges shipping: without the delivery address it is not accepted.
+    await expect(adapter.acceptQuote(enquiry.id, 366000, "manual", "whatsapp")).rejects.toMatchObject({ code: "address_required" });
+    await expect(adapter.acceptQuote(enquiry.id, 366000, "manual", "whatsapp", { address: "Example Street 1", city: " ", postalCode: "0000" })).rejects.toMatchObject({ code: "address_required" });
+    const accepted = await adapter.acceptQuote(enquiry.id, 366000, "manual", "whatsapp", WHERE);
+    expect((await adapter.getAdminOrder(enquiry.id))?.customer).toMatchObject(WHERE);
     expect(accepted).toMatchObject({ status: "new", total: 366000, paymentMethod: "whatsapp", paidAt: null });
-    expect((await adapter.acceptQuote(enquiry.id, 366000, "manual", "bank_transfer")).paymentMethod).toBe("whatsapp");
+    expect((await adapter.acceptQuote(enquiry.id, 366000, "manual", "bank_transfer", WHERE)).paymentMethod).toBe("whatsapp");
     await expect(adapter.setQuote(enquiry.id, { prices: [1], shipping: 0 }, "owner@example.com")).rejects.toMatchObject({ code: "conflict" });
     const paid = await adapter.setOrderStatus(enquiry.id, "new", "paid", "owner@example.com");
     expect(paid.history.map((e) => e.type)).toEqual(["created", "quote", "quote", "quote", "quote", "status", "status"]);

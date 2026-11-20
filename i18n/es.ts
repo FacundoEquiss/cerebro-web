@@ -145,6 +145,8 @@ export const es = {
     inAppHint: "Si el pago no avanza, abrí esta página en el navegador de tu teléfono (menú ⋯ → «Abrir en el navegador»).",
     antibotWaiting: "Verificando que no seas un robot…",
     errors: {
+      needs_store: "Esta tienda no puede tomar ese pedido por la web. Escribinos y lo coordinamos.",
+      booking_limit: "Llegaste al máximo de turnos que se pueden reservar sin pagar ({detail}). Pagá o cancelá uno para reservar otro.",
       slot_required: "Elegí un día y un horario para el turno.",
       slot_invalid: "Ese horario ya no está disponible. Volvé al producto y elegí otro.",
       slot_taken: "Ese horario se acaba de ocupar. Volvé al producto y elegí otro.",
@@ -348,6 +350,22 @@ export const es = {
     text: "Tuvimos un problema al mostrar esta página. Probá de nuevo.",
   },
   types: {
+    contact: {
+      service: "Las reservas online no están activas en esta tienda. Escribinos y coordinamos tu turno.",
+      quote: "Para cotizar esto, escribinos: contanos qué necesitás y te pasamos el precio.",
+      digital: "La compra online de este producto no está activa en esta tienda. Escribinos y te lo enviamos.",
+    },
+    contactWhatsapp: "Escribir por WhatsApp",
+    contactPage: "Ir a contacto",
+    contactMessage: "Hola, quiero consultar por «{product}».",
+    demo: {
+      service: "Estás en la demo: acá no se guarda nada. Podés probar la reserva, pero el turno no queda tomado de verdad y los horarios siempre figuran libres.",
+      quote: "Estás en la demo: acá no se guarda nada. Podés enviar la consulta para ver cómo es, pero nadie va a recibirla ni cotizarla.",
+      digital: "Estás en la demo: acá no se guarda nada. Podés hacer el pedido para ver cómo es, pero la descarga no se entrega.",
+    },
+    notStored: "Esta tienda no guarda los pedidos: los turnos no quedan reservados, los presupuestos no se pueden cotizar desde acá y las descargas no se entregan. Si es una demostración, es lo esperado.",
+    quoteAddressTitle: "¿A dónde lo enviamos?",
+    quoteAddressMissing: "Para aceptar este presupuesto necesitamos la dirección de entrega completa.",
     consult: "Consultar",
     badge: {
       digital: "Digital",
@@ -423,6 +441,11 @@ export const es = {
   ],
   admin: {
     quote: {
+      sentNoMail: "Presupuesto listo para el cliente, pero NO se le envió ningún e-mail (no hay correo configurado o falló). Pasale el enlace de abajo.",
+      link: "Enlace del cliente para ver, aceptar y pagar",
+      linkCopy: "Copiar enlace",
+      linkWhatsapp: "Mandar por WhatsApp",
+      whatsappText: "Hola {name}, te paso el presupuesto de {brand} por {total}. Podés verlo, aceptarlo y pagarlo acá: {url}",
       piece: "unidad",
       title: "Presupuesto",
       request: "Lo que pidió el cliente",
@@ -436,7 +459,7 @@ export const es = {
       notSent: "Todavía no se envió: el cliente no puede aceptarlo ni pagarlo.",
       incomplete: "Cargá un precio mayor a cero en cada línea antes de enviarlo.",
       saved: "Presupuesto guardado. Todavía no se envió.",
-      sent: "Presupuesto enviado al cliente.",
+      sent: "Presupuesto enviado al cliente por e-mail.",
       badge: "Consulta",
       badgeSent: "Enviado",
       failed: "No se pudo guardar el presupuesto.",

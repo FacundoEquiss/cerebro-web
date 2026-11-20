@@ -14,7 +14,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const preset = process.env.PRESET ?? "servicios";
 const port = process.env.PRESET_PORT ?? "3101";
 const copy = mkdtempSync(join(tmpdir(), `preset-${preset}-`));
-const SKIP = new Set(["node_modules", ".next", ".git", ".data", "test-results", "playwright-report", "screenshots", ".vercel"]);
+const SKIP = new Set(["node_modules", ".next", ".git", ".data", "test-results", "playwright-report", "screenshots", ".vercel", ".preset-backups"]);
 
 cpSync(root, copy, { recursive: true, filter: (source) => !SKIP.has(source.slice(root.length + 1).split(/[\\/]/)[0] ?? "") });
 // The dependencies: hard links when the disk allows it (instant), a link to the folder otherwise.

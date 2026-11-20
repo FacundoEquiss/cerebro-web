@@ -10,7 +10,7 @@ import { SQL_ARGS, sqlAdapter, type SqlFunction, type SqlGateway } from "./sql";
 
 export type Query = (sql: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
 
-const JSON_ARGS = new Set(["p"]);
+const JSON_ARGS = new Set(["p", "p_delivery"]);
 const CASTS: Record<string, string> = {
   p_amount: "::numeric", p_limit: "::int", p_stock: "::numeric", p_hours: "::numeric", p_total: "::numeric",
   p_since: "::timestamptz", p_until: "::timestamptz",
@@ -27,7 +27,7 @@ export function postgresGateway(query: Query): SqlGateway {
     catalog: async () => (await query("select * from public_catalog order by created_at desc, id")).rows,
     categories: async () => (await query("select * from public_categories order by position, slug")).rows,
     call: async (fn, args) => {
-      const params = SQL_ARGS[fn].map((name, i) => (JSON_ARGS.has(name) ? JSON.stringify(args[i]) : (args[i] ?? null)));
+      const params = SQL_ARGS[fn].map((name, i) => (JSON_ARGS.has(name) ? (args[i] == null ? null : JSON.stringify(args[i])) : (args[i] ?? null)));
       const { rows } = await query(callSql(fn), params);
       return rows[0]?.r ?? null;
     },

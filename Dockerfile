@@ -37,6 +37,8 @@ RUN addgroup -S app && adduser -S app -G app && mkdir -p /data && chown app:app 
 COPY --from=build --chown=app:app /app/.next/standalone ./
 COPY --from=build --chown=app:app /app/.next/static ./.next/static
 COPY --from=build --chown=app:app /app/public ./public
+# The example files of the digital products (served only through /api/downloads, to paid orders).
+COPY --from=build --chown=app:app /app/content/downloads ./content/downloads
 USER app
 VOLUME /data
 EXPOSE 3000

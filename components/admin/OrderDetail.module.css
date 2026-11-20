@@ -72,3 +72,6 @@
 .quoteLine { display: grid; gap: 8px; padding: 12px; border-radius: var(--r-md); background: var(--surface-2); }
 .quoteTotal { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 1.05rem; }
 .quoteTotal strong { font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+.quoteLink { display: grid; gap: 8px; padding-top: 12px; box-shadow: 0 -1px 0 var(--line); }
+.quoteLink label { font-size: 0.86rem; font-weight: 600; }
+.quoteLink input { font-size: 0.82rem; color: var(--muted); }
