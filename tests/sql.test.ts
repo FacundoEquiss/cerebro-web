@@ -15,7 +15,7 @@ import { seedSql as seedOf } from "../scripts/generate-seed.mjs";
 
 // The tests seed THEIR catalogue (tests/fixtures), never the owner's content/products.json.
 const seedSql = () => seedOf("tests/fixtures/products.json");
-import { request } from "./helpers";
+import { product, request } from "./helpers";
 
 const seedProducts = (seedSql().match(/insert into products /g) ?? []).length;
 const seedCategories = (seedSql().match(/insert into categories /g) ?? []).length;
@@ -835,5 +835,56 @@ describe("migration 0003 on a 0.2.0 database", () => {
     expect((await upgraded.listAllProducts()).map((p) => [p.id, p.draft])).toEqual([["mug", true]]);
     await expect(upgraded.createOrder(request({ idempotencyKey: "d".repeat(64), lines: [{ productId: "mug", quantity: 1 }] }), terms)).rejects.toMatchObject({ code: "unknown_product" });
     await old.close();
+  });
+});
+
+// What the review of 0.3.0 found: the new code on a database that only got part of the upgrade
+// sold drafts for 0. The migration is complete on its own, and the code refuses a database
+// that does not know about drafts.
+describe("a real 0.2.0 database (its whole schema) upgraded with migration 0003 ALONE", () => {
+  const input = (over: Record<string, unknown>) => ({ ...product({ id: "tea", slug: "tea", name: "Tea", category: "hogar", stock: null }), ...over }) as never;
+  const open = async () => {
+    const db = new PGlite();
+    await db.exec(readFileSync("tests/fixtures/schema-0.2.0.sql", "utf8"));
+    await db.exec("insert into categories (slug, name) values ('hogar', 'Hogar')");
+    const adapter = sqlAdapter("postgres", postgresGateway((sql, params) => db.query(sql, params) as Promise<{ rows: Record<string, unknown>[] }>));
+    return { db, adapter };
+  };
+
+  it("without the migration, saving a product fails loudly instead of putting a draft on sale", async () => {
+    const { db, adapter } = await open();
+    await expect(adapter.saveProduct(input({ price: 0, draft: true }))).rejects.toThrow(/0003_drafts/);
+    await db.close();
+  });
+
+  it("with it: a draft is hidden, not orderable, and the functions match db/schema.sql", async () => {
+    const { db, adapter } = await open();
+    await db.exec(readFileSync("db/migrations/0003_drafts.sql", "utf8"));
+    const saved = await adapter.saveProduct(input({ price: 0, draft: true }));
+    expect(saved).toMatchObject({ id: "tea", draft: true, price: 0 });
+    expect((await db.query("select id from public_catalog")).rows).toEqual([]);
+    expect((await adapter.listAllProducts()).map((p) => [p.id, p.draft])).toEqual([["tea", true]]);
+    await expect(adapter.createOrder(request({ idempotencyKey: "e".repeat(64), lines: [{ productId: "tea", quantity: 1 }] }), terms)).rejects.toMatchObject({ code: "unknown_product" });
+    // A quote that the owner keeps as a draft cannot be asked for either.
+    await adapter.saveProduct(input({ id: "plan", slug: "plan", type: "quote", price: 0, draft: true }));
+    await expect(adapter.createQuote({ idempotencyKey: "f".repeat(64), productId: "plan", quantity: 1, detail: "A plan for my shop, please", customer: request().customer })).rejects.toMatchObject({ code: "unknown_product" });
+    // Unticking «draft» with the price still at 0 does not put it on sale for nothing.
+    await expect(adapter.saveProduct(input({ price: 0, draft: false }))).rejects.toMatchObject({ code: "invalid" });
+    // With a price it is on sale, and it can be ordered.
+    expect(await adapter.saveProduct(input({ price: 1500, draft: false }))).toMatchObject({ draft: false, price: 1500 });
+    expect((await adapter.createOrder(request({ idempotencyKey: "a1".repeat(32), lines: [{ productId: "tea", quantity: 1 }] }), terms)).lines[0]).toMatchObject({ unitPrice: 1500 });
+    // A quote has no public price by nature: it is not a draft.
+    expect(await adapter.saveProduct(input({ id: "sign", slug: "sign", type: "quote", price: 0, draft: false }))).toMatchObject({ draft: false });
+    await db.close();
+  });
+
+  it("the migration carries the same four functions as db/schema.sql, word for word", () => {
+    const schema = readFileSync("db/schema.sql", "utf8");
+    const migration = readFileSync("db/migrations/0003_drafts.sql", "utf8");
+    for (const name of ["create_order", "create_quote", "admin_catalog", "save_product"]) {
+      const body = new RegExp(`create or replace function ${name}\\([\\s\\S]*?\\n\\$\\$;\\n`).exec(schema)?.[0];
+      expect(body, name).toBeTruthy();
+      expect(migration.includes(body!), name).toBe(true);
+    }
   });
 });

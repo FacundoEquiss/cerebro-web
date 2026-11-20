@@ -9,7 +9,8 @@ const money = z.number().min(0).max(1_000_000_000);
 const time = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 
 export const productInputSchema = z.object({
-  id: id.optional(),
+  // An id is never shown: a code the business already uses ("SKU_123") is fine. The slug is the address.
+  id: z.string().trim().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$/).optional(),
   slug: id,
   name: z.string().trim().min(2).max(160),
   description: z.string().trim().max(5000),
@@ -34,6 +35,13 @@ export const productInputSchema = z.object({
     blockedDates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(366).optional(),
     // An event: fixed dates (wall time of the store) instead of the weekly agenda.
     sessions: z.array(z.object({ start: z.string().regex(/^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):[0-5]\d$/), durationMinutes: z.number().int().min(5).max(24 * 60).optional() })).max(366).optional(),
+    // …or a rule that repeats («the first Saturday of each month at 10:00»), or both.
+    repeat: z.object({
+      week: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal("last"), z.literal("every")]),
+      weekday: z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]),
+      time,
+      count: z.number().int().min(1).max(24).optional(),
+    }).optional(),
   }).nullable().default(null),
   digital: z.object({ name: z.string().trim().min(1).max(200), file: z.string().max(300).optional() }).nullable().default(null),
   attributes: z.record(z.string().max(60), z.string().max(300)),
@@ -56,6 +64,10 @@ export const productInputSchema = z.object({
     stock: z.number().min(0).nullable(),
     price: money.nullable().optional(),
   })).max(200),
+}).superRefine((form, ctx) => {
+  // Price 0 on something for sale is an empty field, never a free product: without a price it
+  // stays a draft. A quote is the one type whose price comes later, per request.
+  if (!form.draft && form.type !== "quote" && form.price === 0) ctx.addIssue({ code: "custom", path: ["price"], message: "price_required" });
 });
 
 export type ProductForm = z.infer<typeof productInputSchema>;

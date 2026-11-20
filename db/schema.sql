@@ -937,11 +937,17 @@ begin
   if not exists (select 1 from categories where slug = p ->> 'category') then
     raise exception 'PRODUCT_ERROR:category';
   end if;
+  -- Price 0 on something that is for sale is a mistake (an empty field), never a free product:
+  -- without a price it is a draft; a quote is the one type whose price comes later.
+  if coalesce((p ->> 'price')::numeric, 0) = 0 and coalesce(p ->> 'type', 'physical') <> 'quote'
+     and not coalesce((p ->> 'draft')::boolean, false) and (p ->> 'price') is not null then
+    raise exception 'PRODUCT_ERROR:price';
+  end if;
 
   insert into products (id, slug, name, description, category, price, compare_at_price, images, options,
                         stock, featured, active, min_quantity, attributes, type, unit, step, max_quantity, service, digital, draft)
   values (v_id, p ->> 'slug', p ->> 'name', coalesce(p ->> 'description', ''), p ->> 'category',
-          -- No price = a draft, stored as 0 and never sold (see `draft`).
+          -- No price = a draft, stored as 0 and never sold (see `draft`). A quote has no public price by nature.
           coalesce((p ->> 'price')::numeric, 0), (p ->> 'compareAtPrice')::numeric,
           coalesce(p -> 'images', '[]'::jsonb), coalesce(p -> 'options', '[]'::jsonb),
           (p ->> 'stock')::numeric, coalesce((p ->> 'featured')::boolean, false), coalesce((p ->> 'active')::boolean, true),
@@ -951,7 +957,7 @@ begin
           case when jsonb_typeof(p -> 'service') = 'object' then p -> 'service' else null end,
           -- Only the visible name is kept with the product; the storage key goes to product_files.
           case when jsonb_typeof(p -> 'digital') = 'object' then (p -> 'digital') - 'file' else null end,
-          coalesce((p ->> 'draft')::boolean, false) or (p ->> 'price') is null)
+          coalesce((p ->> 'draft')::boolean, false) or ((p ->> 'price') is null and coalesce(p ->> 'type', 'physical') <> 'quote'))
   on conflict (id) do update set
     slug = excluded.slug, name = excluded.name, description = excluded.description, category = excluded.category,
     price = excluded.price, compare_at_price = excluded.compare_at_price, images = excluded.images,

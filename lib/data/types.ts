@@ -71,6 +71,22 @@ export interface ServiceSettings {
    * else is the booking engine: holds, limits, overlap, the Agenda.
    */
   sessions?: EventSession[];
+  /**
+   * An event that REPEATS: «the first Saturday of each month at 10:00». The next `count` dates are
+   * worked out from today, so the event never runs out of dates. Explicit `sessions` are added to
+   * them; `blockedDates` takes one date out.
+   */
+  repeat?: EventRepeat;
+}
+
+export interface EventRepeat {
+  /** Which one of the month: the 1st…4th, the last, or every week. */
+  week: 1 | 2 | 3 | 4 | "last" | "every";
+  weekday: Weekday;
+  /** Wall time of the store, `HH:MM`. */
+  time: string;
+  /** How many upcoming dates are open at once (default 3). */
+  count?: number;
 }
 
 export interface EventSession {

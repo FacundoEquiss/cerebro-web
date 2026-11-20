@@ -63,7 +63,8 @@ export function parseCatalog(data: { categories: { slug: string; name: Text; des
     category: p.category,
     // A price that is not known yet is `null` in the file: the product is a draft, never "0".
     price: p.price ?? 0,
-    draft: p.draft === true || p.price === null || p.price === undefined,
+    // A quote has no public price by nature (the owner prices each request): there `null` is normal.
+    draft: p.draft === true || ((p.price === null || p.price === undefined) && p.type !== "quote"),
     compareAtPrice: p.compareAtPrice ?? null,
     images: p.images.map((i) => ({ src: i.src, alt: tr(i.alt), width: i.width, height: i.height, ...(i.option ? { option: i.option } : {}) })),
     options: (p.options ?? []).map((o) => ({
@@ -173,6 +174,9 @@ function seedsDemoOrders(): boolean {
   return flag === "true" || (flag !== "false" && env().demoMode);
 }
 
+/** An example order written by `demoOrders` (their ids are P-DEMO0001…, which no real order gets). */
+const isSeededOrder = (o: { id: string }) => /^P-DEMO\d{4}$/.test(o.id);
+
 /** Files are only written outside production and outside read-only hosting. */
 export function jsonWritable(): boolean {
   return !env().isProduction && !process.env.VERCEL && process.env.JSON_READ_ONLY !== "1";
@@ -221,6 +225,12 @@ async function loadOrders(): Promise<StoredOrder[]> {
     const saved = await readFile<StoredOrder[]>("orders.json");
     if (saved) {
       s.orders = upgradeOrders(saved);
+      // Example orders seeded while this folder was a demo do not follow the store into real
+      // life: once demo mode is off they are taken out (they would hold real seats).
+      if (!seedsDemoOrders() && s.orders.some(isSeededOrder)) {
+        s.orders = s.orders.filter((o) => !isSeededOrder(o));
+        await writeFile("orders.json", s.orders);
+      }
     } else {
       // First run: example orders in every status, so the kanban is not an empty screen.
       s.orders = seedsDemoOrders() ? demoOrders((await loadCatalog()).products, Date.now()) : [];

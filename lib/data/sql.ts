@@ -235,9 +235,15 @@ export function sqlAdapter(id: string, gateway: SqlGateway): DataAdapter {
     },
     async saveProduct(input) {
       try {
-        const row = await gateway.call("save_product", [input]);
+        const row = (await gateway.call("save_product", [input])) as Record<string, unknown> | null;
         gateway.invalidate?.();
-        return rowToProduct(row as Record<string, unknown>);
+        // A database that was not upgraded to 0.3.0 does not know what a draft is: it would
+        // store this product as "for sale" — a draft without a price, on sale for 0.
+        if (!row || !("draft" in row)) {
+          if (input.draft) await gateway.call("save_product", [{ ...input, active: false }]).catch(() => undefined);
+          throw new Error("The database is not upgraded to 0.3.0 (it has no drafts). Run db/migrations/0003_drafts.sql — see CHANGELOG.md — and save again.");
+        }
+        return rowToProduct(row);
       } catch (e) {
         throw toAdminError(e);
       }
