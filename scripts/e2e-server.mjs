@@ -31,6 +31,9 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
       ADMIN_USERS: `${E2E_ADMIN.email}:${hashPassword(E2E_ADMIN.password)}`,
       ADMIN_SESSION_SECRET: randomBytes(32).toString("base64url"),
       NEXT_PUBLIC_SITE_URL: `http://localhost:${port}`,
+      // Each test announces itself as a different visitor (e2e/helpers.ts): the rate limits stay
+      // on, and one test cannot use up another's allowance.
+      TRUSTED_PROXY_HEADER: "x-e2e-client",
     },
   });
   for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => child.kill(signal));

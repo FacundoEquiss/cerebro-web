@@ -125,3 +125,4 @@
 .slot { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; color: var(--s-shipped); }
 .tag[data-quote] { background: color-mix(in srgb, var(--s-quote) 13%, var(--surface)); color: var(--s-quote); }
 .tag[data-quote="sent"] { background: var(--s-quote); color: #fff; }
+.total { white-space: nowrap; }

@@ -54,6 +54,8 @@
   .heroText { gap: 20px; }
   .heroLead { font-size: 1.14rem; }
   .categories { grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  /* Four in a row when that closes the last row (4, 8, 12 categories). */
+  .categories[data-four] { grid-template-columns: repeat(4, 1fr); gap: 20px; }
   .category { aspect-ratio: 4 / 3; }
   .benefitsBand { padding-block: 48px; }
   .benefits { grid-template-columns: repeat(4, 1fr); gap: 28px; }

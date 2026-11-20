@@ -1,8 +1,23 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, test as base, type Page } from "@playwright/test";
 import admin from "./admin-user.json";
 
 /** The local, throwaway admin the test server creates (scripts/e2e-server.mjs). */
 export const E2E_ADMIN: { email: string; password: string } = admin;
+
+/**
+ * Every test is its own visitor. The test server trusts the header `x-e2e-client` as the caller's
+ * address (TRUSTED_PROXY_HEADER, see scripts/e2e-server.mjs), exactly as a real server trusts its
+ * proxy: the rate limits stay ON and each test gets its own bucket instead of sharing one.
+ */
+export const test = base.extend({
+  extraHTTPHeaders: async ({}, use, info) => {
+    await use({ "x-e2e-client": `${info.project.name}-${info.testId}` });
+  },
+});
+export { expect };
+
+/** An address of example.com that belongs to one buyer name (limits also count per e-mail). */
+export const emailOf = (name: string) => `${name.normalize("NFD").replace(/[^a-zA-Z0-9]+/g, ".").replace(/^\.+|\.+$/g, "").toLowerCase()}@example.com`;
 
 /** Fails the test if the page logs a console error or throws. */
 export function watchConsole(page: Page): string[] {
@@ -17,7 +32,7 @@ export function watchConsole(page: Page): string[] {
 export async function fillCheckout(page: Page, name = "Ana Ejemplo") {
   await page.getByTestId("checkout-form").waitFor();
   await page.getByTestId("checkout-name").fill(name);
-  await page.getByTestId("checkout-email").fill("ana@example.com");
+  await page.getByTestId("checkout-email").fill(emailOf(name));
   await page.getByTestId("checkout-phone").fill("+00 000 000 1000");
 }
 

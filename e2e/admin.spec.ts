@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-import { E2E_ADMIN, login, placeSimpleOrder, watchConsole } from "./helpers";
+import { E2E_ADMIN, expect, login, placeSimpleOrder, test, watchConsole } from "./helpers";
 
 test("a new order shows up in «Nuevo» without reloading, moves to «Pagado», and the history records it", async ({ page, context, isMobile }) => {
   const errors = watchConsole(page);
@@ -49,7 +48,7 @@ test("a new order shows up in «Nuevo» without reloading, moves to «Pagado», 
   await expect(page.getByTestId("column-paid").locator(`[data-order="${orderId}"]`)).toBeVisible();
 
   // A move the rules forbid is refused by the server too.
-  const forbidden = await page.request.post(`/api/admin/orders/${orderId}`, { data: { action: "move", to: "delivered" } });
+  const forbidden = await page.request.post(`/api/admin/orders/${orderId}`, { data: { action: "move", to: "new" } });
   expect(forbidden.status()).toBe(422);
 
   expect(errors).toEqual([]);

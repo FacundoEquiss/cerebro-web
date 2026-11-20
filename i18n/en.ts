@@ -78,8 +78,8 @@ export const en: Dictionary = {
     chooseFirst: "Choose {options} to continue",
     selected: "{option}: {value}",
     quantity: "Quantity",
-    decrease: "Remove one unit",
-    increase: "Add one unit",
+    decrease: "Decrease quantity",
+    increase: "Increase quantity",
     addToCart: "Add to cart",
     added: "Added to cart",
     viewCart: "View cart",
@@ -423,6 +423,7 @@ export const en: Dictionary = {
   ],
   admin: {
     quote: {
+      piece: "unit",
       title: "Quote",
       request: "What the customer asked for",
       unitPrice: "Price per {unit}",

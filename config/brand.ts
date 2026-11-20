@@ -15,13 +15,13 @@ export const brand = {
   name: "Tu Marca",
   /** EXAMPLE — one short line under the name. */
   tagline: {
-    es: "Cosas bien hechas para todos los días",
-    en: "Well-made things for every day",
+    es: "Todo lo que vendés, en un solo lugar",
+    en: "Everything you sell, in one place",
   },
   /** EXAMPLE — one or two sentences: what you sell and for whom. Used in meta tags and llms.txt. */
   description: {
-    es: "Tienda de ejemplo con indumentaria, accesorios y objetos para el hogar. Reemplazá este texto por lo que vende tu negocio.",
-    en: "Example store with apparel, accessories and home goods. Replace this text with what your business sells.",
+    es: "Tienda de ejemplo con productos, descargas, turnos y trabajos a medida. Reemplazá este texto por lo que vende tu negocio.",
+    en: "Example store with products, downloads, appointments and made-to-measure work. Replace this text with what your business sells.",
   },
 
   /** EXAMPLE — ISO 3166-1 country, ISO 4217 currency and BCP 47 tags used to format prices and dates. */

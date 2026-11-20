@@ -18,8 +18,9 @@ export function Header({ categories }: { categories: Category[] }) {
             <li>
               <Link href={paths.shop()}>{t.nav.shop}</Link>
             </li>
-            {categories.map((c) => (
-              <li key={c.slug}>
+            {/* A store with many categories shows the first ones here; all of them are in the shop. */}
+            {categories.slice(0, 6).map((c) => (
+              <li key={c.slug} data-category>
                 <Link href={paths.category(c.slug)}>{c.name}</Link>
               </li>
             ))}

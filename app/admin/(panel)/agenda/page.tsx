@@ -103,7 +103,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Promi
                         <span className={styles.time}><CalendarClock aria-hidden size={15} /> {formatSlotTime(b.start)}–{formatSlotTime(b.end)}</span>
                         <strong>{b.name}</strong>
                         <span className={styles.who}>{b.customerName}{b.seats > 1 ? ` · ${fill(a.seats, { n: b.seats })}` : ""}</span>
-                        <span className={styles.tag}>{b.paid ? a.paid : a.unpaid} · {b.orderId}</span>
+                        <span className={styles.tag}>{b.paid ? a.paid : a.unpaid} · <span className={styles.id}>{b.orderId}</span></span>
                       </a>
                     </li>
                   ))}

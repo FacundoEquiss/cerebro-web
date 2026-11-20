@@ -10,8 +10,8 @@
   letter-spacing: -0.02em; text-decoration: none; margin-right: auto;
 }
 .nav { display: none; }
-.nav ul { display: flex; gap: 26px; }
-.nav a { text-decoration: none; font-weight: 500; font-size: 0.96rem; padding-block: 12px; }
+.nav ul { display: flex; gap: clamp(14px, 1.7vw, 26px); }
+.nav a { text-decoration: none; font-weight: 500; font-size: 0.96rem; padding-block: 12px; white-space: nowrap; }
 .nav a:hover { color: var(--action); }
 .actions { display: flex; align-items: center; gap: 2px; }
 .icon {
@@ -28,4 +28,9 @@
 @media (min-width: 768px) {
   .brand { margin-right: 12px; font-size: 1.6rem; }
   .nav { display: block; margin-right: auto; }
+}
+
+.brand { white-space: nowrap; }
+@media (min-width: 768px) and (max-width: 1180px) {
+  .nav li[data-category]:nth-of-type(n + 5) { display: none; }
 }

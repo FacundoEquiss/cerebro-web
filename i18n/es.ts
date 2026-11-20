@@ -78,8 +78,8 @@ export const es = {
     chooseFirst: "Elegí {options} para continuar",
     selected: "{option}: {value}",
     quantity: "Cantidad",
-    decrease: "Restar una unidad",
-    increase: "Sumar una unidad",
+    decrease: "Restar cantidad",
+    increase: "Sumar cantidad",
     addToCart: "Agregar al carrito",
     added: "Agregado al carrito",
     viewCart: "Ver carrito",
@@ -423,6 +423,7 @@ export const es = {
   ],
   admin: {
     quote: {
+      piece: "unidad",
       title: "Presupuesto",
       request: "Lo que pidió el cliente",
       unitPrice: "Precio por {unit}",

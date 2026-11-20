@@ -218,7 +218,7 @@ export function OrderDetail({
                   <p className={styles.strong}>{formatQuantity(l.quantity, l.unit)} × {l.name}</p>
                   {l.note ? <p className={styles.quote}><span>{t.admin.quote.request}:</span> {l.note}</p> : null}
                   <div className="field">
-                    <label htmlFor={`quote-price-${i}`}>{fill(t.admin.quote.unitPrice, { unit: l.unit })}</label>
+                    <label htmlFor={`quote-price-${i}`}>{fill(t.admin.quote.unitPrice, { unit: l.unit === "u" ? t.admin.quote.piece : l.unit })}</label>
                     <input id={`quote-price-${i}`} className="input" type="number" inputMode="decimal" min={0} step="0.01" value={prices[i] ?? ""} disabled={!canWrite}
                       onChange={(e) => setPrices((all) => all.map((p, j) => (j === i ? e.target.value : p)))} data-testid="quote-price" />
                   </div>

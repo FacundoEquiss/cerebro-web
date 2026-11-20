@@ -31,3 +31,4 @@
   .days[data-view="week"] .day { min-height: 220px; padding: 10px; }
   .days[data-view="day"] .bookings { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
 }
+.id { white-space: nowrap; }

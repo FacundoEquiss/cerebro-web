@@ -1,5 +1,4 @@
-import { expect, test } from "@playwright/test";
-import { fillCheckout, watchConsole } from "./helpers";
+import { expect, fillCheckout, test, watchConsole } from "./helpers";
 
 test("home → product → a choice is required → cart → manual checkout → order page", async ({ page }) => {
   const errors = watchConsole(page);

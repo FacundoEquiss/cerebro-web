@@ -88,7 +88,7 @@ export default async function HomePage() {
           <h2 id="home-categories">{t.home.categoriesTitle}</h2>
           <Link href={paths.shop()} className="link">{t.common.seeAll}</Link>
         </div>
-        <ul className={styles.categories}>
+        <ul className={styles.categories} data-four={categories.length % 4 === 0 ? "" : undefined}>
           {categories.map((c) => {
             const sample = products.find((p) => p.category === c.slug)?.images[0];
             const count = products.filter((p) => p.category === c.slug).length;
