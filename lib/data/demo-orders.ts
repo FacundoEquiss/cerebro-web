@@ -103,7 +103,7 @@ function line(product: Product, quantity: number, now: number, n: number): Order
 }
 
 export function demoOrders(products: Product[], now: number): AdminOrder[] {
-  const active = products.filter((p) => p.active);
+  const active = products.filter((p) => p.active && !p.draft);
   if (active.length === 0) return [];
   const at = (minutesAgo: number) => new Date(now - minutesAgo * 60_000).toISOString();
   const actor = "demo@example.com";

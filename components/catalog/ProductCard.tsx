@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { paths, t } from "@/i18n";
+import { isEvent } from "@/lib/booking/slots";
 import { productAvailability } from "@/lib/data/availability";
 import type { Product } from "@/lib/data/types";
 import { formatPrice, formatUnitPrice } from "@/lib/format";
@@ -29,7 +30,7 @@ export function ProductCard({ product, priority = false }: { product: Product; p
             {availability === "out_of_stock" ? <span className="badge badge-out">{t.product.soldOut}</span> : null}
             {onSale && availability !== "out_of_stock" ? <span className="badge badge-sale">{t.product.sale}</span> : null}
             {availability === "made_to_order" && product.type === "physical" ? <span className="badge">{t.product.madeToOrder}</span> : null}
-            {product.type !== "physical" ? <span className="badge">{t.types.badge[product.type]}</span> : null}
+            {product.type !== "physical" ? <span className="badge">{isEvent(product) ? t.types.badge.event : t.types.badge[product.type]}</span> : null}
           </div>
         </div>
         <h3 className={styles.name}>{product.name}</h3>

@@ -34,11 +34,17 @@ export function SlotPicker({
   // The days that can be booked are asked when the page OPENS: a cached page never offers a day
   // that already passed.
   const [dates, setDates] = useState<string[] | null>(null);
+  // An EVENT has fixed dates: they come with their seats in the same answer, and are a list.
+  const [sessions, setSessions] = useState<{ slot: string; left: number }[] | null>(null);
   useEffect(() => {
     let alive = true;
     fetch(`/api/slots?product=${encodeURIComponent(productId)}`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-      .then((body: { dates: string[] }) => alive && setDates(body.dates))
+      .then((body: { dates: string[]; sessions?: { slot: string; left: number }[] }) => {
+        if (!alive) return;
+        setSessions(body.sessions ?? null);
+        setDates(body.dates);
+      })
       .catch(() => alive && setDates([]));
     return () => {
       alive = false;
@@ -60,6 +66,28 @@ export function SlotPicker({
   }, [productId, date]);
 
   if (dates === null) return <p className="muted" data-testid="dates-loading">{t.types.slotsLoading}</p>;
+  if (sessions) {
+    if (sessions.length === 0) return <p className="notice" data-testid="no-dates">{t.types.eventNoDates}</p>;
+    return (
+      <fieldset className={`${styles.picker} ${styles.times}`} data-testid="slot-picker" data-event>
+        <legend>{t.types.eventChoose}</legend>
+        <div className={styles.sessions}>
+          {sessions.map((s) => {
+            const full = s.left < seats;
+            const [day = "", time = ""] = s.slot.split("T");
+            return (
+              <label key={s.slot} className={styles.session} data-active={value === s.slot || undefined} data-off={full || undefined}>
+                <input type="radio" name="slot" value={s.slot} checked={value === s.slot} disabled={full} onChange={() => onChange(s.slot)} className="sr-only" data-testid="session" />
+                <strong>{dayLabel(day)} · {time}</strong>
+                <span data-testid="session-left">{s.left === 0 ? t.types.slotFull : s.left === 1 ? t.types.seatsLeftOne : fill(t.types.seatsLeft, { n: s.left })}</span>
+              </label>
+            );
+          })}
+        </div>
+        <p className={`muted ${styles.zone}`}>{fill(t.types.timeZoneNote, { zone: timeZone.split("/").pop()!.replace(/_/g, " ") })}</p>
+      </fieldset>
+    );
+  }
   if (dates.length === 0) return <p className="notice" data-testid="no-dates">{t.types.noDates}</p>;
 
   return (

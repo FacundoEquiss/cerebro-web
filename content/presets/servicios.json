@@ -373,6 +373,74 @@
       ]
     },
     {
+      "id": "taller-intensivo",
+      "slug": "taller-intensivo",
+      "name": {
+        "es": "Taller intensivo de fin de semana",
+        "en": "Weekend intensive workshop"
+      },
+      "description": {
+        "es": "Una jornada intensiva con fecha fija y cupo de 12 personas. Las fechas son de EJEMPLO: cargá las reales. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "A one-day intensive on a fixed date, for up to 12 people. The dates are EXAMPLES: load the real ones. EXAMPLE text: describe your own here."
+      },
+      "category": "servicios",
+      "type": "service",
+      "price": 48000,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": null,
+      "service": {
+        "durationMinutes": 180,
+        "capacity": 12,
+        "sessions": [
+          {
+            "start": "2027-03-06T10:00"
+          },
+          {
+            "start": "2027-04-03T10:00"
+          },
+          {
+            "start": "2027-05-08T10:00"
+          }
+        ]
+      },
+      "attributes": {},
+      "createdAt": "2026-03-07T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/taller-intensivo-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Taller intensivo de fin de semana",
+            "en": "Weekend intensive workshop"
+          },
+          "placeholder": {
+            "shape": "calendar",
+            "color": "#5b3f8f",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/taller-intensivo-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Taller intensivo de fin de semana, vista de ambiente",
+            "en": "Weekend intensive workshop, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "calendar",
+            "color": "#5b3f8f",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
       "id": "shampoo-profesional",
       "slug": "shampoo-profesional",
       "name": {

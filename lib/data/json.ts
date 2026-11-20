@@ -38,7 +38,7 @@ import {
 
 type Text = string | Record<string, string>;
 interface RawProduct {
-  id: string; slug: string; name: Text; description: Text; category: string; price: number;
+  id: string; slug: string; name: Text; description: Text; category: string; price: number | null; draft?: boolean;
   compareAtPrice?: number | null; featured?: boolean; active?: boolean; minQuantity?: number; stock?: number | null;
   attributes?: Record<string, string>; createdAt?: string;
   type?: ProductType; unit?: string; step?: number; maxQuantity?: number | null;
@@ -61,7 +61,9 @@ export function parseCatalog(data: { categories: { slug: string; name: Text; des
     name: tr(p.name),
     description: tr(p.description),
     category: p.category,
-    price: p.price,
+    // A price that is not known yet is `null` in the file: the product is a draft, never "0".
+    price: p.price ?? 0,
+    draft: p.draft === true || p.price === null || p.price === undefined,
     compareAtPrice: p.compareAtPrice ?? null,
     images: p.images.map((i) => ({ src: i.src, alt: tr(i.alt), width: i.width, height: i.height, ...(i.option ? { option: i.option } : {}) })),
     options: (p.options ?? []).map((o) => ({
@@ -98,6 +100,7 @@ function holdsSeats(o: StoredOrder, now: number): boolean {
 function upgradeCatalog(c: Catalog): Catalog {
   for (const p of c.products) {
     p.type ??= "physical";
+    p.draft ??= false;
     p.unit ??= "u";
     p.step ??= 1;
     p.maxQuantity ??= null;
@@ -118,6 +121,9 @@ function upgradeOrders(orders: StoredOrder[]): StoredOrder[] {
   }
   return orders;
 }
+
+/** On sale: active and complete. A draft (price missing) is never listed and never ordered. */
+const forSale = (p: Product) => p.active && !p.draft;
 
 /** The storefront never receives the storage key of a digital file. */
 function forStore(p: Product): Product {
@@ -156,6 +162,15 @@ function state(): State {
     globalState.__jsonStore = { dir, queue: Promise.resolve(), seenPayments: new Set(), claimed: new Set() };
   }
   return globalState.__jsonStore;
+}
+
+/**
+ * Whether the example orders are shown: in demo mode, unless DEMO_ORDERS=false; never outside it,
+ * unless DEMO_ORDERS=true asks for them (to try the panel on a laptop).
+ */
+function seedsDemoOrders(): boolean {
+  const flag = process.env.DEMO_ORDERS;
+  return flag === "true" || (flag !== "false" && env().demoMode);
 }
 
 /** Files are only written outside production and outside read-only hosting. */
@@ -199,14 +214,16 @@ async function loadCatalog(): Promise<Catalog> {
 
 async function loadOrders(): Promise<StoredOrder[]> {
   const s = state();
-  if (!jsonWritable()) return demoOrders((await loadCatalog()).products, Date.now());
+  // EXAMPLE ORDERS ARE FOR DEMOS ONLY. A real store never sees them: they would sit in the kanban
+  // and — in a store that keeps orders — hold real seats of real appointments.
+  if (!jsonWritable()) return seedsDemoOrders() ? demoOrders((await loadCatalog()).products, Date.now()) : [];
   if (!s.orders) {
     const saved = await readFile<StoredOrder[]>("orders.json");
     if (saved) {
       s.orders = upgradeOrders(saved);
     } else {
       // First run: example orders in every status, so the kanban is not an empty screen.
-      s.orders = process.env.DEMO_ORDERS === "false" ? [] : demoOrders((await loadCatalog()).products, Date.now());
+      s.orders = seedsDemoOrders() ? demoOrders((await loadCatalog()).products, Date.now()) : [];
       await writeFile("orders.json", s.orders);
     }
   }
@@ -275,7 +292,7 @@ export const jsonAdapter: DataAdapter = {
   },
 
   async listProducts() {
-    return (await loadCatalog()).products.filter((p) => p.active).map(forStore);
+    return (await loadCatalog()).products.filter(forSale).map(forStore);
   },
   async listCategories() {
     return (await loadCatalog()).categories;
@@ -295,7 +312,7 @@ export const jsonAdapter: DataAdapter = {
       if (existing) return publicOrder(existing);
       const catalog = await loadCatalog();
       const now = Date.now();
-      const priced = priceOrder(request, catalog.products.filter((p) => p.active), shipping, { held: seatsHeld(orders, now), now });
+      const priced = priceOrder(request, catalog.products.filter(forSale), shipping, { held: seatsHeld(orders, now), now });
       const slots = priced.lines.filter((l) => l.slot).length;
       if (slots > 0) {
         // One buyer cannot sit on many unpaid appointments at a time.
@@ -332,7 +349,7 @@ export const jsonAdapter: DataAdapter = {
       const orders = await loadOrders();
       const existing = orders.find((o) => o.idempotencyKey === key);
       if (existing) return publicOrder(existing);
-      const order = buildQuote(id, request, (await loadCatalog()).products.filter((p) => p.active), new Date().toISOString());
+      const order = buildQuote(id, request, (await loadCatalog()).products.filter(forSale), new Date().toISOString());
       orders.unshift({
         ...order,
         lines: order.lines.map((l) => ({ ...l })),

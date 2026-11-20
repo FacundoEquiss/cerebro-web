@@ -6,7 +6,7 @@
 // saving changes and the server's own clock cannot move an appointment.
 
 import { commerce } from "@/config/commerce";
-import { OrderError, type Product, type Slot, type Weekday, type WeeklyAvailability } from "@/lib/data/types";
+import { OrderError, type Product, type ServiceSettings, type Slot, type Weekday, type WeeklyAvailability } from "@/lib/data/types";
 
 const WEEKDAYS: Weekday[] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -117,6 +117,34 @@ export function addDays(date: string, days: number): string {
 const minutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
 const clock = (total: number) => `${pad(Math.floor(total / 60))}:${pad(total % 60)}`;
 
+/** An event is a service with fixed dates (`service.sessions`), even when none is left. */
+export function isEvent(product: { service?: ServiceSettings | null; type?: string }): boolean {
+  return Array.isArray(product.service?.sessions);
+}
+
+const SESSION = /^(\d{4}-\d{2}-\d{2})T(([01]\d|2[0-3]):[0-5]\d)$/;
+
+export interface SessionSlot extends DaySlot {
+  date: string;
+  /** What the order sends: `YYYY-MM-DDTHH:MM`, wall time of the store. */
+  slot: string;
+}
+
+/** The sessions of an event that have not started yet, in order. */
+export function upcomingSessions(product: Pick<Product, "service">, now: number, defaults?: BookingRules): SessionSlot[] {
+  const rules = serviceRules(product, defaults);
+  const out: SessionSlot[] = [];
+  for (const session of product.service?.sessions ?? []) {
+    const m = SESSION.exec(session.start ?? "");
+    if (!m) continue;
+    const start = existingInstant(m[1]!, m[2]!, rules.timeZone);
+    if (!start || start.getTime() <= now) continue;
+    const minutesLong = Math.max(5, Math.trunc(session.durationMinutes ?? rules.durationMinutes));
+    out.push({ date: m[1]!, time: m[2]!, slot: `${m[1]}T${m[2]}`, start: start.toISOString(), end: new Date(start.getTime() + minutesLong * MINUTE).toISOString() });
+  }
+  return out.sort((a, b) => a.start.localeCompare(b.start));
+}
+
 export interface DaySlot extends Slot {
   /** Wall time of the store: "09:30". */
   time: string;
@@ -128,6 +156,8 @@ export interface DaySlot extends Slot {
  */
 export function slotsOn(product: Pick<Product, "service">, date: string, now: number, defaults?: BookingRules): DaySlot[] {
   if (!DATE.test(date)) return [];
+  // An event has its own dates: the weekly agenda, the closed days and the calendar window do not apply.
+  if (isEvent(product)) return upcomingSessions(product, now, defaults).filter((s) => s.date === date);
   const rules = serviceRules(product, defaults);
   if (rules.blockedDates.includes(date)) return [];
   const today = wallTime(now, rules.timeZone).date;
@@ -149,6 +179,7 @@ export function slotsOn(product: Pick<Product, "service">, date: string, now: nu
 
 /** The days of the calendar window, from today, that have at least one slot left to book. */
 export function openDates(product: Pick<Product, "service">, now: number, defaults?: BookingRules): string[] {
+  if (isEvent(product)) return [...new Set(upcomingSessions(product, now, defaults).map((s) => s.date))];
   const rules = serviceRules(product, defaults);
   const today = wallTime(now, rules.timeZone).date;
   const out: string[] = [];

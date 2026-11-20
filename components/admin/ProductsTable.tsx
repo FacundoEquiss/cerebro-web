@@ -122,7 +122,9 @@ export function ProductsTable({ products, categories, canWrite }: { products: Pr
                         <StockInput product={product} variantId={null} initial={product.stock} label={fill(p.stockOf, { name: product.name })} canWrite={canWrite} />
                       )}
                     </td>
-                    <td><span className={styles.pill} data-off={!product.active || undefined}>{product.active ? p.active : p.paused}</span></td>
+                    <td>{product.draft
+                      ? <span className={styles.pill} data-draft data-testid="draft-pill">{p.draft}</span>
+                      : <span className={styles.pill} data-off={!product.active || undefined}>{product.active ? p.active : p.paused}</span>}</td>
                   </tr>
                 );
               })}

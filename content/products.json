@@ -1251,6 +1251,74 @@
       ]
     },
     {
+      "id": "taller-de-cocina",
+      "slug": "taller-de-cocina",
+      "name": {
+        "es": "Taller de cocina",
+        "en": "Cooking workshop"
+      },
+      "description": {
+        "es": "Un taller presencial de tres horas, con cupo de 12 personas. Las fechas son de EJEMPLO: cargá las reales. Texto de EJEMPLO: describí acá lo tuyo.",
+        "en": "A three-hour in-person workshop, for up to 12 people. The dates are EXAMPLES: load the real ones. EXAMPLE text: describe your own here."
+      },
+      "category": "gastronomia",
+      "type": "service",
+      "price": 32000,
+      "compareAtPrice": null,
+      "featured": false,
+      "minQuantity": 1,
+      "stock": null,
+      "service": {
+        "durationMinutes": 180,
+        "capacity": 12,
+        "sessions": [
+          {
+            "start": "2027-03-06T10:00"
+          },
+          {
+            "start": "2027-04-03T10:00"
+          },
+          {
+            "start": "2027-05-08T10:00"
+          }
+        ]
+      },
+      "attributes": {},
+      "createdAt": "2026-03-07T00:00:00.000Z",
+      "options": [],
+      "variants": [],
+      "images": [
+        {
+          "src": "/products/taller-de-cocina-main.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Taller de cocina",
+            "en": "Cooking workshop"
+          },
+          "placeholder": {
+            "shape": "calendar",
+            "color": "#b3401f",
+            "view": "front"
+          }
+        },
+        {
+          "src": "/products/taller-de-cocina-scene.svg",
+          "width": 800,
+          "height": 1000,
+          "alt": {
+            "es": "Taller de cocina, vista de ambiente",
+            "en": "Cooking workshop, lifestyle view"
+          },
+          "placeholder": {
+            "shape": "calendar",
+            "color": "#b3401f",
+            "view": "scene"
+          }
+        }
+      ]
+    },
+    {
       "id": "mueble-a-medida",
       "slug": "mueble-a-medida",
       "name": {

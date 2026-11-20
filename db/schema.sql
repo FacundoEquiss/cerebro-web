@@ -61,7 +61,10 @@ create table if not exists products (
   -- type = service: { "durationMinutes": 60, "capacity": 1, "weekly": {…}, "blockedDates": […] }
   service          jsonb,
   -- type = digital: { "name": "guide.pdf" }. The storage key is NOT here: see product_files.
-  digital          jsonb
+  digital          jsonb,
+  -- DRAFT: something the owner must decide is missing (the price). Not for sale: hidden from the
+  -- public catalogue and refused by create_order(). A price is never invented to fill the gap.
+  draft            boolean not null default false
 );
 
 -- The private file of a digital product. Its own table, with no public policy at all: the
@@ -185,6 +188,8 @@ alter table products add column if not exists step numeric(12, 3) not null defau
 alter table products add column if not exists max_quantity numeric(12, 3) check (max_quantity is null or max_quantity > 0);
 alter table products add column if not exists service jsonb;
 alter table products add column if not exists digital jsonb;
+-- 0.3.0 (db/migrations/0003_drafts.sql)
+alter table products add column if not exists draft boolean not null default false;
 
 alter table orders add column if not exists is_quote boolean not null default false;
 alter table orders add column if not exists quote_sent_at timestamptz;
@@ -236,10 +241,10 @@ alter table product_files enable row level security;
 -- level security.
 -- ---------------------------------------------------------------------------------------------
 drop policy if exists public_read on products;
-create policy public_read on products for select using (active);
+create policy public_read on products for select using (active and not draft);
 drop policy if exists public_read on variants;
 create policy public_read on variants for select
-  using (active and exists (select 1 from products p where p.id = variants.product_id and p.active));
+  using (active and exists (select 1 from products p where p.id = variants.product_id and p.active and not p.draft));
 drop policy if exists public_read on categories;
 create policy public_read on categories for select using (true);
 
@@ -254,7 +259,7 @@ select
   ) as variants,
   p.type, p.unit, p.step, p.max_quantity, p.service, p.digital
 from products p
-where p.active;
+where p.active and not p.draft;
 
 create or replace view public_categories with (security_invoker = true) as
 select slug, name, description, position from categories;
@@ -369,7 +374,8 @@ begin
     v_qty := round((v_line ->> 'quantity')::numeric, 3);
 
     -- Locked: the stock and the seats of this product are decided by one buyer at a time.
-    select * into v_product from products where id = v_line ->> 'product_id' and active for update;
+    -- A draft (no price yet) is not for sale: for the store it does not exist.
+    select * into v_product from products where id = v_line ->> 'product_id' and active and not draft for update;
     if not found then
       raise exception 'ORDER_ERROR:unknown_product:%', v_line ->> 'product_id';
     end if;
@@ -603,7 +609,7 @@ begin
     return order_json(v_id);
   end if;
 
-  select * into v_product from products where id = p ->> 'product_id' and active;
+  select * into v_product from products where id = p ->> 'product_id' and active and not draft;
   if not found then
     raise exception 'ORDER_ERROR:unknown_product:%', p ->> 'product_id';
   end if;
@@ -902,7 +908,7 @@ language sql stable security definer set search_path = public as $$
   select coalesce(jsonb_agg(jsonb_build_object(
     'id', p.id, 'slug', p.slug, 'name', p.name, 'description', p.description, 'category', p.category,
     'price', p.price, 'compare_at_price', p.compare_at_price, 'images', p.images, 'options', p.options,
-    'stock', p.stock, 'featured', p.featured, 'active', p.active, 'min_quantity', p.min_quantity,
+    'stock', p.stock, 'featured', p.featured, 'active', p.active, 'draft', p.draft, 'min_quantity', p.min_quantity,
     'attributes', p.attributes, 'created_at', p.created_at,
     'type', p.type, 'unit', p.unit, 'step', p.step, 'max_quantity', p.max_quantity, 'service', p.service,
     'digital', case when p.digital is null then null
@@ -933,9 +939,10 @@ begin
   end if;
 
   insert into products (id, slug, name, description, category, price, compare_at_price, images, options,
-                        stock, featured, active, min_quantity, attributes, type, unit, step, max_quantity, service, digital)
+                        stock, featured, active, min_quantity, attributes, type, unit, step, max_quantity, service, digital, draft)
   values (v_id, p ->> 'slug', p ->> 'name', coalesce(p ->> 'description', ''), p ->> 'category',
-          (p ->> 'price')::numeric, (p ->> 'compareAtPrice')::numeric,
+          -- No price = a draft, stored as 0 and never sold (see `draft`).
+          coalesce((p ->> 'price')::numeric, 0), (p ->> 'compareAtPrice')::numeric,
           coalesce(p -> 'images', '[]'::jsonb), coalesce(p -> 'options', '[]'::jsonb),
           (p ->> 'stock')::numeric, coalesce((p ->> 'featured')::boolean, false), coalesce((p ->> 'active')::boolean, true),
           coalesce((p ->> 'minQuantity')::numeric, 1), coalesce(p -> 'attributes', '{}'::jsonb),
@@ -943,13 +950,15 @@ begin
           (p ->> 'maxQuantity')::numeric,
           case when jsonb_typeof(p -> 'service') = 'object' then p -> 'service' else null end,
           -- Only the visible name is kept with the product; the storage key goes to product_files.
-          case when jsonb_typeof(p -> 'digital') = 'object' then (p -> 'digital') - 'file' else null end)
+          case when jsonb_typeof(p -> 'digital') = 'object' then (p -> 'digital') - 'file' else null end,
+          coalesce((p ->> 'draft')::boolean, false) or (p ->> 'price') is null)
   on conflict (id) do update set
     slug = excluded.slug, name = excluded.name, description = excluded.description, category = excluded.category,
     price = excluded.price, compare_at_price = excluded.compare_at_price, images = excluded.images,
     options = excluded.options, stock = excluded.stock, featured = excluded.featured, active = excluded.active,
     min_quantity = excluded.min_quantity, attributes = excluded.attributes, type = excluded.type, unit = excluded.unit,
-    step = excluded.step, max_quantity = excluded.max_quantity, service = excluded.service, digital = excluded.digital;
+    step = excluded.step, max_quantity = excluded.max_quantity, service = excluded.service, digital = excluded.digital,
+    draft = excluded.draft;
 
   if coalesce(p #>> '{digital,file}', '') <> '' then
     insert into product_files (product_id, file) values (v_id, p #>> '{digital,file}')

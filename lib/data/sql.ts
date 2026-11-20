@@ -72,6 +72,7 @@ export function rowToProduct(r: Record<string, unknown>): Product {
     stock: numOrNull(r.stock),
     featured: Boolean(r.featured),
     active: r.active === undefined ? true : Boolean(r.active),
+    draft: Boolean(r.draft),
     minQuantity: num(r.min_quantity ?? 1),
     attributes: (r.attributes as Record<string, string>) ?? {},
     type: (r.type as ProductType | undefined) ?? "physical",

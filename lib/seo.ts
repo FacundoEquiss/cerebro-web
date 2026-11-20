@@ -5,6 +5,7 @@
 import type { Metadata } from "next";
 import { brand } from "@/config/brand";
 import { languageTag, paths, tr } from "@/i18n";
+import { isEvent, upcomingSessions } from "@/lib/booking/slots";
 import { availabilityOf, byPiece, productAvailability, unitPrice } from "@/lib/data/availability";
 import type { Availability, Category, Product } from "@/lib/data/types";
 import { env } from "@/lib/env";
@@ -104,6 +105,7 @@ export function breadcrumbJsonLd(trail: { name: string; path: string }[]) {
  *             `UnitPriceSpecification` saying which quantity the price refers to.
  *   digital   `Product` + `Offer`, always in stock (a file does not run out).
  *   service   `Service` (not `Product`) with its provider and an `Offer` with the price of one slot.
+ *   event     (a service with fixed dates) one `Event` per upcoming date, with its start and end.
  *   quote     `Product` WITHOUT `offers`: there is no public price, so none is declared. Never a
  *             made-up amount, never "0".
  *
@@ -135,6 +137,26 @@ export function productJsonLd(product: Product, category?: Category) {
     ...(product.type === "physical" ? { itemCondition: "https://schema.org/NewCondition" } : {}),
     seller: { "@id": `${siteUrl()}/#organization` },
   });
+  if (product.type === "service" && isEvent(product)) {
+    // One `Event` per upcoming date. `location` is only stated when the business has an address:
+    // it is never made up (search engines want it to show an event as a rich result).
+    const offers = { "@type": "Offer", url, price: plainPrice(product.price), priceCurrency: brand.currency, availability: SCHEMA_AVAILABILITY.in_stock };
+    const events = upcomingSessions(product, Date.now()).slice(0, 12).map((s) => ({
+      "@context": "https://schema.org",
+      "@type": "Event",
+      name: product.name,
+      description: product.description,
+      url,
+      image: product.images.map((i) => absolute(i.src)),
+      startDate: s.start,
+      endDate: s.end,
+      eventStatus: "https://schema.org/EventScheduled",
+      organizer: { "@id": `${siteUrl()}/#organization` },
+      ...(brand.contact.address ? { location: { "@type": "Place", name: brand.name, address: brand.contact.address } } : {}),
+      offers,
+    }));
+    if (events.length > 0) return events.length === 1 ? events[0]! : events;
+  }
   if (product.type === "service") {
     return {
       "@context": "https://schema.org",

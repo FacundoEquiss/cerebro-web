@@ -64,6 +64,19 @@ export interface ServiceSettings {
   weekly?: WeeklyAvailability | null;
   /** Extra closed days (`YYYY-MM-DD`), added to `commerce.booking.blockedDates`. */
   blockedDates?: string[];
+  /**
+   * AN EVENT: fixed dates instead of a weekly agenda (a workshop, a one-off class, a ticket).
+   * When this list is present the product is booked by DATE: only these sessions exist, each
+   * with `capacity` seats. `start` is wall time of the store, `YYYY-MM-DDTHH:MM`. Everything
+   * else is the booking engine: holds, limits, overlap, the Agenda.
+   */
+  sessions?: EventSession[];
+}
+
+export interface EventSession {
+  start: string;
+  /** Length of THIS session, if it differs from `durationMinutes`. */
+  durationMinutes?: number;
 }
 
 /** The file of a `digital` product. PRIVATE: it is only served to paid orders (lib/orders/download.ts). */
@@ -93,6 +106,14 @@ export interface Product {
   featured: boolean;
   /** False = paused: hidden from the store, still visible in the admin panel. */
   active: boolean;
+  /**
+   * DRAFT: the product is being loaded and something the owner must decide is still missing —
+   * above all, the PRICE. A draft is not for sale: it is hidden from the store, the search, the
+   * sitemap, the feeds, llms.txt and the structured data, and the server refuses to order it. Only
+   * the admin panel shows it («price missing»). In the catalogue file, `"price": null` means draft.
+   * Never invent a price to make a product appear: leave it as a draft and ask the owner.
+   */
+  draft: boolean;
   /** Smallest quantity of one line, in `unit` (the "min"). May be a decimal: 0.25 kg. */
   minQuantity: number;
   type: ProductType;

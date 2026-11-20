@@ -14,3 +14,15 @@
 .time[data-off] strong { text-decoration: line-through; }
 .time:has(input:focus-visible) { outline: 2px solid var(--action); outline-offset: 2px; }
 .zone { font-size: 0.84rem; }
+.sessions { display: grid; gap: 8px; }
+.session {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 14px; min-height: var(--tap);
+  padding: 12px 14px; border-radius: var(--r-md); background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); cursor: pointer;
+}
+.session strong { display: inline-block; font-variant-numeric: tabular-nums; }
+.session strong::first-letter { text-transform: uppercase; }
+.session span { font-size: 0.86rem; color: var(--muted); white-space: nowrap; }
+.session:hover { box-shadow: inset 0 0 0 1px var(--muted); }
+.session[data-active] { box-shadow: inset 0 0 0 2px var(--ink); background: var(--action-soft); }
+.session[data-off] { color: var(--muted); background: var(--surface-2); cursor: not-allowed; }
+.session:has(input:focus-visible) { outline: 2px solid var(--action); outline-offset: 2px; }

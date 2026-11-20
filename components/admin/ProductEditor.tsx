@@ -58,6 +58,7 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
   const [compareAt, setCompareAt] = useState(product.compareAtPrice === null ? "" : String(product.compareAtPrice));
   const [stock, setStock] = useState(product.stock === null ? "" : String(product.stock));
   const [active, setActive] = useState(product.active);
+  const [isDraft, setDraft] = useState(product.draft);
   const [featured, setFeatured] = useState(product.featured);
   const [images, setImages] = useState<ProductImage[]>(product.images);
   const [options, setOptions] = useState<OptionDraft[]>(product.options.map(toDraft));
@@ -110,6 +111,8 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
   const [maxQuantity, setMaxQuantity] = useState(product.maxQuantity === null ? "" : String(product.maxQuantity));
   const [duration, setDuration] = useState(String(product.service?.durationMinutes ?? 60));
   const [capacity, setCapacity] = useState(String(product.service?.capacity ?? 1));
+  // An event: fixed dates, one per line ("2026-12-05 10:00").
+  const [sessionsText, setSessionsText] = useState((product.service?.sessions ?? []).map((x) => x.start.replace("T", " ")).join("\n"));
   const [digital, setDigital] = useState(product.digital ?? { name: "", file: "" });
   const [fileBusy, setFileBusy] = useState(false);
   const pt = t.admin.productType;
@@ -125,6 +128,13 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
     setFileBusy(false);
     if (result.ok && result.data.file) setDigital({ file: result.data.file, name: digital.name || result.data.name || file.name });
     else setError(pt.fileError);
+  }
+
+  /** The service as typed. Dates written → an event; none → the weekly agenda. */
+  function serviceDraft() {
+    const { sessions: _old, ...rest } = product.service ?? { durationMinutes: 60, capacity: 1 };
+    const starts = sessionsText.split(/\n+/).map((line) => line.trim().replace(/\s+/, "T")).filter(Boolean);
+    return { ...rest, durationMinutes: Number(duration) || 60, capacity: Number(capacity) || 1, ...(starts.length > 0 ? { sessions: starts.map((start) => ({ start })) } : {}) };
   }
 
   async function submit(event: FormEvent) {
@@ -143,18 +153,20 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
       name: name.trim(),
       description: description.trim(),
       category,
-      price: Number(price),
+      // A draft may have no price yet: it is stored as 0 and never sold.
+      price: isDraft && price.trim() === "" ? 0 : Number(price),
       compareAtPrice: numberOrNull(compareAt),
       stock: parsedOptions.length > 0 ? null : numberOrNull(stock),
       featured,
       active,
+      draft: isDraft,
       minQuantity: Number(minQuantity) || 1,
       type,
       unit: unit.trim() || "u",
       step: Number(step) || 1,
       maxQuantity: numberOrNull(maxQuantity),
       // Opening hours of its own (set in the catalogue file or by an agent) are kept as they are.
-      service: type === "service" ? { ...(product.service ?? {}), durationMinutes: Number(duration) || 60, capacity: Number(capacity) || 1 } : null,
+      service: type === "service" ? serviceDraft() : null,
       digital: type === "digital" ? { name: digital.name.trim() || "download", ...(digital.file ? { file: digital.file } : {}) } : null,
       attributes: product.attributes,
       images: images.map((img) => ({ ...img, alt: img.alt.trim() })),
@@ -187,7 +199,7 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
       </div>
       <div className="admin-head">
         <h1>{isNew ? e.newTitle : e.editTitle}</h1>
-        {!isNew && product.active ? <Link href={paths.product(product.slug)} target="_blank" className="btn btn-secondary">{t.admin.products.viewInStore}</Link> : null}
+        {!isNew && product.active && !product.draft ? <Link href={paths.product(product.slug)} target="_blank" className="btn btn-secondary">{t.admin.products.viewInStore}</Link> : null}
       </div>
 
       <section className={`admin-card ${styles.block}`} aria-labelledby="editor-basics">
@@ -214,7 +226,7 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
           </div>
           <div className="field">
             <label htmlFor="p-price">{e.price}</label>
-            <input id="p-price" className="input" type="number" min={0} step="any" inputMode="decimal" value={price} onChange={(ev) => setPrice(ev.target.value)} required data-testid="p-price" />
+            <input id="p-price" className="input" type="number" min={0} step="any" inputMode="decimal" value={price} onChange={(ev) => setPrice(ev.target.value)} required={!isDraft} data-testid="p-price" />
           </div>
           <div className="field">
             <label htmlFor="p-compare">{e.compareAt}</label>
@@ -224,6 +236,7 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
         </div>
         <div className={styles.checks}>
           <label><input type="checkbox" checked={active} onChange={(ev) => setActive(ev.target.checked)} data-testid="p-active" /> {e.active}</label>
+          <label><input type="checkbox" checked={isDraft} onChange={(ev) => setDraft(ev.target.checked)} data-testid="p-draft" /> {e.draft}</label>
           <label><input type="checkbox" checked={featured} onChange={(ev) => setFeatured(ev.target.checked)} /> {e.featured}</label>
         </div>
       </section>
@@ -270,7 +283,11 @@ export function ProductEditor({ product, categories, isNew, canWrite }: { produc
                 <input id="p-capacity" className="input" type="number" inputMode="numeric" min={1} step={1} value={capacity} onChange={(ev) => setCapacity(ev.target.value)} data-testid="p-capacity" />
               </div>
             </div>
-            <p className="admin-note">{pt.serviceHint}</p>
+            <div className="field">
+              <label htmlFor="p-sessions">{pt.sessions}</label>
+              <textarea id="p-sessions" className="input" rows={3} value={sessionsText} onChange={(ev) => setSessionsText(ev.target.value)} placeholder={"2027-03-06 10:00\n2027-04-03 10:00"} data-testid="p-sessions" />
+            </div>
+            <p className="admin-note">{pt.sessionsHint} {pt.serviceHint}</p>
           </>
         ) : null}
         {type === "digital" ? (

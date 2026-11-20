@@ -19,6 +19,8 @@ export const productInputSchema = z.object({
   stock: z.number().min(0).nullable(),
   featured: z.boolean(),
   active: z.boolean(),
+  // Draft = something is still missing (the price): not for sale, only the panel shows it.
+  draft: z.boolean().default(false),
   // May be a decimal: 0.25 kg.
   minQuantity: z.number().positive().max(100_000),
   type: z.enum(["physical", "digital", "service", "quote"]).default("physical"),
@@ -30,6 +32,8 @@ export const productInputSchema = z.object({
     capacity: z.number().int().min(1).max(1000),
     weekly: z.record(z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]), z.array(z.tuple([time, time])).max(6)).nullish(),
     blockedDates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).max(366).optional(),
+    // An event: fixed dates (wall time of the store) instead of the weekly agenda.
+    sessions: z.array(z.object({ start: z.string().regex(/^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):[0-5]\d$/), durationMinutes: z.number().int().min(5).max(24 * 60).optional() })).max(366).optional(),
   }).nullable().default(null),
   digital: z.object({ name: z.string().trim().min(1).max(200), file: z.string().max(300).optional() }).nullable().default(null),
   attributes: z.record(z.string().max(60), z.string().max(300)),
@@ -103,7 +107,7 @@ export function generateVariants(productId: string, options: ProductOption[], ex
 export function emptyProduct(category: string): Product {
   return {
     id: "", slug: "", name: "", description: "", category, price: 0, compareAtPrice: null, images: [], options: [],
-    variants: [], stock: 0, featured: false, active: true, minQuantity: 1, attributes: {}, createdAt: "",
+    variants: [], stock: 0, featured: false, active: true, draft: false, minQuantity: 1, attributes: {}, createdAt: "",
     type: "physical", unit: "u", step: 1, maxQuantity: null, service: null, digital: null,
   };
 }

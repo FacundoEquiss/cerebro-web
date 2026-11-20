@@ -20,3 +20,4 @@
 .stockInput[data-state="saved"] { border-color: #23764a; }
 .stockInput[data-state="error"] { border-color: var(--highlight); }
 .more { background: none; border: 0; color: var(--action); font-weight: 600; cursor: pointer; padding: 4px 0; font-size: 0.84rem; text-align: left; }
+.pill[data-draft] { background: var(--highlight-soft); color: var(--highlight); }

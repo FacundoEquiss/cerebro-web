@@ -11,6 +11,7 @@ import { commerce } from "@/config/commerce";
 import { fill, paths, t } from "@/i18n";
 import { track } from "@/lib/analytics/client";
 import { availabilityOf, byPiece, findVariant, maxQuantityOf, missingOptions, productAvailability, roundQuantity, unitPrice, unitsAvailable } from "@/lib/data/availability";
+import { isEvent } from "@/lib/booking/slots";
 import type { Product } from "@/lib/data/types";
 import { formatPrice, formatQuantity, formatUnitPrice, lineTotal } from "@/lib/format";
 import { useCart } from "@/stores/cart";
@@ -26,6 +27,8 @@ export interface BookingInfo {
 export function ProductView({ product, booking, antibot = "none" }: { product: Product; booking?: BookingInfo; antibot?: string }) {
   const isQuote = product.type === "quote";
   const isService = product.type === "service";
+  // A service with fixed dates is an EVENT: it is joined, not booked, and it has places, not turns.
+  const event = isService && isEvent(product);
   const [slot, setSlot] = useState("");
   // Bookings, quotes and downloads need a store that remembers orders (lib/store-mode.ts). The
   // answer is asked when the page opens: "contact" = this store cannot take them online.
@@ -100,7 +103,7 @@ export function ProductView({ product, booking, antibot = "none" }: { product: P
     }
     if (availability === "out_of_stock") return;
     if (isService && !slot) {
-      setError(t.types.chooseSlotFirst);
+      setError(event ? t.types.eventChooseFirst : t.types.chooseSlotFirst);
       return;
     }
     add({ productId: product.id, variantId: variant?.id ?? null, selection, quantity, ...(isService ? { slot } : {}) }, product.options.map((o) => o.id), max);
@@ -144,9 +147,10 @@ export function ProductView({ product, booking, antibot = "none" }: { product: P
         </p>
         {product.type !== "physical" || !piece ? (
           <p className={styles.kind} data-testid="product-kind">
-            {product.type !== "physical" ? <span className="badge badge-soft">{t.types.badge[product.type]}</span> : null}
+            {product.type !== "physical" ? <span className="badge badge-soft">{event ? t.types.badge.event : t.types.badge[product.type]}</span> : null}
             <span>
               {isQuote ? t.types.quoteDetail
+                : event ? t.types.eventDetail
                 : isService ? fill(t.types.serviceDetail, { minutes: booking?.durationMinutes ?? product.service?.durationMinutes ?? 60 })
                 : product.type === "digital" ? t.types.digitalDetail
                 : fill(t.types.unitDetail, { unit: product.unit, min: formatQuantity(product.minQuantity, product.unit), step: formatQuantity(step, product.unit) })}
@@ -229,7 +233,7 @@ export function ProductView({ product, booking, antibot = "none" }: { product: P
         {isQuote || mode === null || mode === "contact" ? null : (
         <div className={styles.actions}>
           {product.type === "digital" ? null : (
-          <div className={styles.quantity} title={isService ? t.types.seats : undefined}>
+          <div className={styles.quantity} title={isService ? t.types.seats : undefined} data-testid="quantity-box">
             <button type="button" onClick={() => setQuantity((q) => roundQuantity(Math.max(product.minQuantity, q - step)))} aria-label={t.product.decrease} disabled={quantity <= product.minQuantity}>
               <Minus aria-hidden size={16} />
             </button>
@@ -246,7 +250,7 @@ export function ProductView({ product, booking, antibot = "none" }: { product: P
             aria-disabled={availability === "out_of_stock" && complete ? "true" : undefined}
             data-testid="add-to-cart"
           >
-            {availability === "out_of_stock" && complete ? t.product.unavailable : isService ? t.types.book : t.product.addToCart}
+            {availability === "out_of_stock" && complete ? t.product.unavailable : event ? t.types.eventJoin : isService ? t.types.book : t.product.addToCart}
             {!piece && !(availability === "out_of_stock" && complete) ? <span className={styles.lineTotal}> · {formatPrice(lineTotal({ unitPrice: price, quantity }))}</span> : null}
           </button>
         </div>
@@ -257,7 +261,7 @@ export function ProductView({ product, booking, antibot = "none" }: { product: P
           {error ? <p className="field-error" data-testid="option-error">{error}</p> : null}
           {added ? (
             <p className={styles.added} data-testid="added-notice">
-              <Check aria-hidden size={18} /> {isService ? t.types.booked : t.product.added}
+              <Check aria-hidden size={18} /> {event ? t.types.eventJoined : isService ? t.types.booked : t.product.added}
               <Link href={paths.cart()} className="link" data-testid="view-cart">{t.product.viewCart}</Link>
             </p>
           ) : null}
