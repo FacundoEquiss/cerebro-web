@@ -421,7 +421,7 @@ export const es = {
   },
   demo: {
     eyebrow: "Estás viendo una demo",
-    title: "No es una tienda de ropa: es una base para cualquier rubro",
+    title: "Una base para cualquier rubro",
     text: "Productos físicos, venta por peso, descargas digitales, servicios con turno y trabajos a presupuesto. Todo el código es tuyo y se cambia entero: diseño, textos, flujo de compra y panel.",
     repo: "Ver el código",
     table: "¿Sirve para mi rubro?",

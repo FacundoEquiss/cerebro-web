@@ -6,7 +6,7 @@
 un panel de gestión que recibe los pedidos en un tablero kanban y un «cerebro» que les explica a
 los agentes de IA cómo construirla y hacerla crecer.**
 
-> ### No es una plataforma: es una base que es tuya
+> ### Una base que es tuya, de punta a punta
 >
 > Tenés **todo el código** y cambiás **cualquier cosa**, de punta a punta: el diseño, los textos,
 > el flujo de compra, el modelo de datos, el panel. Sin comisiones, sin abono mensual a una

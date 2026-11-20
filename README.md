@@ -6,7 +6,7 @@
 an admin panel that receives your orders on a kanban board, and a "brain" that tells AI agents how
 to build and grow it.**
 
-> ### It is not a platform: it is a base that is yours
+> ### A base that is yours, end to end
 >
 > You get **all the code** and you change **anything**, end to end: the design, the texts, the
 > purchase flow, the data model, the admin panel. No commissions, no monthly fee to a store

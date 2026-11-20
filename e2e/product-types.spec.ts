@@ -15,7 +15,7 @@ async function openOrder(page: Page, orderId: string) {
   await expect(page.getByTestId("order-detail")).toBeVisible();
 }
 
-test("the demo home is not a clothing store, and says what it is", async ({ page }) => {
+test("the demo home shows many lines of business, and says what it is", async ({ page }) => {
   const errors = watchConsole(page);
   await page.goto("/");
   // Only in demo mode: one block with the links to the code and to the table of businesses.

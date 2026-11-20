@@ -421,7 +421,7 @@ export const en: Dictionary = {
   },
   demo: {
     eyebrow: "You are looking at a demo",
-    title: "It is not a clothing store: it is a base for any kind of business",
+    title: "A base for any kind of business",
     text: "Physical products, sale by weight, digital downloads, services by appointment and made-to-measure work on a quote. All the code is yours and every part can be changed: design, texts, purchase flow and admin panel.",
     repo: "See the code",
     table: "Does it fit my business?",

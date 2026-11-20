@@ -535,7 +535,7 @@ describe("presets: a starting catalogue per line of business", () => {
     expect(JSON.parse(readFileSync("content/site.json", "utf8"))).toMatchObject({ preset: "mixto", home: mixto.home });
     expect(new Set(mixto.products.map((p: Product) => p.type))).toEqual(new Set(["physical", "digital", "service", "quote"]));
     expect(mixto.categories.length).toBeGreaterThanOrEqual(6);
-    // The first screen is not a clothing store: the featured products come from many categories.
+    // The first screen mixes lines of business: the featured products come from many categories.
     const featured = mixto.products.filter((p: Product) => p.featured);
     expect(new Set(featured.map((p: Product) => p.category)).size).toBeGreaterThanOrEqual(6);
   });
